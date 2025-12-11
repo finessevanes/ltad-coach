@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.firebase import init_firebase, verify_connection
 from app.routers.auth import router as auth_router
+from app.routers.athletes import router as athletes_router
+from app.routers.consent import router as consent_router
 from app.models.errors import (
     AppException,
     ErrorCode,
@@ -54,6 +56,8 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth_router)
+app.include_router(athletes_router)
+app.include_router(consent_router)
 
 
 @app.get("/health")
