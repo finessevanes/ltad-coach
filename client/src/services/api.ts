@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import camelcaseKeys from 'camelcase-keys';
 import snakecaseKeys from 'snakecase-keys';
+import { auth } from '../firebase/config';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -10,9 +11,17 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - convert camelCase to snake_case
+// Request interceptor - add auth token and convert camelCase to snake_case
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
+    // Add Bearer token if user is authenticated
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const token = await currentUser.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Convert camelCase to snake_case
     if (config.data && typeof config.data === 'object') {
       config.data = snakecaseKeys(config.data, { deep: true });
     }
@@ -40,10 +49,9 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 401 - token refresh will be added in FE-002
+    // Handle 401 - sign out user
     if (error.response?.status === 401) {
-      // Token refresh logic will be added when Firebase Auth is integrated
-      console.warn('Unauthorized request - auth handling to be added in FE-002');
+      await auth.signOut();
     }
 
     return Promise.reject(error);
