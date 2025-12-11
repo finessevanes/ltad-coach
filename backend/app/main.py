@@ -1,11 +1,14 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.firebase import init_firebase, verify_connection
+from app.routers.auth import router as auth_router
 from app.models.errors import (
     AppException,
     ErrorCode,
@@ -17,11 +20,22 @@ from app.models.errors import (
 # Application version
 VERSION = "0.1.0"
 
-# Initialize FastAPI app
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler for startup/shutdown events."""
+    # Startup
+    init_firebase()
+    yield
+    # Shutdown (cleanup if needed)
+
+
+# Initialize FastAPI app with lifespan
 app = FastAPI(
     title="AI Coach API",
     description="Computer vision athletic assessment platform for youth sports coaches",
     version=VERSION,
+    lifespan=lifespan,
 )
 
 # Get settings
@@ -38,11 +52,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register routers
+app.include_router(auth_router)
+
 
 @app.get("/health")
 async def health_check() -> dict:
-    """Health check endpoint for deployment monitoring."""
-    return {"status": "ok", "version": VERSION}
+    """Health check endpoint for deployment monitoring.
+
+    Returns server status and Firebase connection status.
+    """
+    fb_status = verify_connection()
+    return {
+        "status": "ok",
+        "version": VERSION,
+        "firebase": {
+            "firestore": "connected" if fb_status["firestore"] else "disconnected",
+            "storage": "connected" if fb_status["storage"] else "disconnected",
+        }
+    }
 
 
 @app.exception_handler(RequestValidationError)

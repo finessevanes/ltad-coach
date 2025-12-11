@@ -19,6 +19,7 @@
     "@mui/material": "^5.15.0",
     "axios": "^1.6.0",
     "camelcase-keys": "^9.1.0",
+    "firebase": "^10.14.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.0",
