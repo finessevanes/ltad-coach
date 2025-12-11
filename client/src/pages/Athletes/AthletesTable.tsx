@@ -10,9 +10,13 @@ import {
   Skeleton,
   Box,
   Typography,
+  Tooltip,
+  Menu,
+  MenuItem,
 } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
+import { Visibility, Videocam as VideocamIcon, CloudUpload, Assessment } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Athlete } from '../../types/athlete';
 import { StatusBadge } from '../../components/StatusBadge';
 
@@ -30,9 +34,40 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
   loading,
 }) => {
   const navigate = useNavigate();
+  const [assessmentMenuAnchor, setAssessmentMenuAnchor] = useState<{
+    [athleteId: string]: HTMLElement | null;
+  }>({});
 
   const handleViewAthlete = (athleteId: string) => {
     navigate(`/athletes/${athleteId}`);
+  };
+
+  const handleOpenAssessmentMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    athleteId: string
+  ) => {
+    event.stopPropagation();
+    setAssessmentMenuAnchor((prev) => ({
+      ...prev,
+      [athleteId]: event.currentTarget,
+    }));
+  };
+
+  const handleCloseAssessmentMenu = (athleteId: string) => {
+    setAssessmentMenuAnchor((prev) => ({
+      ...prev,
+      [athleteId]: null,
+    }));
+  };
+
+  const handleRecordVideo = (athleteId: string) => {
+    handleCloseAssessmentMenu(athleteId);
+    navigate(`/assess/${athleteId}`);
+  };
+
+  const handleUploadVideo = (athleteId: string) => {
+    handleCloseAssessmentMenu(athleteId);
+    navigate(`/assess/${athleteId}/upload`);
   };
 
   // Show skeleton loading state
@@ -121,6 +156,48 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
                 <StatusBadge status={athlete.consentStatus} />
               </TableCell>
               <TableCell align="right">
+                {athlete.consentStatus === 'active' && (
+                  <>
+                    <Tooltip title="Assess Athlete">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={(e) => handleOpenAssessmentMenu(e, athlete.id)}
+                        aria-label={`Assess ${athlete.name}`}
+                      >
+                        <Assessment />
+                      </IconButton>
+                    </Tooltip>
+                    <Menu
+                      anchorEl={assessmentMenuAnchor[athlete.id]}
+                      open={Boolean(assessmentMenuAnchor[athlete.id])}
+                      onClose={() => handleCloseAssessmentMenu(athlete.id)}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                      }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                    >
+                      <MenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        handleRecordVideo(athlete.id);
+                      }}>
+                        <VideocamIcon sx={{ mr: 1 }} fontSize="small" />
+                        Record Live Video
+                      </MenuItem>
+                      <MenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        handleUploadVideo(athlete.id);
+                      }}>
+                        <CloudUpload sx={{ mr: 1 }} fontSize="small" />
+                        Upload Video
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
                 <IconButton
                   size="small"
                   onClick={(e) => {
