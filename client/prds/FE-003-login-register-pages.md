@@ -35,18 +35,18 @@ Implement login and registration pages with Google OAuth and email/password
 
 ## Acceptance Criteria
 
-- [ ] Login page accessible at `/login`
-- [ ] Register page accessible at `/register`
-- [ ] Email/password login works with valid credentials
-- [ ] Google OAuth sign-in works via popup
-- [ ] Form validates email format, password min length (6 chars)
-- [ ] Registration validates name is not empty
-- [ ] Error messages display for invalid credentials
-- [ ] Loading spinner shows during authentication
-- [ ] Successful auth redirects to `/dashboard`
-- [ ] Already authenticated users redirected away from auth pages
-- [ ] Links between login/register pages work
-- [ ] Forms are responsive (work on tablet)
+- [x] Login page accessible at `/login`
+- [x] Register page accessible at `/register`
+- [x] Email/password login works with valid credentials
+- [x] Google OAuth sign-in works via popup
+- [x] Form validates email format, password min length (6 chars)
+- [x] Registration validates name is not empty
+- [x] Error messages display for invalid credentials
+- [x] Loading spinner shows during authentication
+- [x] Successful auth redirects to `/dashboard`
+- [x] Already authenticated users redirected away from auth pages
+- [x] Links between login/register pages work
+- [x] Forms are responsive (work on tablet)
 
 ## Files to Create/Modify
 
