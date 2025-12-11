@@ -1,4 +1,29 @@
+# Environment variables
 /backend/.env
 /client/.env
-backend/ltad-coach-firebase-adminsdk-fbsvc-fc7b6b2a69.json
+backend/ltad-coach-firebase-adminsdk-*.json
 .claude/settings.local.json
+
+# Dependencies
+client/node_modules/
+
+# Build outputs
+client/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+backend/env/
+backend/.python-version
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

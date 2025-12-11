@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ltad-coach-api
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      mkdir -p models
+      wget -O models/pose_landmarker_lite.task https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_BASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
