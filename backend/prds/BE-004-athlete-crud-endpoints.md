@@ -35,16 +35,16 @@ Implement athlete roster management endpoints
 
 ## Acceptance Criteria
 
-- [ ] `POST /athletes` creates new athlete with `pending` consent status
-- [ ] Creating athlete generates unique consent token
-- [ ] Creating athlete increments coach's `athleteCount`
-- [ ] `GET /athletes` returns all athletes for authenticated coach
-- [ ] `GET /athletes` supports filtering by consent status
-- [ ] `GET /athletes/{id}` returns single athlete (only if owned by coach)
-- [ ] `PUT /athletes/{id}` updates athlete fields (only if owned by coach)
-- [ ] `DELETE /athletes/{id}` removes athlete and decrements `athleteCount`
-- [ ] 403 returned when accessing another coach's athlete
-- [ ] 400 returned when coach has 25 athletes (soft limit)
+- [x] `POST /athletes` creates new athlete with `pending` consent status
+- [x] Creating athlete generates unique consent token
+- [x] Creating athlete increments coach's `athleteCount`
+- [x] `GET /athletes` returns all athletes for authenticated coach
+- [x] `GET /athletes` supports filtering by consent status
+- [x] `GET /athletes/{id}` returns single athlete (only if owned by coach)
+- [x] `PUT /athletes/{id}` updates athlete fields (only if owned by coach)
+- [x] `DELETE /athletes/{id}` removes athlete and decrements `athleteCount`
+- [x] 403 returned when accessing another coach's athlete
+- [x] 400 returned when coach has 25 athletes (soft limit)
 
 ## Files to Create/Modify
 

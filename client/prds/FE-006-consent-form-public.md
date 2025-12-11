@@ -34,21 +34,21 @@ Implement public parental consent form page
 
 ## Acceptance Criteria
 
-- [ ] Page accessible at `/consent/:token` without login
-- [ ] Displays athlete name from API response
-- [ ] Displays coach name from API response
-- [ ] Legal text displayed in scrollable container
-- [ ] Checkbox must be checked to enable submit
-- [ ] Submit button disabled until checkbox checked
-- [ ] Decline button available (no checkbox required)
-- [ ] Loading state while fetching/submitting
-- [ ] Success state shows confirmation message for consent
-- [ ] Decline state shows confirmation message for declined consent
-- [ ] Error state for invalid tokens (404)
-- [ ] Error state for expired tokens (410) - shows message to contact coach
-- [ ] Error state for already-consented tokens (400)
-- [ ] Error state for already-declined tokens (400)
-- [ ] Mobile-responsive layout
+- [x] Page accessible at `/consent/:token` without login
+- [x] Displays athlete name from API response
+- [x] Displays coach name from API response
+- [x] Legal text displayed in scrollable container
+- [x] Checkbox must be checked to enable submit
+- [x] Submit button disabled until checkbox checked
+- [x] Decline button available (no checkbox required)
+- [x] Loading state while fetching/submitting
+- [x] Success state shows confirmation message for consent
+- [x] Decline state shows confirmation message for declined consent
+- [x] Error state for invalid tokens (404)
+- [x] Error state for expired tokens (410) - shows message to contact coach
+- [x] Error state for already-consented tokens (400)
+- [x] Error state for already-declined tokens (400)
+- [x] Mobile-responsive layout
 
 ## Files to Create/Modify
 

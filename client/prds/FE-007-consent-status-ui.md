@@ -32,14 +32,14 @@ Add consent status indicators and resend functionality to athlete management
 
 ## Acceptance Criteria
 
-- [ ] Athletes list shows colored status badge (yellow pending, green active, red declined)
-- [ ] Athlete profile shows warning alert if consent pending
-- [ ] Athlete profile shows error alert if consent declined
-- [ ] "Resend Consent Email" button available for pending athletes
-- [ ] Clicking resend shows loading, then success/error toast
-- [ ] "New Assessment" button disabled for pending and declined consent athletes
-- [ ] Tooltip explains why assessment is blocked (different message for declined vs pending)
-- [ ] Active athletes show consent timestamp
+- [x] Athletes list shows colored status badge (yellow pending, green active, red declined)
+- [x] Athlete profile shows warning alert if consent pending
+- [x] Athlete profile shows error alert if consent declined
+- [x] "Resend Consent Email" button available for pending athletes
+- [x] Clicking resend shows loading, then success/error toast
+- [x] "New Assessment" button disabled for pending and declined consent athletes
+- [x] Tooltip explains why assessment is blocked (different message for declined vs pending)
+- [x] Active athletes show consent timestamp
 
 ## Files to Create/Modify
 
