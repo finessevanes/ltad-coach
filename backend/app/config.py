@@ -2,6 +2,7 @@
 
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -14,7 +15,10 @@ class Settings(BaseSettings):
     api_base_url: str = "http://localhost:8000"
 
     # Firebase Configuration
-    google_application_credentials: str
+    # Option 1: Path to service account JSON file (local dev)
+    google_application_credentials: Optional[str] = None
+    # Option 2: Inline JSON string (for Render deployment)
+    firebase_service_account_json: Optional[str] = None
     firebase_project_id: str
     firebase_storage_bucket: str
 
