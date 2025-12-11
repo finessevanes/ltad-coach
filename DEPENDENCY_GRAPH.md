@@ -57,27 +57,27 @@ Phase 4: Consent Workflow ✅ COMPLETE
     (Consent Status UI)
 
                     ▼
-Phase 5: Video Capture (Frontend Heavy)
+Phase 5: Video Capture (Frontend Heavy) ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    FE-008 ◄─── FE-002, FE-007
+    FE-008 ✅ ◄─── FE-002, FE-007
     (Camera + MediaPipe Preview)
 
-    FE-009 ◄─── FE-008
+    FE-009 ✅ ◄─── FE-008
     (Recording Flow)
 
-    FE-010 ◄─── FE-002
+    FE-010 ✅ ◄─── FE-002
     (Video Upload)
 
                     ▼
-Phase 6: CV Analysis (Backend Heavy)
+Phase 6: CV Analysis (Backend Heavy) ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-006 ◄─── BE-002, BE-003, BE-004
+    BE-006 ✅ ◄─── BE-002, BE-003, BE-004
     (Video Upload Endpoint)
 
-    BE-007 ◄─── BE-006
+    BE-007 ✅ ◄─── BE-006
     (MediaPipe Analysis)
 
-    BE-008 ◄─── BE-007
+    BE-008 ✅ ◄─── BE-007
     (Metrics Calculation)
 
                     ▼
@@ -146,8 +146,8 @@ Items in the same group can be worked on in parallel by different engineers.
 | 3 | D | BE-004, FE-004 | Athlete Base | 6-8 | ✅ Done |
 | 3 | E | FE-005 | Add/Edit Forms | 2-3 | ✅ Done |
 | 4 | F | BE-005, FE-006, FE-007 | Consent Workflow | 7-9 | ✅ Done |
-| 5 | G | FE-008, FE-009, FE-010 | Video Capture | 10-12 | |
-| 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | |
+| 5 | G | FE-008, FE-009, FE-010 | Video Capture | 10-12 | ✅ Done |
+| 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | ✅ Done |
 | 7 | I | BE-009, BE-010, BE-011 | AI Agents | 10-12 | |
 | 8 | J | BE-012, FE-011, FE-012 | Results & Profile | 10-12 | |
 | 9 | K | BE-013, BE-014, FE-013, FE-014 | Parent Reports | 12-14 | |
@@ -215,9 +215,9 @@ Week 3-4:
 | BE-003 | Auth Endpoints | S | BE-001, BE-002 | ✅ Done |
 | BE-004 | Athlete CRUD | M | BE-002, BE-003 | ✅ Done |
 | BE-005 | Consent + Email | M | BE-002, BE-004 | ✅ Done |
-| BE-006 | Video Upload Endpoint | M | BE-002, BE-003, BE-004 | |
-| BE-007 | MediaPipe Analysis | L | BE-006 | |
-| BE-008 | Metrics Calculation | M | BE-007 | |
+| BE-006 | Video Upload Endpoint | M | BE-002, BE-003, BE-004 | ✅ Done |
+| BE-007 | MediaPipe Analysis | L | BE-006 | ✅ Done |
+| BE-008 | Metrics Calculation | M | BE-007 | ✅ Done |
 | BE-009 | Orchestrator + Compression | M | BE-008 | |
 | BE-010 | Assessment Agent | S | BE-009 | |
 | BE-011 | Progress Agent | S | BE-009, BE-010 | |
@@ -237,9 +237,9 @@ Week 3-4:
 | FE-005 | Add/Edit Athlete Forms | S | FE-002, FE-004 | ✅ Done |
 | FE-006 | Public Consent Form | S | FE-001 | ✅ Done |
 | FE-007 | Consent Status UI | S | FE-004, FE-005 | ✅ Done |
-| FE-008 | Camera + MediaPipe Preview | M | FE-002, FE-007 | |
-| FE-009 | Recording Flow | M | FE-008 | |
-| FE-010 | Video Upload | M | FE-002 | |
+| FE-008 | Camera + MediaPipe Preview | M | FE-002, FE-007 | ✅ Done |
+| FE-009 | Recording Flow | M | FE-008 | ✅ Done |
+| FE-010 | Video Upload | M | FE-002 | ✅ Done |
 | FE-011 | Assessment Results | M | FE-009, FE-010 | |
 | FE-012 | Athlete Profile + History | M | FE-004, FE-011 | |
 | FE-013 | Report Preview + Send | S | FE-004, FE-011, FE-012 | |

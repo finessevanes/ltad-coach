@@ -2,6 +2,7 @@
 id: BE-008
 depends_on: [BE-007]
 blocks: [BE-009, BE-010, BE-012]
+status: completed
 ---
 
 # BE-008: Metrics Calculation

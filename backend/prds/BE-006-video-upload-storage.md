@@ -2,6 +2,7 @@
 id: BE-006
 depends_on: [BE-002, BE-003, BE-004]
 blocks: [BE-007]
+status: completed
 ---
 
 # BE-006: Video Upload Endpoint & Storage

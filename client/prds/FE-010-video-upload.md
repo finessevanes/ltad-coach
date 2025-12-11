@@ -2,6 +2,7 @@
 id: FE-010
 depends_on: [FE-002]
 blocks: [FE-011]
+status: completed
 ---
 
 # FE-010: Video Upload Component & Backup Flow
