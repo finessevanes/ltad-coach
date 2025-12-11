@@ -183,9 +183,9 @@ async def health():
 
 ## Dependencies to Add
 
-```toml
-# pyproject.toml
-firebase-admin = "^6.4.0"
+```
+# Add to requirements.txt
+firebase-admin>=6.4.0
 ```
 
 ## Environment Variables Required
@@ -202,7 +202,7 @@ Already defined in BE-001:
 
 1. Verify Firebase initialization:
 ```bash
-poetry run uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 curl http://localhost:8000/health
 # Should return: {"status": "ok", "firebase": {"firestore": "connected", "storage": "connected"}}
 ```

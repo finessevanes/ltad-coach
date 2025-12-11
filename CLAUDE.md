@@ -15,7 +15,7 @@ This is a full-stack application that uses MediaPipe pose detection to analyze y
 | Frontend | React 18 + Vite + TypeScript | Coach dashboard SPA |
 | UI Library | Material-UI v5 | Component library |
 | Backend | Python 3.11 + FastAPI | REST API |
-| Package Mgmt | Poetry (backend), npm (frontend) | Dependencies |
+| Package Mgmt | pip + requirements.txt (backend), npm (frontend) | Dependencies |
 | Database | Firebase Firestore | NoSQL document store |
 | Storage | Firebase Storage | Video & keypoint files |
 | Auth | Firebase Auth | Google OAuth + email/password |
@@ -48,7 +48,7 @@ ltad-coach/
 │   │   ├── models/           # Pydantic schemas
 │   │   ├── agents/           # AI agent implementations
 │   │   └── utils/            # Helpers & config
-│   └── pyproject.toml
+│   └── requirements.txt
 │
 ├── prd.md                     # Main product requirements
 ├── DEPENDENCY_GRAPH.md        # Implementation phase ordering
@@ -86,10 +86,12 @@ npm run format       # Run Prettier
 
 ### Backend (from `backend/`)
 ```bash
-poetry install                              # Install dependencies
-poetry run uvicorn app.main:app --reload    # Start dev server (port 8000)
-poetry run pytest                           # Run tests
-poetry run black .                          # Format code
+python -m venv venv                         # Create virtual environment
+source venv/bin/activate                    # Activate (Mac/Linux)
+pip install -r requirements.txt             # Install dependencies
+uvicorn app.main:app --reload               # Start dev server (port 8000)
+pytest                                      # Run tests
+black .                                     # Format code
 ```
 
 ## Environment Variables

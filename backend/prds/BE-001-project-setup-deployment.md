@@ -12,7 +12,7 @@ Initialize FastAPI backend with Render deployment configuration
 ## Scope
 
 ### In Scope
-- Python project initialization with Poetry/pip
+- Python project initialization with pip
 - FastAPI application skeleton
 - Health check endpoint
 - CORS configuration for frontend
@@ -29,15 +29,15 @@ Initialize FastAPI backend with Render deployment configuration
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Package Manager | Poetry | Better dependency resolution, lock file support |
+| Package Manager | pip + requirements.txt | Simple, universal, works with Render |
 | Python Version | 3.11 | Latest stable with good library support |
 | ASGI Server | Uvicorn | Standard for FastAPI, production-ready |
 | Config Management | Pydantic Settings | Type-safe env var parsing |
 
 ## Acceptance Criteria
 
-- [ ] `poetry install` succeeds without errors
-- [ ] `uvicorn main:app --reload` starts server on port 8000
+- [ ] `pip install -r requirements.txt` succeeds without errors
+- [ ] `uvicorn app.main:app --reload` starts server on port 8000
 - [ ] `GET /health` returns `{"status": "ok", "version": "0.1.0"}`
 - [ ] CORS allows requests from `http://localhost:3000` and configured `FRONTEND_URL`
 - [ ] All environment variables are validated on startup (fail fast if missing)
@@ -48,8 +48,7 @@ Initialize FastAPI backend with Render deployment configuration
 
 ```
 backend/
-├── pyproject.toml           # Poetry config with dependencies
-├── poetry.lock              # Generated lock file
+├── requirements.txt         # Python dependencies
 ├── render.yaml              # Render deployment config
 ├── .python-version          # Python version file
 ├── app/
@@ -63,19 +62,15 @@ backend/
 
 ## Implementation Details
 
-### pyproject.toml Dependencies
-```toml
-[tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^0.109.0"
-uvicorn = {extras = ["standard"], version = "^0.27.0"}
-pydantic = "^2.5.0"
-pydantic-settings = "^2.1.0"
-python-multipart = "^0.0.6"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-httpx = "^0.26.0"
+### requirements.txt Dependencies
+```
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.6
+pytest>=7.4.0
+httpx>=0.26.0
 ```
 
 ### config.py Structure
@@ -261,10 +256,10 @@ services:
     name: ltad-coach-api
     env: python
     buildCommand: |
-      pip install poetry && poetry install
+      pip install -r requirements.txt
       mkdir -p models
       wget -O models/pose_landmarker_lite.task https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
-    startCommand: "poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
@@ -295,9 +290,11 @@ services:
 1. Local testing:
 ```bash
 cd backend
-poetry install
+python -m venv venv
+source venv/bin/activate  # Mac/Linux
+pip install -r requirements.txt
 cp .env.example .env  # Fill in values
-poetry run uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 curl http://localhost:8000/health
 ```
 
