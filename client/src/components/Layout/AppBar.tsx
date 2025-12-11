@@ -65,6 +65,7 @@ export function AppBar({ drawerWidth, onMenuClick }: AppBarProps) {
             <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
               <Avatar
                 src={user.photoURL ?? undefined}
+                imgProps={{ crossOrigin: 'anonymous' }}
                 sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}
               >
                 {user.displayName?.[0] ?? user.email?.[0]?.toUpperCase()}
