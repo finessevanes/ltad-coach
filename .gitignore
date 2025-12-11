@@ -27,5 +27,4 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-*.swo
 client/.claude/settings.local.json
