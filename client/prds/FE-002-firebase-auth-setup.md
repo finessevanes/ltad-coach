@@ -33,13 +33,13 @@ Configure Firebase Auth SDK with auth context and API client
 
 ## Acceptance Criteria
 
-- [ ] Firebase SDK initializes without errors
-- [ ] `useAuth()` hook provides `user`, `loading`, `signIn`, `signOut`
-- [ ] Auth state persists across page refreshes
-- [ ] API client automatically adds Bearer token to requests
-- [ ] API client handles 401 by signing out user
-- [ ] `<ProtectedRoute>` component redirects unauthenticated users to /login
-- [ ] Loading spinner shows while auth state is being determined
+- [x] Firebase SDK initializes without errors
+- [x] `useAuth()` hook provides `user`, `loading`, `signIn`, `signOut`
+- [x] Auth state persists across page refreshes
+- [x] API client automatically adds Bearer token to requests
+- [x] API client handles 401 by signing out user
+- [x] `<ProtectedRoute>` component redirects unauthenticated users to /login
+- [x] Loading spinner shows while auth state is being determined
 
 ## Files to Create/Modify
 

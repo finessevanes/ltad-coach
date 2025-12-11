@@ -1,10 +1,22 @@
 import { RouteObject } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Home } from '../pages/Home';
+import { ProtectedRoute } from '../components/ProtectedRoute';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
 
 // Route definitions for the application
-// Additional routes will be added in subsequent phases
 export const routes: RouteObject[] = [
+  // Auth routes (outside Layout - no sidebar/appbar)
+  {
+    path: '/login',
+    element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
+  },
+  // App routes (inside Layout)
   {
     path: '/',
     element: <Layout />,
@@ -13,20 +25,30 @@ export const routes: RouteObject[] = [
         index: true,
         element: <Home />,
       },
-      // Dashboard route (FE-015)
+      // Protected routes
       {
         path: 'dashboard',
-        element: <Home />, // Placeholder until FE-015
+        element: (
+          <ProtectedRoute>
+            <Home /> {/* Placeholder until FE-015 */}
+          </ProtectedRoute>
+        ),
       },
-      // Athletes routes (FE-004, FE-005)
       {
         path: 'athletes',
-        element: <Home />, // Placeholder until FE-004
+        element: (
+          <ProtectedRoute>
+            <Home /> {/* Placeholder until FE-004 */}
+          </ProtectedRoute>
+        ),
       },
-      // Assessments routes (FE-011)
       {
         path: 'assessments',
-        element: <Home />, // Placeholder until FE-011
+        element: (
+          <ProtectedRoute>
+            <Home /> {/* Placeholder until FE-011 */}
+          </ProtectedRoute>
+        ),
       },
     ],
   },

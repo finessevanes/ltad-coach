@@ -33,12 +33,12 @@ Integrate Firebase Admin SDK for Firestore and Storage access
 
 ## Acceptance Criteria
 
-- [ ] Firebase Admin SDK initializes successfully on app startup
-- [ ] `GET /health` includes `"firebase": "connected"` status
-- [ ] Firestore connection is verified (can list collections)
-- [ ] Storage bucket is accessible (can check bucket exists)
-- [ ] Base repository class provides typed CRUD operations
-- [ ] Graceful error handling if Firebase connection fails
+- [x] Firebase Admin SDK initializes successfully on app startup
+- [x] `GET /health` includes `"firebase": "connected"` status
+- [x] Firestore connection is verified (can list collections)
+- [x] Storage bucket is accessible (can check bucket exists)
+- [x] Base repository class provides typed CRUD operations
+- [x] Graceful error handling if Firebase connection fails
 
 ## Files to Create/Modify
 

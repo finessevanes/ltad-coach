@@ -15,21 +15,21 @@ Phase 0: Infrastructure (MUST BE FIRST - Deployment) ✅ COMPLETE
                                                  │
                     ┌────────────────────────────┘
                     ▼
-Phase 1: Foundation
+Phase 1: Foundation ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-002 ◄─── BE-001
+    BE-002 ✅ ◄─── BE-001
     (Firebase Integration)
 
-    FE-002 ◄─── FE-001
+    FE-002 ✅ ◄─── FE-001
     (Firebase Auth Client)
 
                     ▼
-Phase 2: Authentication
+Phase 2: Authentication ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-003 ◄─── BE-001, BE-002
+    BE-003 ✅ ◄─── BE-001, BE-002
     (Auth Endpoints)
 
-    FE-003 ◄─── FE-001, FE-002
+    FE-003 ✅ ◄─── FE-001, FE-002
     (Login/Register UI)
 
                     ▼
@@ -141,8 +141,8 @@ Items in the same group can be worked on in parallel by different engineers.
 | Phase | Group | PRs | Description | Est. Hours | Status |
 |-------|-------|-----|-------------|------------|--------|
 | 0 | A | BE-001, FE-001 | Infrastructure + Deployment | 4-6 | ✅ Done |
-| 1 | B | BE-002, FE-002 | Firebase Integration | 4-6 | |
-| 2 | C | BE-003, FE-003 | Authentication | 5-7 | |
+| 1 | B | BE-002, FE-002 | Firebase Integration | 4-6 | ✅ Done |
+| 2 | C | BE-003, FE-003 | Authentication | 5-7 | ✅ Done |
 | 3 | D | BE-004, FE-004 | Athlete Base | 6-8 | |
 | 3 | E | FE-005 | Add/Edit Forms | 2-3 | |
 | 4 | F | BE-005, FE-006, FE-007 | Consent Workflow | 7-9 | |
@@ -211,8 +211,8 @@ Week 3-4:
 | ID | Name | Complexity | Dependencies | Status |
 |----|------|------------|--------------|--------|
 | BE-001 | Project Setup + Render Deploy | S | None | ✅ Done |
-| BE-002 | Firebase Integration | S | BE-001 | |
-| BE-003 | Auth Endpoints | S | BE-001, BE-002 | |
+| BE-002 | Firebase Integration | S | BE-001 | ✅ Done |
+| BE-003 | Auth Endpoints | S | BE-001, BE-002 | ✅ Done |
 | BE-004 | Athlete CRUD | M | BE-002, BE-003 | |
 | BE-005 | Consent + Email | M | BE-002, BE-004 | |
 | BE-006 | Video Upload Endpoint | M | BE-002, BE-003, BE-004 | |
@@ -231,8 +231,8 @@ Week 3-4:
 | ID | Name | Complexity | Dependencies | Status |
 |----|------|------------|--------------|--------|
 | FE-001 | Project Setup + Vercel Deploy | S | None | ✅ Done |
-| FE-002 | Firebase Auth Client | S | FE-001 | |
-| FE-003 | Login/Register Pages | S | FE-001, FE-002 | |
+| FE-002 | Firebase Auth Client | S | FE-001 | ✅ Done |
+| FE-003 | Login/Register Pages | S | FE-001, FE-002 | ✅ Done |
 | FE-004 | Athletes List | S | FE-002, FE-003 | |
 | FE-005 | Add/Edit Athlete Forms | S | FE-002, FE-004 | |
 | FE-006 | Public Consent Form | S | FE-001 | |

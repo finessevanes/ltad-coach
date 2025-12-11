@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, Button, Grid } from '@mui/material';
+import { Box, Typography, Paper, Grid } from '@mui/material';
 import SportsIcon from '@mui/icons-material/Sports';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -52,15 +52,6 @@ export function Home() {
           </Paper>
         </Grid>
       </Grid>
-
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Button variant="contained" size="large" disabled>
-          Get Started (Login Required)
-        </Button>
-        <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-          Authentication will be available after Phase 2
-        </Typography>
-      </Box>
     </Box>
   );
 }

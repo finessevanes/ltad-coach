@@ -33,13 +33,13 @@ Implement Firebase JWT token validation and auth middleware
 
 ## Acceptance Criteria
 
-- [ ] `POST /auth/token` validates Firebase ID token and returns user data
-- [ ] Invalid/expired tokens return 401 Unauthorized
-- [ ] First-time users are created in Firestore `users` collection
-- [ ] Returning users have their data fetched from Firestore
-- [ ] Protected routes reject requests without valid Bearer token
-- [ ] User object includes `id`, `email`, `name`, `createdAt`, `athleteCount`
-- [ ] `POST /auth/logout` endpoint exists (for future session cleanup)
+- [x] `POST /auth/token` validates Firebase ID token and returns user data
+- [x] Invalid/expired tokens return 401 Unauthorized
+- [x] First-time users are created in Firestore `users` collection
+- [x] Returning users have their data fetched from Firestore
+- [x] Protected routes reject requests without valid Bearer token
+- [x] User object includes `id`, `email`, `name`, `createdAt`, `athleteCount`
+- [x] `POST /auth/logout` endpoint exists (for future session cleanup)
 
 ## Files to Create/Modify
 
