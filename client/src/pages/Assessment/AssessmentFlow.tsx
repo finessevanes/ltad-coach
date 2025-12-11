@@ -17,6 +17,7 @@ export default function AssessmentFlow() {
   const [testType] = useState<TestType>('one_leg_balance');
   const [legTested, setLegTested] = useState<LegTested>('left');
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   if (!athleteId) {
@@ -40,8 +41,9 @@ export default function AssessmentFlow() {
     setSelectedDevice(deviceId);
   };
 
-  const handleRecordingComplete = (blob: Blob) => {
+  const handleRecordingComplete = (blob: Blob, duration: number) => {
     setVideoBlob(blob);
+    setVideoDuration(duration);
     handleNext();
   };
 
@@ -91,6 +93,7 @@ export default function AssessmentFlow() {
           <UploadStep
             athleteId={athleteId}
             videoBlob={videoBlob}
+            videoDuration={videoDuration}
             testType={testType}
             legTested={legTested}
             onComplete={handleUploadComplete}

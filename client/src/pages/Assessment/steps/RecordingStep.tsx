@@ -40,7 +40,7 @@ interface RecordingStepProps {
   onDeviceSelect: (deviceId: string) => void;
   testType: TestType;
   legTested: LegTested;
-  onRecordingComplete: (blob: Blob) => void;
+  onRecordingComplete: (blob: Blob, duration: number) => void;
   onBack: () => void;
 }
 
@@ -201,9 +201,9 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
   useEffect(() => {
     if (videoBlob) {
-      onRecordingComplete(videoBlob);
+      onRecordingComplete(videoBlob, elapsedTime);
     }
-  }, [videoBlob, onRecordingComplete]);
+  }, [videoBlob, elapsedTime, onRecordingComplete]);
 
   useEffect(() => {
     return () => {
