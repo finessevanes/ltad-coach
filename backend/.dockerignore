@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Environment files (secrets should not be in container)
+.env
+.env.local
+.env.*.local
+
+# Firebase service account JSON (not needed in Cloud Run)
+*firebase-adminsdk*.json
+*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Heroku-specific files (not needed for Cloud Run)
+Procfile
+runtime.txt
+
+# Documentation
+README.md
+*.md
+prds/
+
+# Testing
+tests/
+*.test.py
+pytest.ini
+.pytest_cache/
+
+# Scripts (don't need in production container)
+scripts/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+tmp/
+temp/

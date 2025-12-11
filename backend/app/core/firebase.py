@@ -13,7 +13,10 @@ _firebase_app: Optional[firebase_admin.App] = None
 def initialize_firebase() -> firebase_admin.App:
     """
     Initialize Firebase Admin SDK (singleton pattern)
-    Works both locally (with service account file) and on Heroku (with env vars)
+    Works in multiple environments:
+    - Cloud Run: Uses Application Default Credentials (automatic)
+    - Heroku: Uses environment variables
+    - Local: Uses service account file
     """
     global _firebase_app
 
@@ -22,8 +25,17 @@ def initialize_firebase() -> firebase_admin.App:
 
     cred = None
 
-    # Production (Heroku) - use environment variables
-    if settings.environment == "production":
+    # Check if running on Cloud Run (K_SERVICE env var is set by Cloud Run)
+    is_cloud_run = os.getenv("K_SERVICE") is not None
+
+    if is_cloud_run:
+        # Cloud Run - use Application Default Credentials (ADC)
+        # This automatically uses the service account attached to the Cloud Run service
+        # No need for JSON files or environment variables
+        cred = credentials.ApplicationDefault()
+
+    elif settings.environment == "production":
+        # Production (Heroku or other) - use environment variables
         # Option 1: Base64 encoded JSON (if provided)
         if settings.google_application_credentials_json:
             try:

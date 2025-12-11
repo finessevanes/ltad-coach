@@ -8,7 +8,14 @@ class StorageService:
     """Firebase Storage service"""
 
     def __init__(self):
-        self.bucket = storage.bucket()
+        self._bucket = None
+
+    @property
+    def bucket(self):
+        """Lazy initialization of Firebase storage bucket"""
+        if self._bucket is None:
+            self._bucket = storage.bucket()
+        return self._bucket
 
     def upload_video(
         self,

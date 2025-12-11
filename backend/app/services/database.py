@@ -17,7 +17,14 @@ class DatabaseService:
     """Firestore database service"""
 
     def __init__(self):
-        self.db = firestore.client()
+        self._db = None
+
+    @property
+    def db(self):
+        """Lazy initialization of Firestore client"""
+        if self._db is None:
+            self._db = firestore.client()
+        return self._db
 
     def create(self, collection: str, data: Dict[str, Any], doc_id: Optional[str] = None) -> str:
         """
