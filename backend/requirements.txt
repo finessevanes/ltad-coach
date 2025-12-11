@@ -22,10 +22,10 @@ resend>=0.7.0
 # HTTP client for external APIs
 aiohttp>=3.9.0
 
-# Note: MediaPipe and OpenCV will be added in BE-007
-# They require Python 3.11 specifically - Render will use 3.11
-# mediapipe>=0.10.9
-# opencv-python-headless>=4.9.0
+# Computer vision and video processing
+mediapipe>=0.10.9
+opencv-python-headless>=4.9.0
+scipy>=1.12.0
 
 # NumPy for numerical operations
 numpy>=1.26.0
