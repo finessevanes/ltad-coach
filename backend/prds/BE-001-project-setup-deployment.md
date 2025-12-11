@@ -1,5 +1,6 @@
 ---
 id: BE-001
+status: ✅ COMPLETE
 depends_on: []
 blocks: [BE-002, BE-003, BE-004, BE-005, BE-006]
 ---

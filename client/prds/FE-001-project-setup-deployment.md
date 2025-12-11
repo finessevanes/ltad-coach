@@ -1,5 +1,6 @@
 ---
 id: FE-001
+status: ✅ COMPLETE
 depends_on: []
 blocks: [FE-002, FE-003, FE-004, FE-005, FE-006, FE-007, FE-008]
 ---
