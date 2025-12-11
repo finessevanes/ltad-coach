@@ -225,7 +225,7 @@ The AI system uses a custom orchestration pattern with Claude models via OpenRou
 |-------|-------|----------------|
 | Orchestrator | Python Logic (no LLM) | Routes requests to appropriate agents based on request type. No LLM needed - pure conditional logic. |
 | Compression Agent | Claude Haiku | Summarizes historical assessment data to reduce token costs. Converts 12 assessments (~6000 tokens) into ~150 token summary. |
-| Assessment Agent | Claude Sonnet | Interprets single test results. Generates coach-friendly feedback with coaching cues, percentile context, and improvement suggestions. |
+| Assessment Agent | Claude Sonnet | Interprets single test results. Generates coach-friendly feedback with coaching cues, progress context, and improvement suggestions. |
 | Progress Agent | Claude Sonnet | Analyzes historical trends. Generates parent-friendly reports with progress visualization, team ranking, and developmental context. |
 
 ### 4.3 Deep Agent Patterns
@@ -390,6 +390,10 @@ The metrics object stored in each assessment contains all derived values from CV
 | armAsymmetryRatio | number | Left/Right arm movement ratio |
 | correctionsCount | number | Number of times sway exceeded threshold |
 | failureReason | string | `'time_complete'` \| `'foot_touchdown'` \| `'hands_left_hips'` \| `'support_foot_moved'` |
+| progressComparison | object | Percent change from rolling 3-test average (null if first test) |
+| legAsymmetry | object | Asymmetry ratios if both legs tested in session (null otherwise) |
+
+> **Note**: All sway metrics are stored as raw values (no height normalization). Progress tracking uses intra-individual comparison rather than cross-athlete percentiles.
 
 ---
 
@@ -719,7 +723,7 @@ The metrics object stored in each assessment contains all derived values from CV
 |--------------|------------------|--------|
 | Foot Touchdown | Raised foot Y-coordinate drops to standing foot level | Test ends, partial duration recorded |
 | Hands Leave Hips | Wrist landmarks move >threshold from hip landmarks | Test ends, partial duration recorded |
-| Support Foot Moves | Standing ankle X/Y displacement >5% of athlete height (normalized) | Test ends, partial duration recorded |
+| Support Foot Moves | Standing ankle X/Y displacement >5% of pose bounding box (frame-relative) | Test ends, partial duration recorded |
 | Time Complete | 30-second timer reaches zero | Test ends, full duration (success) |
 
 ---
@@ -733,7 +737,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | Model | BlazePose (33 landmarks) |
 | Target frame rate | 30 FPS minimum |
 | Filtering | Low-pass Butterworth filter (2 Hz cutoff) on landmark trajectories |
-| Normalization | Sway values normalized by athlete height |
+| Normalization | None (raw values stored); progress calculated via intra-individual comparison |
 | Camera angle | Frontal or 45-degree view preferred |
 
 ### 11.2 Key Landmarks Used
@@ -783,9 +787,27 @@ Number of times sway exceeds a threshold and returns. Each time the hip midpoint
 
 Composite score (0-100) calculated from weighted combination of metrics.
 
-**Formula**: `100 - (w1 × normalized_sway_std + w2 × normalized_arm_excursion + w3 × normalized_corrections + w4 × duration_penalty)`
+**Formula**: `100 - (w1 × sway_std + w2 × arm_excursion + w3 × corrections + w4 × duration_penalty)`
 
-Weights calibrated against LTAD benchmark data.
+Weights calibrated against LTAD benchmark data. All metrics use raw values (no height normalization); weights account for typical value ranges.
+
+#### Progress Comparison
+
+For athletes with prior assessments, the system calculates percent change from their rolling 3-test average:
+
+- Compare current test metrics to average of last 3 completed tests
+- Calculate `{metric}_change` as percentage (e.g., `sway_velocity_change: -12.5%`)
+- Enables "You improved 18% since last month" style feedback
+- First test for an athlete has no comparison (null values)
+
+#### Leg Asymmetry Detection (Optional)
+
+When both legs are tested in the same session, calculate asymmetry index:
+
+- **Formula**: `abs(left - right) / avg(left, right)`
+- Applied to: `stability_score`, `sway_velocity`, `duration_seconds`
+- Values > 0.15 may indicate bilateral imbalance worth investigating
+- Not required — system surfaces this insight only when both legs tested
 
 ### 11.4 Hybrid Scoring Model
 
@@ -805,7 +827,7 @@ Based on LTAD benchmark data. Provides age-normed, coach-friendly scoring.
 
 #### Tier 2: Quality Score — Secondary Metrics (Team-Relative)
 
-CV-detected form factors that reveal *how well* the athlete balanced, not just *how long*. For MVP, these metrics are calculated as team-relative rankings rather than national percentiles.
+CV-detected form factors that reveal *how well* the athlete balanced, not just *how long*. For MVP, these metrics are calculated as team-relative rankings using raw scores (not body-size-adjusted). National percentiles are post-MVP (requires torso-length normalization + sufficient anonymized data collection).
 
 | Metric | What It Measures | Quality Indicator | Ranking Logic |
 |--------|------------------|-------------------|---------------|

@@ -117,7 +117,7 @@ ANKLE_LANDMARKS = [LEFT_ANKLE, RIGHT_ANKLE]
 FOOT_TOUCHDOWN_THRESHOLD = 0.05  # Y-axis threshold
 
 # For support foot movement detection
-SUPPORT_FOOT_MOVEMENT_THRESHOLD = 0.05  # ~5% of athlete height (normalized)
+SUPPORT_FOOT_MOVEMENT_THRESHOLD = 0.05  # ~5% of pose bounding box (frame-relative)
 ```
 
 ### utils/video.py
@@ -394,7 +394,7 @@ async def analyze_video(
         leg_tested: 'left' or 'right'
 
     Returns:
-        Dict with metrics, raw_keypoints_url, ai_feedback, percentile
+        Dict with metrics, raw_keypoints_url, ai_feedback, team_rank
     """
     processor = PoseProcessor()
     failure_detector = FailureDetector(leg_tested)

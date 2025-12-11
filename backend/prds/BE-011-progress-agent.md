@@ -130,6 +130,7 @@ async def generate_progress_report(
     current_metrics: Optional[dict],
     team_rank: tuple,  # (rank, total)
     assessment_count: int,
+    progress_comparison: Optional[dict] = None,  # NEW: intra-individual progress
 ) -> str:
     """
     Generate parent-friendly progress report.
@@ -141,6 +142,7 @@ async def generate_progress_report(
         current_metrics: Most recent assessment metrics (or None)
         team_rank: (rank, total) tuple
         assessment_count: Total number of assessments
+        progress_comparison: Percent change from rolling 3-test average (optional)
 
     Returns:
         Parent report string (250-350 words)
@@ -157,6 +159,15 @@ async def generate_progress_report(
 - Stability: {current_metrics.get('stability_score', 0):.0f}/100
 """
 
+    # Build progress comparison context (intra-individual)
+    progress_text = ""
+    if progress_comparison:
+        progress_text = f"""
+**Progress vs. Rolling Average (Last 3 Tests)**:
+- Stability Score: {progress_comparison.get('stability_score_change', 'N/A')}% change
+- Sway Velocity: {progress_comparison.get('sway_velocity_change', 'N/A')}% change
+"""
+
     # Build context
     dynamic_context = f"""
 # Progress Report Data
@@ -170,6 +181,7 @@ async def generate_progress_report(
 {compressed_history}
 
 {current_score_text}
+{progress_text}
 
 ## LTAD Context for Age {athlete_age}
 - Stage: {"FUNdamentals" if athlete_age <= 11 else "Learn to Train"}

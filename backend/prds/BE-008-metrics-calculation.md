@@ -21,25 +21,29 @@ Implement balance test metrics calculation from pose landmarks
 
 ### Out of Scope
 - AI feedback generation (BE-009, BE-010)
-- National percentile calculation (post-MVP)
+- National percentile calculation (post-MVP, requires torso-length normalization + data collection)
+- Fatigue analysis (first 10s vs last 10s comparison) - post-MVP
 
 ## Technical Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Normalization | Height-based | Accounts for athlete size differences |
-| Stability Formula | Weighted composite | Combines multiple quality factors |
-| Rankings | Team-relative | No national data for MVP |
+| Normalization | None (raw values) | Enables intra-individual progress tracking; cross-athlete comparison is secondary |
+| Progress Tracking | Rolling 3-test average | Compare athlete to themselves over time |
+| Stability Formula | Weighted composite | Combines multiple quality factors using reference value scaling |
+| Rankings | Team-relative (raw scores) | No body-size adjustment for MVP; acceptable for team context |
 
 ## Acceptance Criteria
 
 - [ ] Calculate all metrics defined in PRD Section 11
 - [ ] Duration score maps to 1-5 LTAD scale
-- [ ] Sway metrics normalized by estimated height
-- [ ] Stability score on 0-100 scale
+- [ ] Sway metrics stored as raw values (no height normalization)
+- [ ] Stability score on 0-100 scale using reference value scaling
 - [ ] Arm excursion calculated from shoulder-wrist distance
 - [ ] Corrections count from sway threshold crossings
 - [ ] Quality rankings calculated within coach's roster
+- [ ] Progress comparison to rolling 3-test average
+- [ ] Leg asymmetry calculation when both legs tested in session
 
 ## Files to Create/Modify
 
@@ -91,13 +95,15 @@ STABILITY_WEIGHTS = {
     "corrections": 0.20,
 }
 
-# Correction threshold (normalized units)
+# Correction threshold (in normalized pose coordinates, ~5% of pose bounding box)
 CORRECTION_THRESHOLD = 0.02
 
-# Reference values for normalization (from research data)
+# Reference values for stability score calculation (from research data)
+# Used to scale raw metrics to 0-1 range for weighted combination
+# NOT used for height-based normalization (we store raw values)
 REFERENCE_VALUES = {
-    "sway_std_max": 0.05,        # Worst case sway std
-    "sway_velocity_max": 5.0,    # Worst case velocity cm/s
+    "sway_std_max": 0.05,        # Worst case sway std (normalized pose coords)
+    "sway_velocity_max": 5.0,    # Worst case velocity (normalized coords/s)
     "arm_excursion_max": 100,    # Worst case arm movement degrees
     "corrections_max": 10,       # Worst case corrections count
 }
@@ -124,23 +130,6 @@ def calculate_path_length(points: List[Tuple[float, float]]) -> float:
     for i in range(1, len(points)):
         total += calculate_euclidean_distance(points[i-1], points[i])
     return total
-
-def estimate_height_from_landmarks(
-    landmarks: List[Tuple[float, float, float, float]]
-) -> float:
-    """
-    Estimate athlete height from pose landmarks.
-    Uses shoulder to ankle distance as proxy.
-    """
-    LEFT_SHOULDER = 11
-    LEFT_ANKLE = 27
-
-    shoulder = landmarks[LEFT_SHOULDER]
-    ankle = landmarks[LEFT_ANKLE]
-
-    # Vertical distance in normalized coordinates
-    height = abs(shoulder[1] - ankle[1])
-    return max(height, 0.3)  # Minimum reasonable value
 
 def count_threshold_crossings(
     values: np.ndarray,
@@ -174,12 +163,15 @@ from app.constants.landmarks import *
 from app.constants.scoring import *
 from app.utils.math_utils import (
     calculate_path_length,
-    estimate_height_from_landmarks,
     count_threshold_crossings,
 )
 
 class MetricsCalculator:
-    """Calculate balance test metrics from pose landmarks"""
+    """Calculate balance test metrics from pose landmarks.
+
+    Stores raw metric values (no height normalization) to enable
+    intra-individual progress tracking over time.
+    """
 
     def __init__(
         self,
@@ -195,49 +187,37 @@ class MetricsCalculator:
         self.failure_reason = failure_reason
         self.leg_tested = leg_tested
 
-        # Estimate height for normalization
-        if self.landmarks:
-            self.height = estimate_height_from_landmarks(self.landmarks[0])
-        else:
-            self.height = 0.5  # Default normalized height
-
     def calculate_all(self) -> dict:
-        """Calculate all metrics"""
+        """Calculate all metrics (raw values, no height normalization)"""
         if not self.landmarks:
             return self._empty_metrics()
 
         # Extract hip midpoints for sway analysis
         hip_trajectory = self._get_hip_trajectory()
 
-        # Calculate sway metrics
+        # Calculate sway metrics (raw values in normalized pose coordinates)
         sway_std_x = np.std([p[0] for p in hip_trajectory])
         sway_std_y = np.std([p[1] for p in hip_trajectory])
         sway_path_length = calculate_path_length(hip_trajectory)
         sway_velocity = sway_path_length / self.duration if self.duration > 0 else 0
 
-        # Normalize by height
-        sway_std_x_norm = sway_std_x / self.height
-        sway_std_y_norm = sway_std_y / self.height
-        sway_path_norm = sway_path_length / self.height
-        sway_velocity_norm = sway_velocity / self.height
-
         # Calculate arm excursion
         arm_left, arm_right = self._calculate_arm_excursion()
         arm_asymmetry = arm_left / arm_right if arm_right > 0 else 1.0
 
-        # Count corrections
+        # Count corrections (fixed threshold in normalized pose coordinates)
         hip_x = np.array([p[0] for p in hip_trajectory])
         center_x = np.mean(hip_x)
         corrections = count_threshold_crossings(
             hip_x,
-            CORRECTION_THRESHOLD * self.height,
+            CORRECTION_THRESHOLD,
             center_x
         )
 
-        # Calculate stability score
+        # Calculate stability score (uses reference values for scaling, not height)
         stability_score = self._calculate_stability_score(
-            sway_std=max(sway_std_x_norm, sway_std_y_norm),
-            sway_velocity=sway_velocity_norm,
+            sway_std=max(sway_std_x, sway_std_y),
+            sway_velocity=sway_velocity,
             arm_excursion=(arm_left + arm_right) / 2,
             corrections=corrections
         )
@@ -245,10 +225,10 @@ class MetricsCalculator:
         return {
             "duration_seconds": round(self.duration, 2),
             "stability_score": round(stability_score, 1),
-            "sway_std_x": round(sway_std_x_norm * 100, 3),  # Convert to cm
-            "sway_std_y": round(sway_std_y_norm * 100, 3),
-            "sway_path_length": round(sway_path_norm * 100, 2),
-            "sway_velocity": round(sway_velocity_norm * 100, 2),
+            "sway_std_x": round(sway_std_x, 5),       # Raw value in normalized pose coords
+            "sway_std_y": round(sway_std_y, 5),       # Raw value in normalized pose coords
+            "sway_path_length": round(sway_path_length, 4),  # Raw value
+            "sway_velocity": round(sway_velocity, 4),        # Raw value
             "arm_excursion_left": round(arm_left, 1),
             "arm_excursion_right": round(arm_right, 1),
             "arm_asymmetry_ratio": round(arm_asymmetry, 2),
@@ -320,8 +300,13 @@ class MetricsCalculator:
         arm_excursion: float,
         corrections: int
     ) -> float:
-        """Calculate composite stability score (0-100)"""
-        # Normalize each metric to 0-1 (lower is better for all)
+        """Calculate composite stability score (0-100).
+
+        Uses REFERENCE_VALUES to scale raw metrics to 0-1 range.
+        This is NOT height-based normalization - it's reference scaling
+        for the weighted combination formula.
+        """
+        # Scale each metric to 0-1 using reference values (lower is better for all)
         norm_sway = min(sway_std / REFERENCE_VALUES["sway_std_max"], 1.0)
         norm_velocity = min(sway_velocity / REFERENCE_VALUES["sway_velocity_max"], 1.0)
         norm_arm = min(arm_excursion / REFERENCE_VALUES["arm_excursion_max"], 1.0)
@@ -435,6 +420,73 @@ async def calculate_team_ranking(
     )
 
     return (rank, len(scores))
+
+
+async def calculate_progress_comparison(
+    athlete_id: str,
+    current_metrics: dict
+) -> dict:
+    """
+    Compare current metrics to athlete's rolling average of last 3 tests.
+
+    Returns:
+        Dict with percent_change for each metric, e.g.:
+        {"sway_velocity_change": -12.5, "stability_score_change": 8.2, ...}
+        Returns empty dict if no prior assessments exist.
+    """
+    from app.repositories.assessment import AssessmentRepository
+    repo = AssessmentRepository()
+
+    # Get last 3 completed assessments for this athlete (excluding current)
+    history = await repo.get_by_athlete(athlete_id, limit=3)
+
+    if len(history) < 1:
+        return {}  # No history to compare
+
+    # Calculate rolling averages
+    averages = {}
+    for metric in ["sway_velocity", "stability_score", "sway_std_x", "sway_std_y"]:
+        values = [a.metrics.get(metric, 0) for a in history if a.metrics]
+        if values:
+            averages[metric] = sum(values) / len(values)
+
+    # Calculate percent changes
+    changes = {}
+    for metric, avg in averages.items():
+        if avg > 0:
+            current = current_metrics.get(metric, 0)
+            change = ((current - avg) / avg) * 100
+            changes[f"{metric}_change"] = round(change, 1)
+
+    return changes
+
+
+def calculate_leg_asymmetry(
+    left_leg_metrics: dict,
+    right_leg_metrics: dict
+) -> dict:
+    """
+    Calculate asymmetry between left and right leg tests.
+    Only called when both legs tested in same session.
+
+    Formula: abs(left - right) / avg(left, right)
+
+    Returns:
+        Dict with asymmetry ratios, e.g.:
+        {"stability_score_asymmetry": 0.15, "sway_velocity_asymmetry": 0.08}
+    """
+    result = {}
+
+    for metric in ["stability_score", "sway_velocity", "duration_seconds"]:
+        left = left_leg_metrics.get(metric, 0)
+        right = right_leg_metrics.get(metric, 0)
+        avg = (left + right) / 2
+
+        if avg > 0:
+            asymmetry = abs(left - right) / avg
+            result[f"{metric}_asymmetry"] = round(asymmetry, 3)
+
+    return result
 ```
 
 ## API Integration
@@ -446,6 +498,8 @@ from app.services.metrics import (
     MetricsCalculator,
     get_duration_score,
     calculate_team_ranking,
+    calculate_progress_comparison,
+    calculate_leg_asymmetry,
 )
 
 # In analyze_video function, after getting landmarks:
@@ -458,10 +512,19 @@ calculator = MetricsCalculator(
 )
 metrics = calculator.calculate_all()
 
-# Calculate team ranking
+# Calculate team ranking (uses raw scores, not body-size-adjusted)
 rank, total = await calculate_team_ranking(
     coach_id, athlete_id, metrics["stability_score"]
 )
+
+# Calculate progress comparison to rolling 3-test average
+progress_comparison = await calculate_progress_comparison(
+    athlete_id, metrics
+)
+metrics["progress_comparison"] = progress_comparison if progress_comparison else None
+
+# If both legs tested in same session, calculate asymmetry
+# (requires checking for other leg assessment in current session)
 ```
 
 ## Estimated Complexity
@@ -496,7 +559,9 @@ assert 0 <= metrics["stability_score"] <= 100
 3. Verify team ranking updates when new assessments added
 
 ## Notes
-- Metrics are normalized for athlete height comparison
-- Stability score formula may need tuning based on real data
-- Team ranking recalculates on each assessment
-- Consider caching rankings for performance
+- Metrics are stored as raw values (no height normalization) for intra-individual progress tracking
+- Stability score uses reference value scaling (not height-based normalization)
+- Team ranking uses raw scores (acceptable for MVP team context; not marketed as scientifically normalized)
+- Progress comparison enables "You improved 18% since last month" style feedback
+- Leg asymmetry is optional - only calculated when both legs tested in same session
+- National percentiles are post-MVP (requires torso-length normalization + data collection)

@@ -159,22 +159,30 @@ Generate the feedback now:
 
 
 def _identify_focus_areas(metrics: dict) -> list:
-    """Identify areas needing improvement based on metrics"""
+    """Identify areas needing improvement based on metrics.
+
+    Thresholds are based on research reference values, not athlete-specific
+    normalization. These fixed thresholds work because metrics are stored
+    in normalized pose coordinates (consistent frame-of-reference).
+    """
     focus = []
 
+    # Stability score is already scaled 0-100 using reference values
     stability = metrics.get("stability_score", 100)
     if stability < 60:
         focus.append("overall stability")
 
+    # Sway velocity threshold based on research data (normalized pose coords/sec)
     sway_velocity = metrics.get("sway_velocity", 0)
-    if sway_velocity > 2.0:  # High sway
+    if sway_velocity > 0.02:  # Threshold in normalized pose coordinates
         focus.append("sway control")
 
+    # Arm excursion in degrees (not normalized, directly measured)
     arm_excursion = (
         metrics.get("arm_excursion_left", 0) +
         metrics.get("arm_excursion_right", 0)
     ) / 2
-    if arm_excursion > 30:  # High arm movement
+    if arm_excursion > 30:  # High arm movement in degrees
         focus.append("arm compensation")
 
     corrections = metrics.get("corrections_count", 0)
