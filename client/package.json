@@ -15,6 +15,7 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.3.0",
+    "@mediapipe/tasks-vision": "^0.10.9",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "axios": "^1.6.0",

@@ -2,6 +2,7 @@
 id: FE-008
 depends_on: [FE-002, FE-007]
 blocks: [FE-009]
+status: completed
 ---
 
 # FE-008: Camera Setup with MediaPipe Preview
