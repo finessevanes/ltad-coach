@@ -1,5 +1,7 @@
 """FastAPI application entry point."""
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,12 +13,22 @@ from app.firebase import init_firebase, verify_connection
 from app.routers.auth import router as auth_router
 from app.routers.athletes import router as athletes_router
 from app.routers.consent import router as consent_router
+from app.routers.assessments import router as assessments_router
 from app.models.errors import (
     AppException,
     ErrorCode,
     ErrorDetail,
     ErrorResponse,
     STATUS_TO_ERROR_CODE,
+)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
 # Application version
@@ -58,6 +70,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(athletes_router)
 app.include_router(consent_router)
+app.include_router(assessments_router)
 
 
 @app.get("/health")
