@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-023
 depends_on: [FE-022]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-023: Progress Chart Visualization
+
+**COMPLETED**
 
 ## Scope
 - Line chart of duration over time

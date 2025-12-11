@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-014
 depends_on: [BE-012]
 blocks: [BE-015, BE-016, BE-017, BE-018, BE-019]
+status: COMPLETED
 ---
 
 # BE-014: MediaPipe Python Setup & Landmark Extraction

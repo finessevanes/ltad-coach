@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-032
 depends_on: [FE-017, FE-018, FE-021]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-032: Component Tests with Playwright
+
+**COMPLETED**
 
 ## Scope
 

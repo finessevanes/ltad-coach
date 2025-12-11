@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-012
 depends_on: [BE-005, BE-006]
 blocks: [BE-013, BE-014, BE-029]
+status: COMPLETED
 ---
 
 # BE-012: Video Upload Endpoint

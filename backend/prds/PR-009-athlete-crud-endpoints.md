@@ -1,3 +1,5 @@
+COMPLETED
+
 ---
 id: BE-009
 depends_on: [BE-006, BE-004]

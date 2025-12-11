@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-024
 depends_on: [FE-014, FE-005]
 blocks: [FE-025]
+status: COMPLETED
 ---
 
 # FE-024: Report Preview UI
+
+**COMPLETED**
 
 ## Scope
 - Generate report preview

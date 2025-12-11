@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-021
 depends_on: [BE-020]
 blocks: [BE-029]
+status: COMPLETED
 ---
 
 # BE-021: Duration Score Calculation (1-5 Tiers)

@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-018
 depends_on: [BE-016, BE-017]
 blocks: [BE-029]
+status: COMPLETED
 ---
 
 # BE-018: Stability Score Calculation

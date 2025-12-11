@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-011
 depends_on: [FE-010, FE-005]
 blocks: [FE-012, FE-013, FE-014]
+status: COMPLETED
 ---
 
 # FE-011: Athletes List Page

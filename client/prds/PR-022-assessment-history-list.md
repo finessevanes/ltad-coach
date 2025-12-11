@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-022
 depends_on: [FE-014, FE-005]
 blocks: [FE-023]
+status: COMPLETED
 ---
 
 # FE-022: Assessment History List
+
+**COMPLETED**
 
 ## Scope
 - List all assessments for athlete

@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-013
 depends_on: [BE-004, BE-012]
 blocks: [BE-014, BE-029]
+status: COMPLETED
 ---
 
 # BE-013: Video Metadata Storage

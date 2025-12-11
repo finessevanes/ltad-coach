@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-030
 depends_on: [FE-001]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-030: Responsive Layout Polish
+
+**COMPLETED**
 
 ## Scope
 - Mobile responsiveness

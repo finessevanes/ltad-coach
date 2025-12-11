@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-019
 depends_on: [FE-018]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-019: Recording Preview & Reshoot

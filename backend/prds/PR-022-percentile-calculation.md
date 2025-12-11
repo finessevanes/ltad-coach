@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-022
 depends_on: [BE-020, BE-004]
 blocks: []
+status: COMPLETED
 ---
 
 # BE-022: Percentile Calculation Logic

@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-015
 depends_on: [FE-002, FE-005]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-015: Consent Form (Public Page)

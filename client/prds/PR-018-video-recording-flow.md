@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-018
 depends_on: [FE-017]
 blocks: [FE-019]
+status: COMPLETED
 ---
 
 # FE-018: Video Recording Flow

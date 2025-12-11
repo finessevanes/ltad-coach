@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-012
 depends_on: [FE-011]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-012: Add Athlete Form

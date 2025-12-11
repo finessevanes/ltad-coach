@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-016
 depends_on: [BE-014]
 blocks: [BE-018]
+status: COMPLETED
 ---
 
 # BE-016: Sway Metrics Calculation

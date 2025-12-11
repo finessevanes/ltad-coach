@@ -1,0 +1,155 @@
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Divider,
+  Grid,
+  Chip,
+  Paper,
+} from '@mui/material';
+import { format } from 'date-fns';
+import { EmojiEvents } from '@mui/icons-material';
+
+const ReportPreview = ({ reportData }) => {
+  if (!reportData) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography color="text.secondary">No report data available</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { athleteName, assessments, summary, recommendations } = reportData;
+
+  return (
+    <Paper
+      elevation={3}
+      sx={{
+        p: { xs: 2, sm: 4 },
+        maxWidth: 800,
+        mx: 'auto',
+        backgroundColor: 'background.paper',
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
+          Balance Assessment Report
+        </Typography>
+        <Typography variant="h5" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+          {athleteName}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Generated on {format(new Date(), 'MMMM dd, yyyy')}
+        </Typography>
+      </Box>
+
+      <Divider sx={{ mb: 3 }} />
+
+      {/* Summary Section */}
+      {summary && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            Summary
+          </Typography>
+          <Typography variant="body1" sx={{ whiteSpace: 'pre-line', lineHeight: 1.8 }}>
+            {summary}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Recent Assessments */}
+      {assessments && assessments.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            Recent Assessments
+          </Typography>
+
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {assessments.slice(0, 5).map((assessment, index) => (
+              <Grid item xs={12} key={index}>
+                <Card variant="outlined" sx={{ backgroundColor: 'background.default' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {format(new Date(assessment.date), 'MMMM dd, yyyy')}
+                      </Typography>
+                      <Chip
+                        icon={assessment.score >= 4 ? <EmojiEvents /> : undefined}
+                        label={`Score: ${assessment.score}/5`}
+                        size="small"
+                        color={assessment.score >= 4 ? 'success' : assessment.score >= 3 ? 'info' : 'warning'}
+                      />
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Duration
+                        </Typography>
+                        <Typography variant="body2" fontWeight={500}>
+                          {assessment.duration.toFixed(1)}s
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Leg Tested
+                        </Typography>
+                        <Typography variant="body2" fontWeight={500}>
+                          {assessment.leg === 'left' ? 'Left' : 'Right'}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                    {assessment.notes && (
+                      <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+                        {assessment.notes}
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* Recommendations */}
+      {recommendations && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            Recommendations
+          </Typography>
+          <Box
+            component="ul"
+            sx={{
+              pl: 3,
+              '& li': {
+                mb: 1.5,
+                lineHeight: 1.8,
+              },
+            }}
+          >
+            {recommendations.map((rec, index) => (
+              <Typography component="li" key={index} variant="body1">
+                {rec}
+              </Typography>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Footer */}
+      <Divider sx={{ my: 3 }} />
+      <Typography variant="caption" color="text.secondary" align="center" display="block">
+        This report was generated by the LTAD Coach Balance Assessment Platform
+      </Typography>
+      <Typography variant="caption" color="text.secondary" align="center" display="block">
+        For questions, please contact your coach
+      </Typography>
+    </Paper>
+  );
+};
+
+export default ReportPreview;

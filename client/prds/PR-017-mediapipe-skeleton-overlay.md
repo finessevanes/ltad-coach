@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-017
 depends_on: [FE-016]
 blocks: [FE-018]
+status: COMPLETED
 ---
 
 # FE-017: MediaPipe.js Skeleton Overlay

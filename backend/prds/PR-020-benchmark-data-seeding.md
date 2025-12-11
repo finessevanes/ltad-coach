@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-020
 depends_on: [BE-004]
 blocks: [BE-021, BE-022, BE-025]
+status: COMPLETED
 ---
 
 # BE-020: Benchmark Data Seeding

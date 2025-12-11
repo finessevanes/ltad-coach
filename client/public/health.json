@@ -1,0 +1,6 @@
+{
+  "status": "ok",
+  "version": "1.0.0",
+  "service": "ltad-coach-client",
+  "timestamp": "{{timestamp}}"
+}

@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-023
 depends_on: [BE-004]
 blocks: [BE-029]
+status: COMPLETED
 ---
 
 # BE-023: Team Ranking Logic

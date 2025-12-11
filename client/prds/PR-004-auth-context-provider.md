@@ -1,3 +1,5 @@
+COMPLETED
+
 ---
 id: FE-004
 depends_on: [FE-002]

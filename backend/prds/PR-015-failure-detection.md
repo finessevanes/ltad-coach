@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-015
 depends_on: [BE-014]
 blocks: [BE-029]
+status: COMPLETED
 ---
 
 # BE-015: Failure Detection Logic

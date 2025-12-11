@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-021
 depends_on: [FE-014, FE-005]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-021: Assessment Results Display
+
+**COMPLETED**
 
 ## Scope
 - Display all metrics

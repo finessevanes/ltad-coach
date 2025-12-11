@@ -1,7 +1,10 @@
+COMPLETED
+
 ---
 id: BE-019
 depends_on: [BE-014, BE-005]
 blocks: []
+status: COMPLETED
 ---
 
 # BE-019: Raw Keypoints Storage

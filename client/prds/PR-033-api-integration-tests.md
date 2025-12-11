@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-033
 depends_on: [FE-005, BE-029, BE-030]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-033: API Integration Tests
+
+**COMPLETED**
 
 ## Scope
 

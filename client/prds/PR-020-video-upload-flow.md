@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-020
 depends_on: [FE-014, FE-005]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-020: Video Upload UI (Backup Flow)

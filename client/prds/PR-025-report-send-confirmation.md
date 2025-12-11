@@ -1,10 +1,14 @@
+COMPLETED
 ---
 id: FE-025
 depends_on: [FE-024]
 blocks: []
+status: COMPLETED
 ---
 
 # FE-025: Report Send Confirmation
+
+**COMPLETED**
 
 ## Scope
 - Confirm parent email

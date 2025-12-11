@@ -1,7 +1,9 @@
+COMPLETED
 ---
 id: FE-016
 depends_on: [FE-014]
 blocks: [FE-017]
+status: COMPLETED
 ---
 
 # FE-016: Camera Setup & Preview
