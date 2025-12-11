@@ -2,6 +2,7 @@
 id: FE-009
 depends_on: [FE-008]
 blocks: [FE-011]
+status: completed
 ---
 
 # FE-009: Recording Flow with Countdown and Timer

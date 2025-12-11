@@ -2,6 +2,7 @@
 id: BE-007
 depends_on: [BE-006]
 blocks: [BE-008, BE-009]
+status: completed
 ---
 
 # BE-007: MediaPipe Video Analysis Pipeline

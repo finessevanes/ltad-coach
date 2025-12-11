@@ -6,6 +6,8 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import { AthletesList, AddAthlete } from '../pages/Athletes';
 import ConsentForm from '../pages/Consent';
+import AssessmentFlow from '../pages/Assessment/AssessmentFlow';
+import BackupUpload from '../pages/Assessment/BackupUpload';
 
 // Route definitions for the application
 export const routes: RouteObject[] = [
@@ -54,6 +56,38 @@ export const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <AddAthlete />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'athletes/:athleteId',
+        element: (
+          <ProtectedRoute>
+            <Home /> {/* Placeholder - will be athlete detail page */}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'assess/:athleteId',
+        element: (
+          <ProtectedRoute>
+            <AssessmentFlow />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'assess/:athleteId/upload',
+        element: (
+          <ProtectedRoute>
+            <BackupUpload />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'assessments/:assessmentId',
+        element: (
+          <ProtectedRoute>
+            <Home /> {/* Placeholder - will be FE-011 */}
           </ProtectedRoute>
         ),
       },
