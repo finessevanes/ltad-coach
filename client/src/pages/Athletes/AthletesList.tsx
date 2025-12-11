@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Add, Search } from '@mui/icons-material';
 import athletesService from '../../services/athletes';
-import { Athlete, ConsentStatus } from '../../types/athlete';
+import { Athlete } from '../../types/athlete';
 import { AthletesTable } from './AthletesTable';
 import { EmptyState } from '../../components/EmptyState';
 import { ConsentAlert } from '../../components/ConsentAlert';
