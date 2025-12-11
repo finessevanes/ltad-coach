@@ -21,5 +21,23 @@ export const registerSchema = yup.object({
     .required('Please confirm your password'),
 });
 
+export const athleteSchema = yup.object({
+  name: yup.string().max(100, 'Name must be 100 characters or less').required('Name is required'),
+  age: yup
+    .number()
+    .min(5, 'Age must be at least 5')
+    .max(13, 'Age must be 13 or less')
+    .required('Age is required'),
+  gender: yup
+    .string()
+    .oneOf(['male', 'female', 'other'], 'Invalid gender selection')
+    .required('Gender is required'),
+  parentEmail: yup
+    .string()
+    .email('Invalid email address')
+    .required('Parent email is required'),
+});
+
 export type LoginFormData = yup.InferType<typeof loginSchema>;
 export type RegisterFormData = yup.InferType<typeof registerSchema>;
+export type AthleteFormData = yup.InferType<typeof athleteSchema>;

@@ -36,17 +36,17 @@ Implement athlete roster list page with status badges and search
 
 ## Acceptance Criteria
 
-- [ ] Page accessible at `/athletes` (protected route)
-- [ ] Athletes displayed in a table/list with columns: Name, Age, Status, Actions
-- [ ] Pending consent status shows yellow "Pending" badge
-- [ ] Active consent status shows green "Active" badge
-- [ ] Search input filters athletes by name (client-side)
-- [ ] Status filter dropdown filters by consent status
-- [ ] "Add Athlete" button navigates to add athlete page/modal
-- [ ] Clicking athlete row navigates to `/athletes/:id`
-- [ ] Empty state shows helpful message and "Add Athlete" CTA
-- [ ] Loading spinner while fetching athletes
-- [ ] Error state if fetch fails
+- [x] Page accessible at `/athletes` (protected route)
+- [x] Athletes displayed in a table/list with columns: Name, Age, Status, Actions
+- [x] Pending consent status shows yellow "Pending" badge
+- [x] Active consent status shows green "Active" badge
+- [x] Search input filters athletes by name (client-side)
+- [x] Status filter dropdown filters by consent status
+- [x] "Add Athlete" button navigates to add athlete page/modal
+- [x] Clicking athlete row navigates to `/athletes/:id`
+- [x] Empty state shows helpful message and "Add Athlete" CTA
+- [x] Loading spinner while fetching athletes
+- [x] Error state if fetch fails
 
 ## Files to Create/Modify
 
