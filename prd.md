@@ -18,7 +18,7 @@ This document serves as the single source of truth for the AI Coach MVP engineer
 
 ### 1.2 Product Vision
 
-AI Coach is a computer vision-powered athletic assessment platform designed for youth sports coaches. The platform enables coaches to conduct standardized athletic tests (starting with the One-Leg Balance Test), automatically analyze performance using MediaPipe pose estimation, and generate AI-powered feedback using a multi-agent system built on Claude. The platform follows the Long Term Athlete Development (LTAD) framework, targeting middle school athletes (ages 10-14).
+AI Coach is a computer vision-powered athletic assessment platform designed for youth sports coaches. The platform enables coaches to conduct standardized athletic tests (starting with the One-Leg Balance Test), automatically analyze performance using MediaPipe pose estimation, and generate AI-powered feedback using a multi-agent system built on Claude. The platform follows the Long Term Athlete Development (LTAD) framework, supporting youth athletes ages 5-13 based on Jeremy Frisch's athletic development benchmarks.
 
 ### 1.3 Key Decisions Summary
 
@@ -26,7 +26,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 |---------------|----------|
 | Video Capture | Local browser camera (webcam or iPhone Continuity) + upload. No WebRTC peer-to-peer streaming. |
 | AI Architecture | Custom orchestration with Claude via OpenRouter (Haiku for compression, Sonnet for assessment/progress agents) |
-| Target Population | Middle school athletes (ages 10-14), LTAD framework |
+| Target Population | Youth athletes ages 5-13, LTAD framework (Jeremy Frisch benchmarks) |
 | MVP Test | One-Leg Balance Test only, architecture designed for extensibility |
 | Parental Consent | Required workflow with automated email, token-protected consent form |
 | Parent Reports | Shareable link with PIN protection, auto-emailed via Resend |
@@ -40,7 +40,8 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 **Primary: Youth Sports Coaches**
 
-- Middle school athletic coaches (PE teachers, club coaches, rec league coaches)
+- Youth athletic coaches (PE teachers, club coaches, rec league coaches)
+- Working with athletes ages 5-13
 - Need to assess athlete development without expensive equipment
 - Want objective data to track progress over time
 - Need to communicate progress to parents
@@ -55,7 +56,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 1. **Automated Assessment**: Replace subjective coach observations with objective CV-measured metrics
 2. **AI-Powered Insights**: Transform raw metrics into actionable coaching feedback using LLM agents
-3. **Progress Tracking**: Historical trend analysis with national percentile and team ranking comparisons
+3. **Progress Tracking**: Historical trend analysis with team ranking comparisons
 4. **Parent Communication**: Professional, shareable reports that build trust and demonstrate value
 5. **LTAD Alignment**: Assessments tied to established youth athletic development frameworks
 
@@ -70,7 +71,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 - Video recording with preview and reshoot capability
 - Backup video upload workflow
 - Full deep agent system (Orchestrator, Assessment, Progress, Compression agents)
-- National percentile and team ranking comparisons
+- Team ranking comparisons
 - Parent report generation and sharing with PIN protection
 - Assessment history and progress visualization
 
@@ -132,7 +133,7 @@ The system follows a client-server architecture with clear separation between re
 3. **Test Setup**: Coach selects test type and which leg to test
 4. **Camera Setup**: Coach selects camera source, positions athlete in frame
 5. **Live Preview**: Real-time skeleton overlay via MediaPipe.js
-6. **Recording**: 3-2-1 countdown, then 20-second test with visible timer
+6. **Recording**: 3-2-1 countdown, then 30-second test with visible timer
 7. **Preview**: Playback of recorded video, coach chooses Analyze or Reshoot
 8. **Upload**: Raw video blob uploaded to Firebase Storage
 9. **Server Analysis**: MediaPipe (Python) extracts keypoints, calculates metrics
@@ -144,7 +145,71 @@ The system follows a client-server architecture with clear separation between re
 
 For pre-recorded videos or when live recording is impractical, coaches can upload video files directly. The flow starts at step 8 (Upload) and proceeds identically from there.
 
-**Supported formats**: `.mp4`, `.mov`, `.avi`, `.m4v`, HEVC
+**Supported formats**: `.mp4`, `.mov`, `.avi`, `.m4v`, `.webm`, HEVC
+
+**Maximum file size**: 100MB (larger files should be compressed or trimmed before upload)
+
+### 3.4 Assessment Processing Pipeline (Sequence Diagram)
+
+The following sequence shows the async processing flow from video upload through AI feedback generation:
+
+```
+┌─────────┐    ┌──────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐
+│ Client  │    │ Firebase │    │ Backend │    │MediaPipe│    │  Agents  │    │Firestore │
+│(FE-010) │    │ Storage  │    │(BE-006) │    │(BE-007) │    │(BE-009+) │    │          │
+└────┬────┘    └────┬─────┘    └────┬────┘    └────┬────┘    └────┬─────┘    └────┬─────┘
+     │              │               │              │               │               │
+     │ uploadVideo()│               │              │               │               │
+     │─────────────>│               │              │               │               │
+     │              │               │              │               │               │
+     │   videoUrl   │               │              │               │               │
+     │<─────────────│               │              │               │               │
+     │              │               │              │               │               │
+     │ POST /assessments/analyze    │              │               │               │
+     │─────────────────────────────>│              │               │               │
+     │              │               │              │               │               │
+     │              │               │ Create assessment (status: "processing")     │
+     │              │               │─────────────────────────────────────────────>│
+     │              │               │              │               │               │
+     │   { id: "assessment_123" }   │              │               │               │
+     │<─────────────────────────────│              │               │               │
+     │              │               │              │               │               │
+     │ Poll GET /assessments/{id}   │ [ASYNC BACKGROUND TASK]     │               │
+     │─ ─ ─ ─ ─ ─ ─>│               │              │               │               │
+     │              │               │ downloadVideo│               │               │
+     │              │               │<─────────────│               │               │
+     │              │               │              │               │               │
+     │              │               │ processVideo │               │               │
+     │              │               │─────────────>│               │               │
+     │              │               │              │               │               │
+     │              │               │   keypoints  │               │               │
+     │              │               │<─────────────│               │               │
+     │              │               │              │               │               │
+     │              │               │ BE-008: calculateMetrics()   │               │
+     │              │               │──────────────────────────────│               │
+     │              │               │              │               │               │
+     │              │               │ orchestrator.route("assessment")             │
+     │              │               │────────────────────────────────────────────>│               │
+     │              │               │              │               │               │
+     │              │               │              │    aiFeedback │               │
+     │              │               │<─────────────────────────────│               │
+     │              │               │              │               │               │
+     │              │               │ Update assessment (status: "completed")      │
+     │              │               │─────────────────────────────────────────────>│
+     │              │               │              │               │               │
+     │ { status: "completed", metrics, aiFeedback }│               │               │
+     │<─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│              │               │               │
+     │              │               │              │               │               │
+```
+
+**Key Implementation Notes:**
+- Client receives assessment ID immediately and polls for completion
+- Backend processes video asynchronously (does not block HTTP response)
+- Raw keypoints stored to Firebase Storage (context offloading)
+- Derived metrics (~500 tokens) passed to AI agents
+- Status transitions: `processing` → `completed` | `failed`
+- NFR-2: Analysis must complete in <30 seconds
+- NFR-3: AI feedback must complete in <10 seconds
 
 ---
 
@@ -247,7 +312,7 @@ The Orchestrator (pure Python, no LLM) routes requests based on type:
 |-------|------|-------------|
 | coachId | string | Reference to `/users/{userId}` |
 | name | string | Athlete full name |
-| age | number | Athlete age (10-14 for MVP target) |
+| age | number | Athlete age (5-13) |
 | gender | string | `'male'` \| `'female'` \| `'other'` |
 | parentEmail | string | Parent/guardian email for consent and reports |
 | consentStatus | string | `'pending'` \| `'active'` \| `'declined'` |
@@ -272,7 +337,6 @@ The Orchestrator (pure Python, no LLM) routes requests based on type:
 | metrics | object | Derived metrics object (see 5.2) |
 | aiFeedback | string | Generated feedback from Assessment Agent |
 | coachNotes | string | Optional coach annotations |
-| percentile | number | National percentile (calculated) |
 
 #### Collection: `parent_reports`
 
@@ -288,28 +352,26 @@ The Orchestrator (pure Python, no LLM) routes requests based on type:
 | assessmentIds | array | List of assessment IDs included in report |
 | sentAt | timestamp | When email was sent to parent |
 
-#### Collection: `benchmarks`
+#### Collection: `benchmarks` (NOT USED IN MVP)
 
-**Path**: `/benchmarks/{testType}_{ageGroup}`
+> **Note**: For MVP, benchmark data (LTAD scoring tiers, age expectations) is stored in the **prompt cache** (see BE-009) rather than Firestore. This is because:
+> - The data is static and rarely changes
+> - It's needed for every AI call (prompt caching provides 90% cost savings)
+> - Hardcoding in the frontend `ScoreBadge.tsx` (FE-011) is sufficient for display
+>
+> A Firestore `benchmarks` collection may be added post-MVP if coaches need custom benchmark overrides.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| testType | string | `'one_leg_balance'` |
-| ageGroup | string | `'10-11'` \| `'12-13'` \| `'14'` |
-| expectedScore | number | Expected LTAD score (1-5) for age group |
-| scoringTiers | object | Duration thresholds for each score level |
+**Scoring Logic (Hardcoded)**:
 
-**Scoring Tiers Object**:
+| Score | Duration | Label | Expected For |
+|-------|----------|-------|--------------|
+| 1 | 1-9 sec | Beginning | Ages 5-6 |
+| 2 | 10-14 sec | Developing | Age 7 |
+| 3 | 15-19 sec | Competent | Ages 8-9 |
+| 4 | 20-24 sec | Proficient | Ages 10-11 |
+| 5 | 25+ sec | Advanced | Ages 12-13 |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| score1 | object | `{ min: 1, max: 9, label: "Beginning" }` |
-| score2 | object | `{ min: 10, max: 14, label: "Developing" }` |
-| score3 | object | `{ min: 15, max: 19, label: "Competent" }` |
-| score4 | object | `{ min: 20, max: 24, label: "Proficient" }` |
-| score5 | object | `{ min: 25, max: null, label: "Advanced" }` |
-
-> **Hybrid Scoring Model**: The system uses a two-tier scoring approach. Tier 1 (Duration Score) provides an LTAD-aligned 1-5 score based on how long the athlete maintained balance. Tier 2 (Quality Percentile) provides team-relative rankings based on CV-detected form factors (sway, arm excursion, corrections). See Section 11.4 for details.
+> **Hybrid Scoring Model**: The system uses a two-tier scoring approach. Tier 1 (Duration Score) provides an LTAD-aligned 1-5 score based on how long the athlete maintained balance. Tier 2 (Quality Ranking) provides team-relative rankings based on CV-detected form factors (sway, arm excursion, corrections). See Section 11.4 for details.
 
 ### 5.2 Metrics Object Schema
 
@@ -317,7 +379,7 @@ The metrics object stored in each assessment contains all derived values from CV
 
 | Field | Type | Description |
 |-------|------|-------------|
-| durationSeconds | number | Time athlete maintained balance (0-20) |
+| durationSeconds | number | Time athlete maintained balance (0-30) |
 | stabilityScore | number | Composite score (0-100), higher = better |
 | swayStdX | number | Standard deviation of lateral (side-to-side) hip movement |
 | swayStdY | number | Standard deviation of anterior-posterior hip movement |
@@ -356,6 +418,7 @@ The metrics object stored in each assessment contains all derived values from CV
 |--------|----------|-------------|
 | GET | `/consent/{token}` | Get consent form (public, token-protected) |
 | POST | `/consent/{token}/sign` | Submit signed consent (public) |
+| POST | `/consent/{token}/decline` | Decline consent (public) |
 | POST | `/athletes/{id}/resend-consent` | Resend consent email |
 
 ### 6.4 Assessment Endpoints
@@ -374,7 +437,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/reports/generate/{athleteId}` | Generate parent report preview |
-| POST | `/reports/{id}/send` | Send report to parent (generates PIN, sends email) |
+| POST | `/reports/{athlete_id}/send` | Send report to parent (generates PIN, sends email) |
 | GET | `/reports/view/{id}` | Get report content (public, requires PIN) |
 | POST | `/reports/view/{id}/verify` | Verify PIN for report access |
 
@@ -382,7 +445,13 @@ The metrics object stored in each assessment contains all derived values from CV
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/benchmarks/{testType}/{age}/{gender}` | Get percentile benchmarks |
+| GET | `/benchmarks/{testType}/{age}/{gender}` | Get benchmarks |
+
+### 6.7 Dashboard Endpoint
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/dashboard` | Get coach dashboard data (stats, recent activity, pending consent) |
 
 ---
 
@@ -424,7 +493,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | Test Setup | Select test type (One-Leg Balance), select leg (left/right) |
 | Camera Setup | Camera source selection, positioning guide, athlete framing preview |
 | Live Preview | Live video with skeleton overlay, Start Recording button |
-| Recording | 3-2-1 countdown, 20-second timer, skeleton overlay, Stop button |
+| Recording | 3-2-1 countdown, 30-second timer, skeleton overlay, Stop button |
 | Recording Preview | Playback with skeleton, Analyze and Reshoot buttons |
 | Processing | Upload progress, analysis status indicators |
 | Results | Metrics, AI feedback, peer comparison, coach notes, Generate Report button |
@@ -471,8 +540,8 @@ The metrics object stored in each assessment contains all derived values from CV
 |----|-------------|
 | FR-5 | Coaches can add athletes with name, age, gender, and parent email |
 | FR-6 | Adding an athlete automatically sends consent email to parent |
-| FR-7 | Athletes have status: `pending_consent`, `active`, or `declined` |
-| FR-8 | Athletes with `pending_consent` cannot be assessed |
+| FR-7 | Athletes have status: `pending`, `active`, or `declined` |
+| FR-8 | Athletes with `pending` status cannot be assessed |
 | FR-9 | Coaches can view and manage a roster of up to 25 athletes |
 | FR-10 | Coaches can edit athlete information and resend consent emails |
 | FR-11 | Coaches can delete athletes from their roster |
@@ -494,9 +563,9 @@ The metrics object stored in each assessment contains all derived values from CV
 | FR-17 | System accesses camera via browser `getUserMedia()` API |
 | FR-18 | Camera source options include webcam and iPhone Continuity Camera |
 | FR-19 | MediaPipe.js renders skeleton overlay on live video in real-time |
-| FR-20 | Recording includes 3-5 second buffer before 20-second test |
+| FR-20 | Recording includes 3-second countdown before 30-second test |
 | FR-21 | Countdown timer (3-2-1) displays before test begins |
-| FR-22 | 20-second countdown timer displays during test |
+| FR-22 | 30-second countdown timer displays during test |
 | FR-23 | Coach can manually stop recording early |
 | FR-24 | Recording auto-stops when timer reaches zero |
 | FR-25 | Preview screen shows recorded video with skeleton overlay |
@@ -507,7 +576,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | ID | Requirement |
 |----|-------------|
 | FR-27 | Coaches can upload pre-recorded video files |
-| FR-28 | Supported formats: `.mp4`, `.mov`, `.avi`, `.m4v`, HEVC |
+| FR-28 | Supported formats: `.mp4`, `.mov`, `.avi`, `.m4v`, `.webm`, HEVC |
 | FR-29 | Upload preview shows video and confirms athlete/test selection |
 
 ### 8.6 Computer Vision Analysis
@@ -526,7 +595,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | ID | Requirement |
 |----|-------------|
 | FR-36 | Assessment Agent generates coach-friendly feedback from metrics |
-| FR-37 | Feedback includes percentile context (national comparison) |
+| FR-37 | Feedback includes team ranking context (team comparison) |
 | FR-38 | Feedback includes specific coaching cues for improvement |
 | FR-39 | Progress Agent analyzes historical trends for parent reports |
 | FR-40 | Compression Agent summarizes historical data to reduce costs |
@@ -551,7 +620,19 @@ The metrics object stored in each assessment contains all derived values from CV
 | FR-49 | Sending report generates unique 6-digit PIN |
 | FR-50 | System emails report link + PIN to parent automatically |
 | FR-51 | Parents access report via link + PIN (no account required) |
-| FR-52 | Report includes progress trends, percentile, team ranking |
+| FR-52 | Report includes progress trends and team ranking |
+
+### 8.10 Concurrent Access & Edit Locking
+
+| ID | Requirement |
+|----|-------------|
+| FR-53 | When a coach opens an athlete for editing, the system acquires an edit lock |
+| FR-54 | If another session holds the lock, the coach sees a read-only view with "This athlete is being edited in another session" message |
+| FR-55 | Edit locks auto-expire after 5 minutes of inactivity |
+| FR-56 | Edit lock is released when coach navigates away or explicitly saves |
+| FR-57 | Lock owner can refresh their lock by continuing to edit (prevents timeout during active use) |
+
+**Implementation Details**: See [BE-004](backend/prds/BE-004-athlete-crud-endpoints.md) for API endpoints and [FE-005](client/prds/FE-005-add-edit-athlete-forms.md) for the `useEditLock` hook implementation.
 
 ---
 
@@ -611,10 +692,10 @@ The metrics object stored in each assessment contains all derived values from CV
 
 | Parameter | Value |
 |-----------|-------|
-| Target Population | Middle school athletes (ages 10-14) |
-| Framework | LTAD (FUNdamentals and Learn to Train stages) |
-| Test Duration | 20 seconds |
-| Recording Duration | ~25-30 seconds (includes buffer before/after) |
+| Target Population | Youth athletes ages 5-13 |
+| Framework | LTAD (Jeremy Frisch athletic development benchmarks) |
+| Test Duration | 30 seconds |
+| Recording Duration | ~35-40 seconds (includes countdown) |
 | Hand Position | Hands on hips (iliac crest) |
 | Eye Condition | Eyes open, focused on fixed point ahead |
 | Leg Selection | Coach selects left or right leg |
@@ -629,7 +710,7 @@ The metrics object stored in each assessment contains all derived values from CV
 5. Click Start when athlete is ready
 6. 3-2-1 countdown will appear
 7. Athlete lifts non-standing leg when countdown ends
-8. 20-second timer begins
+8. 30-second timer begins
 9. Test ends when timer reaches 0 or failure is detected
 
 #### Auto-Detected Failure Events
@@ -638,8 +719,8 @@ The metrics object stored in each assessment contains all derived values from CV
 |--------------|------------------|--------|
 | Foot Touchdown | Raised foot Y-coordinate drops to standing foot level | Test ends, partial duration recorded |
 | Hands Leave Hips | Wrist landmarks move >threshold from hip landmarks | Test ends, partial duration recorded |
-| Support Foot Moves | Standing ankle X/Y displacement >15cm from start | Test ends, partial duration recorded |
-| Time Complete | 20-second timer reaches zero | Test ends, full duration (success) |
+| Support Foot Moves | Standing ankle X/Y displacement >5% of athlete height (normalized) | Test ends, partial duration recorded |
+| Time Complete | 30-second timer reaches zero | Test ends, full duration (success) |
 
 ---
 
@@ -651,7 +732,7 @@ The metrics object stored in each assessment contains all derived values from CV
 |---------|-------|
 | Model | BlazePose (33 landmarks) |
 | Target frame rate | 30 FPS minimum |
-| Filtering | Low-pass Butterworth filter (2-6 Hz cutoff) on landmark trajectories |
+| Filtering | Low-pass Butterworth filter (2 Hz cutoff) on landmark trajectories |
 | Normalization | Sway values normalized by athlete height |
 | Camera angle | Frontal or 45-degree view preferred |
 
@@ -672,7 +753,7 @@ The metrics object stored in each assessment contains all derived values from CV
 
 #### Duration (`durationSeconds`)
 
-Time from test start until failure event or timer completion. Range: 0-20 seconds.
+Time from test start until failure event or timer completion. Range: 0-30 seconds.
 
 #### Sway Standard Deviation (`swayStdX`, `swayStdY`)
 
@@ -714,13 +795,13 @@ The system uses a two-tier scoring approach that combines LTAD-aligned duration 
 
 Based on LTAD benchmark data. Provides age-normed, coach-friendly scoring.
 
-| Score | Duration | Label | Ages 10-11 | Ages 12-13 | Age 14 |
-|-------|----------|-------|------------|------------|--------|
-| 1 | 1-9 sec | Beginning | Below | Below | Below |
-| 2 | 10-14 sec | Developing | Below | Below | Below |
-| 3 | 15-19 sec | Competent | Below | Below | Below |
-| 4 | 20-24 sec | Proficient | **Expected** | Below | Below |
-| 5 | 25+ sec | Advanced | Above | **Expected** | **Expected** |
+| Score | Duration | Label | Ages 5-6 | Age 7 | Ages 8-9 | Ages 10-11 | Ages 12-13 |
+|-------|----------|-------|----------|-------|----------|------------|------------|
+| 1 | 1-9 sec | Beginning | **Expected** | Below | Below | Below | Below |
+| 2 | 10-14 sec | Developing | Above | **Expected** | Below | Below | Below |
+| 3 | 15-19 sec | Competent | Above | Above | **Expected** | Below | Below |
+| 4 | 20-24 sec | Proficient | Above | Above | Above | **Expected** | Below |
+| 5 | 25+ sec | Advanced | Above | Above | Above | Above | **Expected** |
 
 #### Tier 2: Quality Score — Secondary Metrics (Team-Relative)
 
@@ -754,7 +835,21 @@ This gives coaches actionable feedback: "Great duration! Now let's work on reduc
 
 #### Post-MVP Enhancement
 
-National percentiles for quality metrics will be added once sufficient anonymized data is collected to establish normative baselines across age groups.
+National benchmarks for quality metrics may be added in the future once sufficient anonymized data is collected to establish normative baselines across age groups.
+
+---
+
+## 11.5 Accepted Security Risks (MVP)
+
+The following security trade-offs are accepted for MVP:
+
+| Risk | Mitigation | Rationale |
+|------|------------|-----------|
+| PIN brute force attacks | 5 attempts/min rate limit + 10 attempt lockout | 6-digit PIN provides 1,000,000 combinations; rate limiting makes brute force impractical |
+| In-memory rate limiting | Single instance deployment | Multi-instance will require Redis (documented as post-MVP) |
+| Edit lock conflicts | 5-minute auto-expiry | Conflicts are rare for single-coach MVP |
+
+For edit locking implementation, see [Section 8.10](#810-concurrent-access--edit-locking).
 
 ---
 
@@ -791,6 +886,41 @@ National percentiles for quality metrics will be added once sufficient anonymize
 | `RESEND_API_KEY` | Resend email service API key |
 | `FRONTEND_URL` | Deployed frontend URL (for email links) |
 | `BACKEND_URL` | Deployed backend URL (for API calls) |
+
+### 12.4 Technical Debt (Post-MVP)
+
+The following items are documented as technical debt to be addressed after MVP:
+
+| Item | Current State | Post-MVP Solution | Affected PRDs |
+|------|---------------|-------------------|---------------|
+| Test Type Extensibility | Hardcoded for One-Leg Balance test | Refactor to use strategy pattern with test-type-specific analyzers, metric calculators, and AI prompts | BE-007, BE-008, BE-009, BE-010, BE-011 |
+| Rate Limiting | In-memory storage (single instance only) | Migrate to Redis for multi-instance support | BE-005, BE-006, BE-013 |
+| National Benchmarks | Team-relative only | Add anonymized aggregate benchmarks by age/gender | BE-008, FE-011 |
+
+#### Test Type Extensibility Details
+
+The MVP implements only the One-Leg Balance test. To add new test types (e.g., Y-Balance, Single Leg Hop), the following would need refactoring:
+
+```python
+# Current: Hardcoded in BE-007
+def detect_failure(landmarks, test_type):
+    if test_type == "one_leg_balance":
+        return detect_one_leg_balance_failure(landmarks)
+    # No other types supported
+
+# Post-MVP: Strategy pattern
+class TestAnalyzer(Protocol):
+    def detect_failure(self, landmarks) -> tuple[bool, str]: ...
+    def calculate_metrics(self, keypoints) -> dict: ...
+    def get_benchmark(self, age, gender) -> dict: ...
+
+ANALYZERS: dict[str, TestAnalyzer] = {
+    "one_leg_balance": OneLegBalanceAnalyzer(),
+    "y_balance": YBalanceAnalyzer(),  # Future
+}
+```
+
+This is acceptable for MVP but should be prioritized if additional tests are planned within 6 months.
 
 ---
 
