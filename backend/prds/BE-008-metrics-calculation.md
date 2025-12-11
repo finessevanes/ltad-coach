@@ -80,11 +80,13 @@ DURATION_SCORE_LABELS = {
     5: "Advanced",
 }
 
-# Age-based expected scores
+# Age-based expected scores (LTAD framework - Jeremy Frisch benchmarks)
 AGE_EXPECTED_SCORES = {
+    (5, 6): 1,    # Beginning expected
+    (7, 7): 2,    # Developing expected
+    (8, 9): 3,    # Competent expected
     (10, 11): 4,  # Proficient expected
     (12, 13): 5,  # Advanced expected
-    (14, 14): 5,  # Advanced expected
 }
 
 # Stability score weights

@@ -265,7 +265,7 @@ class PoseProcessor:
     def __init__(self):
         # Initialize MediaPipe Pose Landmarker
         base_options = python.BaseOptions(
-            model_asset_path='pose_landmarker_lite.task'
+            model_asset_path='models/pose_landmarker_lite.task'
         )
         options = vision.PoseLandmarkerOptions(
             base_options=base_options,
@@ -494,13 +494,16 @@ numpy = "^1.26.0"
 
 ## Model File Setup
 
-Download the MediaPipe pose model:
+The MediaPipe pose model is automatically downloaded during Render deployment (see BE-001 `render.yaml`).
+
+For local development, download manually:
 ```bash
-wget -O pose_landmarker_lite.task \
+mkdir -p backend/models
+wget -O backend/models/pose_landmarker_lite.task \
   https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
 ```
 
-Place in `backend/models/` directory.
+Model path in code: `models/pose_landmarker_lite.task` (relative to backend root).
 
 ## Estimated Complexity
 **L** (Large) - 6-8 hours

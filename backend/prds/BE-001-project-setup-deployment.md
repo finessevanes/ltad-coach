@@ -81,20 +81,30 @@ httpx = "^0.26.0"
 ### config.py Structure
 ```python
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     # Required
     frontend_url: str
-    backend_url: str
+    api_base_url: str  # Backend URL for self-reference
 
-    # Firebase (validated but not used until BE-002)
+    # Firebase - Using JSON service account file (simpler for local dev + deployment)
+    google_application_credentials: str  # Path to Firebase Admin SDK JSON file
     firebase_project_id: str
-    firebase_private_key: str
-    firebase_client_email: str
+    firebase_storage_bucket: str
 
     # External APIs (validated but not used until later PRs)
     openrouter_api_key: str
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
     resend_api_key: str
+
+    # CORS
+    allowed_origins: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Parse ALLOWED_ORIGINS into list"""
+        return [origin.strip() for origin in self.allowed_origins.split(",")]
 
     class Config:
         env_file = ".env"
@@ -250,7 +260,10 @@ services:
   - type: web
     name: ltad-coach-api
     env: python
-    buildCommand: "pip install poetry && poetry install"
+    buildCommand: |
+      pip install poetry && poetry install
+      mkdir -p models
+      wget -O models/pose_landmarker_lite.task https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
     startCommand: "poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
@@ -258,17 +271,21 @@ services:
         value: 3.11.0
 ```
 
+> **Note**: The MediaPipe pose model (~8MB) is downloaded during build to avoid runtime download delays. The model is used by BE-007 for video analysis.
+
 ## Environment Variables Required
 
 | Variable | Example | Required |
 |----------|---------|----------|
 | FRONTEND_URL | https://ltad-coach.vercel.app | Yes |
-| BACKEND_URL | https://ltad-coach-api.onrender.com | Yes |
+| API_BASE_URL | https://ltad-coach-api.onrender.com | Yes |
+| GOOGLE_APPLICATION_CREDENTIALS | ./firebase-adminsdk.json | Yes |
 | FIREBASE_PROJECT_ID | ltad-coach | Yes |
-| FIREBASE_PRIVATE_KEY | -----BEGIN PRIVATE KEY----- | Yes |
-| FIREBASE_CLIENT_EMAIL | firebase-adminsdk@... | Yes |
+| FIREBASE_STORAGE_BUCKET | ltad-coach.firebasestorage.app | Yes |
 | OPENROUTER_API_KEY | sk-or-... | Yes |
+| OPENROUTER_BASE_URL | https://openrouter.ai/api/v1 | No (has default) |
 | RESEND_API_KEY | re_... | Yes |
+| ALLOWED_ORIGINS | http://localhost:5173,http://localhost:3000 | No (has default) |
 
 ## Estimated Complexity
 **S** (Small) - 2-3 hours
