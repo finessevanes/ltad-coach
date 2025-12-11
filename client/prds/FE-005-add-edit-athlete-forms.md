@@ -34,15 +34,15 @@ Implement add athlete page and edit athlete modal/form
 
 ## Acceptance Criteria
 
-- [ ] Add athlete page accessible at `/athletes/new`
-- [ ] Form validates: name required, age 5-13, valid email
-- [ ] Gender selection via radio buttons or select
-- [ ] Submit button disabled while submitting
-- [ ] Success shows toast and redirects to /athletes
-- [ ] Error shows error message in form
-- [ ] Edit modal opens with pre-filled data
-- [ ] Edit submit updates athlete
-- [ ] Cancel on edit modal closes without saving
+- [x] Add athlete page accessible at `/athletes/new`
+- [x] Form validates: name required, age 5-13, valid email
+- [x] Gender selection via radio buttons or select
+- [x] Submit button disabled while submitting
+- [x] Success shows toast and redirects to /athletes
+- [x] Error shows error message in form
+- [x] Edit modal opens with pre-filled data
+- [x] Edit submit updates athlete
+- [x] Cancel on edit modal closes without saving
 
 ## Files to Create/Modify
 

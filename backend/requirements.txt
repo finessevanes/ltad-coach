@@ -16,6 +16,9 @@ httpx>=0.26.0
 # Firebase Admin SDK (for BE-002)
 firebase-admin>=6.4.0
 
+# Email service (for BE-005)
+resend>=0.7.0
+
 # HTTP client for external APIs
 aiohttp>=3.9.0
 

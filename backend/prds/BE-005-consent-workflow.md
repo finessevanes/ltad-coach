@@ -48,16 +48,16 @@ Implement parental consent endpoints and automated email sending
 
 ## Acceptance Criteria
 
-- [ ] `GET /consent/{token}` returns consent form data (athlete name, coach name)
-- [ ] `POST /consent/{token}/sign` records consent and updates athlete status to `active`
-- [ ] `POST /consent/{token}/decline` records decline and updates athlete status to `declined`
-- [ ] Creating athlete triggers consent email to parent
-- [ ] Consent email contains unique link with token
-- [ ] Coach receives email when consent is provided
-- [ ] Coach receives email when consent is declined
-- [ ] `POST /athletes/{id}/resend-consent` sends new consent email
-- [ ] Invalid/expired tokens return appropriate errors
-- [ ] Consent timestamp is recorded when signed or declined
+- [x] `GET /consent/{token}` returns consent form data (athlete name, coach name)
+- [x] `POST /consent/{token}/sign` records consent and updates athlete status to `active`
+- [x] `POST /consent/{token}/decline` records decline and updates athlete status to `declined`
+- [x] Creating athlete triggers consent email to parent
+- [x] Consent email contains unique link with token
+- [x] Coach receives email when consent is provided
+- [x] Coach receives email when consent is declined
+- [x] `POST /athletes/{id}/resend-consent` sends new consent email
+- [x] Invalid/expired tokens return appropriate errors
+- [x] Consent timestamp is recorded when signed or declined
 
 ## Files to Create/Modify
 

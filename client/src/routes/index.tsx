@@ -4,6 +4,8 @@ import { Home } from '../pages/Home';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import { AthletesList, AddAthlete } from '../pages/Athletes';
+import ConsentForm from '../pages/Consent';
 
 // Route definitions for the application
 export const routes: RouteObject[] = [
@@ -15,6 +17,11 @@ export const routes: RouteObject[] = [
   {
     path: '/register',
     element: <Register />,
+  },
+  // Public consent route (no auth required)
+  {
+    path: '/consent/:token',
+    element: <ConsentForm />,
   },
   // App routes (inside Layout)
   {
@@ -38,7 +45,15 @@ export const routes: RouteObject[] = [
         path: 'athletes',
         element: (
           <ProtectedRoute>
-            <Home /> {/* Placeholder until FE-004 */}
+            <AthletesList />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'athletes/new',
+        element: (
+          <ProtectedRoute>
+            <AddAthlete />
           </ProtectedRoute>
         ),
       },

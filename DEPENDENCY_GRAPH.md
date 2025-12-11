@@ -33,27 +33,27 @@ Phase 2: Authentication ✅ COMPLETE
     (Login/Register UI)
 
                     ▼
-Phase 3: Athlete Management
+Phase 3: Athlete Management ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-004 ◄─── BE-002, BE-003
+    BE-004 ✅ ◄─── BE-002, BE-003
     (Athlete CRUD)
 
-    FE-004 ◄─── FE-002, FE-003
+    FE-004 ✅ ◄─── FE-002, FE-003
     (Athletes List)
 
-    FE-005 ◄─── FE-002, FE-004
+    FE-005 ✅ ◄─── FE-002, FE-004
     (Add/Edit Athlete)
 
                     ▼
-Phase 4: Consent Workflow
+Phase 4: Consent Workflow ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-005 ◄─── BE-002, BE-004
+    BE-005 ✅ ◄─── BE-002, BE-004
     (Consent + Email)
 
-    FE-006 ◄─── FE-001      (No auth needed - public)
+    FE-006 ✅ ◄─── FE-001      (No auth needed - public)
     (Public Consent Form)
 
-    FE-007 ◄─── FE-004, FE-005
+    FE-007 ✅ ◄─── FE-004, FE-005
     (Consent Status UI)
 
                     ▼
@@ -143,9 +143,9 @@ Items in the same group can be worked on in parallel by different engineers.
 | 0 | A | BE-001, FE-001 | Infrastructure + Deployment | 4-6 | ✅ Done |
 | 1 | B | BE-002, FE-002 | Firebase Integration | 4-6 | ✅ Done |
 | 2 | C | BE-003, FE-003 | Authentication | 5-7 | ✅ Done |
-| 3 | D | BE-004, FE-004 | Athlete Base | 6-8 | |
-| 3 | E | FE-005 | Add/Edit Forms | 2-3 | |
-| 4 | F | BE-005, FE-006, FE-007 | Consent Workflow | 7-9 | |
+| 3 | D | BE-004, FE-004 | Athlete Base | 6-8 | ✅ Done |
+| 3 | E | FE-005 | Add/Edit Forms | 2-3 | ✅ Done |
+| 4 | F | BE-005, FE-006, FE-007 | Consent Workflow | 7-9 | ✅ Done |
 | 5 | G | FE-008, FE-009, FE-010 | Video Capture | 10-12 | |
 | 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | |
 | 7 | I | BE-009, BE-010, BE-011 | AI Agents | 10-12 | |
@@ -213,8 +213,8 @@ Week 3-4:
 | BE-001 | Project Setup + Render Deploy | S | None | ✅ Done |
 | BE-002 | Firebase Integration | S | BE-001 | ✅ Done |
 | BE-003 | Auth Endpoints | S | BE-001, BE-002 | ✅ Done |
-| BE-004 | Athlete CRUD | M | BE-002, BE-003 | |
-| BE-005 | Consent + Email | M | BE-002, BE-004 | |
+| BE-004 | Athlete CRUD | M | BE-002, BE-003 | ✅ Done |
+| BE-005 | Consent + Email | M | BE-002, BE-004 | ✅ Done |
 | BE-006 | Video Upload Endpoint | M | BE-002, BE-003, BE-004 | |
 | BE-007 | MediaPipe Analysis | L | BE-006 | |
 | BE-008 | Metrics Calculation | M | BE-007 | |
@@ -233,10 +233,10 @@ Week 3-4:
 | FE-001 | Project Setup + Vercel Deploy | S | None | ✅ Done |
 | FE-002 | Firebase Auth Client | S | FE-001 | ✅ Done |
 | FE-003 | Login/Register Pages | S | FE-001, FE-002 | ✅ Done |
-| FE-004 | Athletes List | S | FE-002, FE-003 | |
-| FE-005 | Add/Edit Athlete Forms | S | FE-002, FE-004 | |
-| FE-006 | Public Consent Form | S | FE-001 | |
-| FE-007 | Consent Status UI | S | FE-004, FE-005 | |
+| FE-004 | Athletes List | S | FE-002, FE-003 | ✅ Done |
+| FE-005 | Add/Edit Athlete Forms | S | FE-002, FE-004 | ✅ Done |
+| FE-006 | Public Consent Form | S | FE-001 | ✅ Done |
+| FE-007 | Consent Status UI | S | FE-004, FE-005 | ✅ Done |
 | FE-008 | Camera + MediaPipe Preview | M | FE-002, FE-007 | |
 | FE-009 | Recording Flow | M | FE-008 | |
 | FE-010 | Video Upload | M | FE-002 | |
