@@ -78,6 +78,7 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
   // Create composite canvas for recording video + skeleton
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const compositeStreamRef = useRef<MediaStream | null>(null);
   const compositeAnimationRef = useRef<number>(0);
 
   const { startRecording, stopRecording, videoBlob } = useVideoRecorder(compositeStream);
@@ -96,9 +97,15 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
     // Get stream from composite canvas
     const stream = canvas.captureStream(COMPOSITE_FPS);
+    compositeStreamRef.current = stream;
     setCompositeStream(stream);
 
     return () => {
+      // Stop composite canvas stream
+      if (compositeStreamRef.current) {
+        compositeStreamRef.current.getTracks().forEach((track) => track.stop());
+        compositeStreamRef.current = null;
+      }
       if (compositeAnimationRef.current) {
         cancelAnimationFrame(compositeAnimationRef.current);
       }
@@ -160,17 +167,18 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     startRecording();
 
     // Start 30-second timer
-    timerRef.current = setInterval(() => {
+    const interval = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           stopRecording();
-          if (timerRef.current) clearInterval(timerRef.current);
+          clearInterval(interval);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+    timerRef.current = interval;
   }, [startRecording, stopRecording]);
 
   // Stop Early button click
@@ -205,10 +213,20 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     }
   }, [videoBlob, elapsedTime, onRecordingComplete]);
 
+  // Cleanup on component unmount
   useEffect(() => {
     return () => {
+      // Clear timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      // Stop composite stream
+      if (compositeStreamRef.current) {
+        compositeStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      // Cancel animation frame
+      if (compositeAnimationRef.current) {
+        cancelAnimationFrame(compositeAnimationRef.current);
       }
     };
   }, []);

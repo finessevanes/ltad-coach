@@ -1,6 +1,6 @@
 import { Paper, Typography, Box, Button } from '@mui/material';
 import { Replay as ReplayIcon, CheckCircle as CheckIcon } from '@mui/icons-material';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 interface ReviewStepProps {
   videoBlob: Blob | null;
@@ -17,6 +17,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     if (!videoBlob) return null;
     return URL.createObjectURL(videoBlob);
   }, [videoBlob]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+    };
+  }, [videoUrl]);
 
   if (!videoUrl) {
     return (
