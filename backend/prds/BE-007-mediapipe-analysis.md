@@ -16,7 +16,7 @@ Implement server-side MediaPipe pose analysis for video processing
 - MediaPipe Pose Landmarker setup in Python
 - Frame-by-frame video processing
 - Raw keypoint extraction and storage
-- Failure event detection (foot touchdown, hands leave hips, support foot moves)
+- Failure event detection (foot touchdown, support foot moves)
 - Test duration calculation
 - Low-pass filtering of landmark trajectories
 
@@ -108,10 +108,6 @@ RIGHT_SHOULDER = 12
 
 # Hip midpoint calculation
 HIP_LANDMARKS = [LEFT_HIP, RIGHT_HIP]
-
-# For hands-on-hips detection
-WRIST_LANDMARKS = [LEFT_WRIST, RIGHT_WRIST]
-HIP_TO_WRIST_THRESHOLD = 0.15  # Normalized distance
 
 # For foot touchdown detection
 ANKLE_LANDMARKS = [LEFT_ANKLE, RIGHT_ANKLE]
@@ -336,24 +332,6 @@ class FailureDetector:
 
         if abs(support_y - raised_y) < FOOT_TOUCHDOWN_THRESHOLD:
             return "foot_touchdown"
-
-        # Check hands leaving hips
-        left_wrist = landmarks[LEFT_WRIST]
-        right_wrist = landmarks[RIGHT_WRIST]
-        left_hip = landmarks[LEFT_HIP]
-        right_hip = landmarks[RIGHT_HIP]
-
-        left_dist = np.sqrt(
-            (left_wrist[0] - left_hip[0])**2 +
-            (left_wrist[1] - left_hip[1])**2
-        )
-        right_dist = np.sqrt(
-            (right_wrist[0] - right_hip[0])**2 +
-            (right_wrist[1] - right_hip[1])**2
-        )
-
-        if left_dist > HIP_TO_WRIST_THRESHOLD or right_dist > HIP_TO_WRIST_THRESHOLD:
-            return "hands_left_hips"
 
         # Check support foot movement
         current_support = (

@@ -28,9 +28,9 @@ export const TestSetup: React.FC<TestSetupProps> = ({
           </Typography>
           <ul style={{ margin: '8px 0', paddingLeft: 20 }}>
             <li>Athlete stands on one leg for up to 30 seconds</li>
-            <li>Hands must remain on hips</li>
+            <li>Arms extended out wide (T-pose), raised knee up</li>
             <li>Eyes open, focused on point ahead</li>
-            <li>Test ends if foot touches down or hands leave hips</li>
+            <li>Test ends if foot touches down or support foot moves</li>
           </ul>
         </Box>
       </Alert>
@@ -40,6 +40,9 @@ export const TestSetup: React.FC<TestSetupProps> = ({
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Which leg will the athlete stand on?
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block', fontStyle: 'italic' }}>
+        Left leg = Stand on left, raise right knee | Right leg = Stand on right, raise left knee
       </Typography>
 
       <ToggleButtonGroup

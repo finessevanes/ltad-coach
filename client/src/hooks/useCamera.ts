@@ -22,13 +22,14 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Enumerate devices on mount
   useEffect(() => {
     async function getDevices() {
       try {
-        // Request permission first (needed to get device labels)
-        await navigator.mediaDevices.getUserMedia({ video: true });
+        // Get permission and enumerate devices
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
 
         const allDevices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = allDevices
@@ -45,6 +46,10 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
           const defaultDevice = initialDeviceId || videoDevices[0].deviceId;
           setSelectedDevice(defaultDevice);
         }
+
+        // Stop temp stream - the device selection effect will create the proper one
+        tempStream.getTracks().forEach((track) => track.stop());
+        setLoading(false);
       } catch (err: any) {
         if (err.name === 'NotAllowedError') {
           setError('Camera permission denied. Please allow camera access to continue.');
@@ -53,7 +58,6 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
         } else {
           setError('Failed to access camera. Please check your device settings.');
         }
-      } finally {
         setLoading(false);
       }
     }
@@ -65,18 +69,16 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
   useEffect(() => {
     if (!selectedDevice) return;
 
-    const deviceId = selectedDevice;
-
     async function startStream() {
       // Stop existing stream
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
 
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: deviceId },
+            deviceId: { exact: selectedDevice },
             width: { ideal: 1280 },
             height: { ideal: 720 },
             frameRate: { ideal: 30 },
@@ -84,6 +86,7 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
           audio: false,
         });
 
+        streamRef.current = newStream;
         setStream(newStream);
 
         if (videoRef.current) {
@@ -96,13 +99,30 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
 
     startStream();
 
-    // Cleanup on unmount
+    // Cleanup on device change
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, [selectedDevice]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, []);
 
   return {
     devices,

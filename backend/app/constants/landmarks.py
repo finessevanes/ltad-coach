@@ -45,7 +45,6 @@ LEFT_FOOT_INDEX = 31
 RIGHT_FOOT_INDEX = 32
 
 # Failure Detection Thresholds (normalized coordinates)
-HIP_TO_WRIST_THRESHOLD = 0.15  # Distance for "hands on hips" detection
 FOOT_TOUCHDOWN_THRESHOLD = 0.05  # Y-distance for foot touchdown detection
 SUPPORT_FOOT_MOVEMENT_THRESHOLD = 0.05  # Ankle displacement threshold
 MINIMUM_POSE_CONFIDENCE = 0.5  # Minimum confidence to consider pose valid

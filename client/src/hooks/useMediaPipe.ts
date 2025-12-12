@@ -62,6 +62,11 @@ export function useMediaPipe(
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      // Close MediaPipe landmarker to free resources
+      if (landmarkerRef.current) {
+        landmarkerRef.current.close();
+        landmarkerRef.current = null;
+      }
     };
   }, []);
 

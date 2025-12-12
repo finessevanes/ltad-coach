@@ -49,6 +49,6 @@ CORRECTION_THRESHOLD = 0.02  # Threshold for detecting balance corrections
 REFERENCE_VALUES = {
     "sway_std_max": 0.08,           # Max expected sway std (normalized)
     "sway_velocity_max": 0.015,     # Max expected sway velocity
-    "arm_excursion_max": 90.0,      # Max expected arm excursion (degrees)
+    "arm_excursion_max": 90.0,      # Max expected arm excursion (degrees) - arms extended wide
     "corrections_max": 15,          # Max expected corrections
 }
