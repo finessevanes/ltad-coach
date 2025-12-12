@@ -389,7 +389,7 @@ The metrics object stored in each assessment contains all derived values from CV
 | armExcursionRight | number | Total right arm movement (degrees or cm) |
 | armAsymmetryRatio | number | Left/Right arm movement ratio |
 | correctionsCount | number | Number of times sway exceeded threshold |
-| failureReason | string | `'time_complete'` \| `'foot_touchdown'` \| `'hands_left_hips'` \| `'support_foot_moved'` |
+| failureReason | string | `'time_complete'` \| `'foot_touchdown'` \| `'support_foot_moved'` |
 | progressComparison | object | Percent change from rolling 3-test average (null if first test) |
 | legAsymmetry | object | Asymmetry ratios if both legs tested in session (null otherwise) |
 
@@ -700,7 +700,8 @@ The metrics object stored in each assessment contains all derived values from CV
 | Framework | LTAD (Jeremy Frisch athletic development benchmarks) |
 | Test Duration | 30 seconds |
 | Recording Duration | ~35-40 seconds (includes countdown) |
-| Hand Position | Hands on hips (iliac crest) |
+| Arm Position | Arms extended wide (T-pose) |
+| Raised Knee | Lifted to ~90 degrees, thigh parallel to ground |
 | Eye Condition | Eyes open, focused on fixed point ahead |
 | Leg Selection | Coach selects left or right leg |
 | Surface | Flat, stable surface; barefoot preferred |
@@ -708,12 +709,12 @@ The metrics object stored in each assessment contains all derived values from CV
 #### Test Instructions (Shown to Coach)
 
 1. Position athlete on flat surface, barefoot if possible
-2. Athlete places hands on hips
+2. Athlete extends arms out wide (T-pose)
 3. Athlete focuses on a fixed point ahead (eyes open)
 4. Select which leg to test (left or right)
 5. Click Start when athlete is ready
 6. 3-2-1 countdown will appear
-7. Athlete lifts non-standing leg when countdown ends
+7. Athlete lifts non-standing leg to ~90° (thigh parallel to ground) when countdown ends
 8. 30-second timer begins
 9. Test ends when timer reaches 0 or failure is detected
 
@@ -722,7 +723,6 @@ The metrics object stored in each assessment contains all derived values from CV
 | Failure Type | Detection Method | Result |
 |--------------|------------------|--------|
 | Foot Touchdown | Raised foot Y-coordinate drops to standing foot level | Test ends, partial duration recorded |
-| Hands Leave Hips | Wrist landmarks move >threshold from hip landmarks | Test ends, partial duration recorded |
 | Support Foot Moves | Standing ankle X/Y displacement >5% of pose bounding box (frame-relative) | Test ends, partial duration recorded |
 | Time Complete | 30-second timer reaches zero | Test ends, full duration (success) |
 
@@ -748,8 +748,8 @@ The metrics object stored in each assessment contains all derived values from CV
 | Right Hip | 24 | Hip midpoint calculation for sway |
 | Left Ankle | 27 | Standing foot position, foot touchdown detection |
 | Right Ankle | 28 | Standing foot position, foot touchdown detection |
-| Left Wrist | 15 | Arm excursion, hands-on-hips detection |
-| Right Wrist | 16 | Arm excursion, hands-on-hips detection |
+| Left Wrist | 15 | Arm excursion, arm stability monitoring |
+| Right Wrist | 16 | Arm excursion, arm stability monitoring |
 | Left Shoulder | 11 | Arm excursion reference point |
 | Right Shoulder | 12 | Arm excursion reference point |
 

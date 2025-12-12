@@ -379,8 +379,8 @@ def route_request(request_type: str, data: dict) -> str:
 | Right Hip | 24 | Hip midpoint calculation for sway |
 | Left Ankle | 27 | Standing foot position, foot touchdown detection |
 | Right Ankle | 28 | Standing foot position, foot touchdown detection |
-| Left Wrist | 15 | Arm excursion, hands-on-hips detection |
-| Right Wrist | 16 | Arm excursion, hands-on-hips detection |
+| Left Wrist | 15 | Arm excursion, arm stability monitoring |
+| Right Wrist | 16 | Arm excursion, arm stability monitoring |
 | Left Shoulder | 11 | Arm excursion reference point |
 | Right Shoulder | 12 | Arm excursion reference point |
 
@@ -389,7 +389,6 @@ def route_request(request_type: str, data: dict) -> str:
 | Failure Type | Detection Method | Result |
 |--------------|------------------|--------|
 | Foot Touchdown | Raised foot Y-coordinate drops to standing foot level | Test ends, partial duration recorded |
-| Hands Leave Hips | Wrist landmarks move >threshold from hip landmarks | Test ends, partial duration recorded |
 | Support Foot Moves | Standing ankle X/Y displacement >5% of pose bounding box | Test ends, partial duration recorded |
 | Time Complete | 30-second timer reaches zero | Test ends, full duration (success) |
 
@@ -400,10 +399,6 @@ def detect_failure(landmarks: List[Landmark], frame_idx: int) -> Optional[str]:
     # Check foot touchdown
     if is_foot_touchdown(landmarks):
         return "foot_touchdown"
-
-    # Check hands left hips
-    if are_hands_off_hips(landmarks):
-        return "hands_left_hips"
 
     # Check support foot moved
     if has_support_foot_moved(landmarks):
@@ -592,7 +587,6 @@ class AssessmentMetrics(BaseModel):
     failureReason: Literal[
         'time_complete',
         'foot_touchdown',
-        'hands_left_hips',
         'support_foot_moved'
     ]
 ```

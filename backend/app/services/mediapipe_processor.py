@@ -162,11 +162,7 @@ class FailureDetector:
         if self._check_foot_touchdown(landmarks):
             return "foot_touchdown"
 
-        # Check 2: Hands leaving hips
-        if self._check_hands_left_hips(landmarks):
-            return "hands_left_hips"
-
-        # Check 3: Support foot movement
+        # Check 2: Support foot movement
         if self._check_support_foot_moved(landmarks):
             return "support_foot_moved"
 
@@ -188,36 +184,6 @@ class FailureDetector:
         y_distance = abs(raised_ankle[1] - support_ankle[1])
 
         return y_distance < lm.FOOT_TOUCHDOWN_THRESHOLD
-
-    def _check_hands_left_hips(self, landmarks: List[Tuple]) -> bool:
-        """Check if hands left hips.
-
-        Args:
-            landmarks: Landmark list
-
-        Returns:
-            True if hands left hips
-        """
-        left_wrist = landmarks[lm.LEFT_WRIST]
-        right_wrist = landmarks[lm.RIGHT_WRIST]
-        left_hip = landmarks[lm.LEFT_HIP]
-        right_hip = landmarks[lm.RIGHT_HIP]
-
-        # Calculate distance from each wrist to corresponding hip
-        left_distance = np.sqrt(
-            (left_wrist[0] - left_hip[0]) ** 2 +
-            (left_wrist[1] - left_hip[1]) ** 2
-        )
-        right_distance = np.sqrt(
-            (right_wrist[0] - right_hip[0]) ** 2 +
-            (right_wrist[1] - right_hip[1]) ** 2
-        )
-
-        # If either hand is too far from hip
-        return (
-            left_distance > lm.HIP_TO_WRIST_THRESHOLD or
-            right_distance > lm.HIP_TO_WRIST_THRESHOLD
-        )
 
     def _check_support_foot_moved(self, landmarks: List[Tuple]) -> bool:
         """Check if support foot moved significantly.

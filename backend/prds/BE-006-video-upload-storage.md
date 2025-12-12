@@ -208,7 +208,6 @@ class AssessmentStatus(str, Enum):
 class FailureReason(str, Enum):
     TIME_COMPLETE = "time_complete"
     FOOT_TOUCHDOWN = "foot_touchdown"
-    HANDS_LEFT_HIPS = "hands_left_hips"
     SUPPORT_FOOT_MOVED = "support_foot_moved"
 
 class MetricsData(BaseModel):

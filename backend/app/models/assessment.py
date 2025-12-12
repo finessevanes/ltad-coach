@@ -28,7 +28,6 @@ class FailureReason(str, Enum):
     """Reason for test failure."""
     TIME_COMPLETE = "time_complete"  # Completed full 30 seconds
     FOOT_TOUCHDOWN = "foot_touchdown"  # Raised foot touched ground
-    HANDS_LEFT_HIPS = "hands_left_hips"  # Hands moved from hips
     SUPPORT_FOOT_MOVED = "support_foot_moved"  # Standing foot moved
 
 
