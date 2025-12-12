@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
-
-interface PoseResult {
-  landmarks: any[];
-  worldLandmarks: any[];
-}
+import { PoseResult } from '../types/mediapipe';
+import { LegTested } from '../types/assessment';
 
 interface UseMediaPipeResult {
   loading: boolean;
@@ -13,6 +10,8 @@ interface UseMediaPipeResult {
   fps: number;
   isPersonDetected: boolean;
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  legTested: LegTested;
+  setLegTested: (leg: LegTested) => void;
 }
 
 export function useMediaPipe(
@@ -24,6 +23,7 @@ export function useMediaPipe(
   const [poseResult, setPoseResult] = useState<PoseResult | null>(null);
   const [fps, setFps] = useState(0);
   const [isPersonDetected, setIsPersonDetected] = useState(false);
+  const [legTested, setLegTested] = useState<LegTested>('right');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
@@ -153,5 +153,7 @@ export function useMediaPipe(
     fps,
     isPersonDetected,
     canvasRef,
+    legTested,
+    setLegTested,
   };
 }

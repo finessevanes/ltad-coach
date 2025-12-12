@@ -6,6 +6,7 @@ import { RecordingStep } from './steps/RecordingStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { UploadStep } from './steps/UploadStep';
 import { LegTested, TestType } from '../../types/assessment';
+import { TestResult } from '../../types/balanceTest';
 
 const steps = ['Test Setup', 'Recording', 'Review', 'Upload'];
 
@@ -19,6 +20,12 @@ export default function AssessmentFlow() {
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
+
+  // Log testResult for debugging (will be used in upload step later)
+  if (testResult) {
+    console.log('[AssessmentFlow] Current testResult:', testResult.success ? 'PASSED' : 'FAILED');
+  }
 
   if (!athleteId) {
     navigate('/athletes');
@@ -41,9 +48,21 @@ export default function AssessmentFlow() {
     setSelectedDevice(deviceId);
   };
 
-  const handleRecordingComplete = (blob: Blob, duration: number) => {
+  const handleRecordingComplete = (blob: Blob, duration: number, result?: TestResult) => {
+    console.log('Recording complete:', { duration, result });
+    if (result) {
+      console.log('Test Result:', {
+        success: result.success,
+        holdTime: result.holdTime,
+        failureReason: result.failureReason,
+        armExcursionLeft: result.armExcursionLeft,
+        armExcursionRight: result.armExcursionRight,
+        landmarkFrames: result.landmarkHistory.length,
+      });
+    }
     setVideoBlob(blob);
     setVideoDuration(duration);
+    setTestResult(result || null);
     handleNext();
   };
 
