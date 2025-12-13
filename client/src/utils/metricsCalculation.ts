@@ -591,6 +591,11 @@ export interface CalculatedMetrics {
   armAngleLeft: number;
   armAngleRight: number;
   armAsymmetryRatio: number;
+  armAngleRangeLeft: number;       // degrees (max - min)
+  armAngleRangeRight: number;      // degrees
+  armAngleStdDevLeft: number;      // degrees
+  armAngleStdDevRight: number;     // degrees
+  timeArmsAboveHorizontal: number; // percentage (0-100)
   stabilityScore: number;
   temporal: TemporalMetrics;
 }
@@ -649,10 +654,15 @@ export function calculateMetrics(
     temporal.middleThird.correctionsCount +
     temporal.lastThird.correctionsCount;
 
-  // Calculate arm angles
-  let totalArmAngleLeft = 0;
-  let totalArmAngleRight = 0;
-  let armCount = 0;
+  // Calculate arm angles - collect all angles for new metrics
+  const armAnglesLeftArray: number[] = [];
+  const armAnglesRightArray: number[] = [];
+  let minArmAngleLeft = Infinity,
+    maxArmAngleLeft = -Infinity;
+  let minArmAngleRight = Infinity,
+    maxArmAngleRight = -Infinity;
+  let framesAboveHorizontalLeft = 0;
+  let framesAboveHorizontalRight = 0;
 
   for (const frame of landmarkHistory) {
     const worldLandmarks = frame.worldLandmarks;
@@ -664,14 +674,51 @@ export function calculateMetrics(
     const rightWrist = worldLandmarks[FILTERED_INDEX.RIGHT_WRIST];
 
     if (leftShoulder && leftWrist && rightShoulder && rightWrist) {
-      totalArmAngleLeft += calculateArmAngle(leftShoulder, leftWrist);
-      totalArmAngleRight += calculateArmAngle(rightShoulder, rightWrist);
-      armCount++;
+      const leftAngle = calculateArmAngle(leftShoulder, leftWrist);
+      const rightAngle = calculateArmAngle(rightShoulder, rightWrist);
+
+      // Collect for averages
+      armAnglesLeftArray.push(leftAngle);
+      armAnglesRightArray.push(rightAngle);
+
+      // Track min/max for range
+      minArmAngleLeft = Math.min(minArmAngleLeft, leftAngle);
+      maxArmAngleLeft = Math.max(maxArmAngleLeft, leftAngle);
+      minArmAngleRight = Math.min(minArmAngleRight, rightAngle);
+      maxArmAngleRight = Math.max(maxArmAngleRight, rightAngle);
+
+      // Count frames above horizontal (angle < 0)
+      if (leftAngle < 0) framesAboveHorizontalLeft++;
+      if (rightAngle < 0) framesAboveHorizontalRight++;
     }
   }
 
-  const armAngleLeft = armCount > 0 ? totalArmAngleLeft / armCount : 0;
-  const armAngleRight = armCount > 0 ? totalArmAngleRight / armCount : 0;
+  // Averages
+  const armAngleLeft =
+    armAnglesLeftArray.length > 0
+      ? armAnglesLeftArray.reduce((a, b) => a + b, 0) / armAnglesLeftArray.length
+      : 0;
+  const armAngleRight =
+    armAnglesRightArray.length > 0
+      ? armAnglesRightArray.reduce((a, b) => a + b, 0) / armAnglesRightArray.length
+      : 0;
+
+  // Range metrics
+  const armAngleRangeLeft =
+    armAnglesLeftArray.length > 0 ? maxArmAngleLeft - minArmAngleLeft : 0;
+  const armAngleRangeRight =
+    armAnglesRightArray.length > 0 ? maxArmAngleRight - minArmAngleRight : 0;
+
+  // Standard deviation
+  const armAngleStdDevLeft = calculateStdDev(armAnglesLeftArray);
+  const armAngleStdDevRight = calculateStdDev(armAnglesRightArray);
+
+  // Time above horizontal (average of both arms)
+  const totalArmFrames = armAnglesLeftArray.length + armAnglesRightArray.length;
+  const totalAboveHorizontal =
+    framesAboveHorizontalLeft + framesAboveHorizontalRight;
+  const timeArmsAboveHorizontal =
+    totalArmFrames > 0 ? (totalAboveHorizontal / totalArmFrames) * 100 : 0;
 
   // Calculate arm asymmetry ratio
   const armAsymmetryRatio =
@@ -706,6 +753,25 @@ export function calculateMetrics(
   console.log('--- ARM ANGLES (should change with arm flapping) ---');
   console.log('[Metrics] Left Arm Angle:', armAngleLeft.toFixed(1), '°');
   console.log('[Metrics] Right Arm Angle:', armAngleRight.toFixed(1), '°');
+  console.log(
+    '[Metrics] Left Range:',
+    armAngleRangeLeft.toFixed(1),
+    '° | StdDev:',
+    armAngleStdDevLeft.toFixed(1),
+    '°'
+  );
+  console.log(
+    '[Metrics] Right Range:',
+    armAngleRangeRight.toFixed(1),
+    '° | StdDev:',
+    armAngleStdDevRight.toFixed(1),
+    '°'
+  );
+  console.log(
+    '[Metrics] Time Arms Above Horizontal:',
+    timeArmsAboveHorizontal.toFixed(1),
+    '%'
+  );
   console.log('--- FINAL SCORE ---');
   console.log('[Metrics] Stability Score:', stabilityScore.toFixed(1), '/ 100');
   console.log('=====================================\n');
@@ -730,6 +796,11 @@ export function calculateMetrics(
       correctionsCount,
       armAngleLeft,
       armAngleRight,
+      armAngleRangeLeft,
+      armAngleRangeRight,
+      armAngleStdDevLeft,
+      armAngleStdDevRight,
+      timeArmsAboveHorizontal,
       stabilityScore,
     },
     temporal,
@@ -753,6 +824,11 @@ export function calculateMetrics(
     armAngleLeft: Math.round(armAngleLeft * 10) / 10,
     armAngleRight: Math.round(armAngleRight * 10) / 10,
     armAsymmetryRatio: Math.round(armAsymmetryRatio * 100) / 100,
+    armAngleRangeLeft: Math.round(armAngleRangeLeft * 10) / 10,
+    armAngleRangeRight: Math.round(armAngleRangeRight * 10) / 10,
+    armAngleStdDevLeft: Math.round(armAngleStdDevLeft * 10) / 10,
+    armAngleStdDevRight: Math.round(armAngleStdDevRight * 10) / 10,
+    timeArmsAboveHorizontal: Math.round(timeArmsAboveHorizontal * 10) / 10,
     stabilityScore,
     temporal,
   };
