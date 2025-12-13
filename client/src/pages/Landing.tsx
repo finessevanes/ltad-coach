@@ -5,19 +5,9 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { useState, useEffect } from 'react';
 
 export function Landing() {
   const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'white' }}>
