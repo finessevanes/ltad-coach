@@ -57,7 +57,7 @@ export function AppBar({ drawerWidth, onMenuClick }: AppBarProps) {
           <MenuIcon />
         </IconButton>
         <Typography variant="h6" noWrap component="div">
-          AI Coach
+          CoachLens
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         {user ? (
