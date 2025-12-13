@@ -22,5 +22,8 @@ resend>=0.7.0
 # HTTP client for external APIs
 aiohttp>=3.9.0
 
+# Anthropic API client for AI agents
+anthropic>=0.25.0
+
 # NumPy for numerical operations (used by scoring utilities)
 numpy>=1.26.0

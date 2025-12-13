@@ -63,7 +63,7 @@ ltad-coach/
 
 **NFR-3**: AI feedback <10 seconds
 - Haiku for compression, Sonnet for assessment/progress
-- Enable prompt caching for static LTAD content (~90% cost savings)
+- Use static LTAD context in system prompts
 
 **NFR-4**: Page load <3 seconds
 - Lazy load analysis components
@@ -125,7 +125,7 @@ Client (React)                    Backend (FastAPI)                 External
 ─────────────────                ──────────────────                ─────────
 Camera capture
 MediaPipe.js (metrics) ──────────► Validate auth/consent
-All 11 CV metrics calculated     Duration scoring (LTAD 1-5)
+17+ CV metrics calculated        Duration scoring (LTAD 1-5)
 Video upload ────────────────────► ─────────────────────────────► Firebase Storage
                                   Agent orchestrator ─────────────► OpenRouter (Claude)
                                   Store results ──────────────────► Firestore
@@ -228,7 +228,7 @@ reports/{reportId}
 ### Context Management
 - **Offloading**: Store raw keypoints in Cloud Storage, not LLM context
 - **Compression**: Use Haiku to summarize before passing to Sonnet
-- **Caching**: Cache static LTAD benchmarks in system prompt
+- **Static Context**: Provide LTAD benchmarks in system prompts
 
 ## Implementation Order
 

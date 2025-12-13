@@ -2,6 +2,7 @@
 id: BE-009
 depends_on: [BE-008]
 blocks: [BE-010, BE-011]
+status: ✅ COMPLETE
 ---
 
 # BE-009: Agent Orchestrator & Compression Agent
@@ -14,8 +15,7 @@ Implement AI agent orchestration and context compression
 ### In Scope
 - Agent orchestrator (pure Python routing logic)
 - Compression Agent using Claude Haiku
-- OpenRouter API client setup
-- Prompt caching for static context
+- Anthropic API client setup
 - Historical assessment compression
 
 ### Out of Scope
@@ -26,20 +26,17 @@ Implement AI agent orchestration and context compression
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| LLM API | OpenRouter | PRD specifies, multi-model support |
+| LLM API | Anthropic Direct | Direct API access to Claude models |
 | Compression Model | Claude Haiku | Fast, cheap, good for summarization |
-| Caching | Anthropic native | 90% cost savings on static prompts |
 | Orchestrator | Pure Python | No LLM needed for routing |
 
 ## Acceptance Criteria
 
-- [ ] OpenRouter API client configured and working
-- [ ] Orchestrator routes requests to correct agents
-- [ ] Compression Agent summarizes 12 assessments into ~150 tokens
-- [ ] Prompt cache configured for static LTAD content
-- [ ] Cache hit rate tracked in logs
-- [ ] Graceful fallback on API failures
-- [ ] Request/response logging for debugging
+- [x] Anthropic API client configured and working
+- [x] Orchestrator routes requests to correct agents
+- [x] Compression Agent summarizes 12 assessments into ~150 tokens
+- [x] Graceful fallback on API failures
+- [x] Request/response logging for debugging
 
 ## Files to Create/Modify
 
@@ -98,50 +95,30 @@ class OpenRouterClient:
         system: Optional[str] = None,
         max_tokens: int = 1024,
         temperature: float = 0.7,
-        cache_control: bool = False
     ) -> str:
         """
         Send chat completion request.
 
         Args:
-            model: Model ID (e.g., 'anthropic/claude-3-haiku')
+            model: Model ID (e.g., 'claude-3-haiku-20240307')
             messages: List of message dicts with 'role' and 'content'
             system: System prompt
             max_tokens: Max response tokens
             temperature: Sampling temperature
-            cache_control: Whether to use prompt caching
 
         Returns:
             Response content string
         """
-        payload = {
-            "model": model,
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-        }
+        # Use Anthropic SDK directly
+        response = await self.client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            system=system if system else None,
+            messages=messages,
+        )
 
-        if system:
-            if cache_control:
-                # Use cache_control for static system prompts
-                payload["messages"] = [
-                    {
-                        "role": "system",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": system,
-                                "cache_control": {"type": "ephemeral"}
-                            }
-                        ]
-                    },
-                    *messages
-                ]
-            else:
-                payload["messages"] = [
-                    {"role": "system", "content": system},
-                    *messages
-                ]
+        return response.content[0].text
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:

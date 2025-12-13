@@ -49,7 +49,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "raw_keypoints_url": None,
             "metrics": None,
             "client_metrics": client_metrics,
-            "ai_feedback": None,
+            "ai_coach_assessment": None,
             "failure_reason": None,
             "error_message": None,
         }
@@ -96,7 +96,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "created_at": datetime.utcnow(),
             "raw_keypoints_url": None,
             "metrics": metrics,
-            "ai_feedback": None,  # Populated in Phase 7
+            "ai_coach_assessment": None,  # Populated in Phase 7
             "error_message": None,
         }
 
@@ -109,7 +109,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
         assessment_id: str,
         metrics: Dict,
         raw_keypoints_url: str,
-        ai_feedback: str = "",
+        ai_coach_assessment: str = "",
     ) -> bool:
         """Update assessment with analysis results.
 
@@ -117,7 +117,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             assessment_id: Assessment ID
             metrics: Calculated metrics dictionary
             raw_keypoints_url: URL to raw keypoints JSON
-            ai_feedback: AI-generated feedback (populated in Phase 7)
+            ai_coach_assessment: AI-generated coach-friendly assessment feedback (Phase 7)
 
         Returns:
             True if successful
@@ -126,7 +126,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "status": AssessmentStatus.COMPLETED.value,
             "metrics": metrics,
             "raw_keypoints_url": raw_keypoints_url,
-            "ai_feedback": ai_feedback,
+            "ai_coach_assessment": ai_coach_assessment,
         }
         return await self.update(assessment_id, update_data)
 

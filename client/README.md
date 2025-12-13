@@ -170,7 +170,7 @@ client/
 │   │   └── ...
 │   │
 │   ├── utils/               # Metrics calculation (SOURCE OF TRUTH)
-│   │   ├── metricsCalculation.ts  # All 11 CV metrics
+│   │   ├── metricsCalculation.ts  # 17+ CV metrics (sway, arms, temporal, events)
 │   │   ├── positionDetection.ts   # Pose state machine + failure detection
 │   │   ├── metricsComparison.ts   # Compare test results
 │   │   ├── validation.ts
@@ -211,12 +211,12 @@ client/
 
 **Location**: `src/components/BalanceTest.tsx`, `src/hooks/useBalanceTest.tsx`, `src/utils/metricsCalculation.ts`
 
-The client calculates ALL 11 CV metrics using MediaPipe.js:
+The client calculates ALL CV metrics using MediaPipe.js (17+ metrics):
 
 - Uses `getUserMedia()` for camera access (webcam or iPhone Continuity Camera)
 - MediaPipe.js streams landmarks at ≥15 FPS via `useMediaPipe` hook
 - `useBalanceTest` accumulates positions and manages test state machine
-- `metricsCalculation.ts` calculates all 11 metrics when test completes
+- `metricsCalculation.ts` calculates 17+ metrics when test completes (sway, arm angles, temporal analysis, events)
 - `positionDetection.ts` detects failures (foot down, hands off hips, etc.)
 - 3-second countdown before test begins
 - 30-second max timer during test
@@ -225,17 +225,33 @@ The client calculates ALL 11 CV metrics using MediaPipe.js:
 **Metrics Calculated Client-Side** (`utils/metricsCalculation.ts`):
 ```typescript
 {
-  holdTime: number;           // Seconds in valid position
-  stabilityScore: number;     // 0-100 composite score
-  swayStdX: number;          // Hip horizontal variance
-  swayStdY: number;          // Hip vertical variance
-  swayPathLength: number;    // Total hip trajectory
-  swayVelocity: number;      // Average hip speed
-  armDeviationLeft: number;  // Left arm movement
-  armDeviationRight: number; // Right arm movement
-  armAsymmetryRatio: number; // L/R compensation ratio
-  correctionsCount: number;  // Balance adjustments
-  failureReason: string | null; // Failure type or null
+  // Sway Metrics (5)
+  swayStdX: number;              // Hip horizontal variance (cm)
+  swayStdY: number;              // Hip vertical variance (cm)
+  swayPathLength: number;        // Total hip trajectory (cm)
+  swayVelocity: number;          // Average hip speed (cm/s)
+  correctionsCount: number;      // Balance adjustments
+
+  // Arm Metrics (8)
+  armAngleLeft: number;          // Left arm angle (degrees)
+  armAngleRight: number;         // Right arm angle (degrees)
+  armAsymmetryRatio: number;     // L/R compensation ratio
+  armAngleRangeLeft: number;     // Left arm movement range (degrees)
+  armAngleRangeRight: number;    // Right arm movement range (degrees)
+  armAngleStdDevLeft: number;    // Left arm stability (degrees)
+  armAngleStdDevRight: number;   // Right arm stability (degrees)
+  timeArmsAboveHorizontal: number; // % time arms raised
+
+  // Temporal Analysis (3 segments + 5-second windows)
+  temporal: {
+    firstThird: SegmentMetrics;
+    middleThird: SegmentMetrics;
+    lastThird: SegmentMetrics;
+  };
+  fiveSecondSegments: FiveSecondSegment[];
+
+  // Events (critical moments)
+  events: BalanceEvent[];  // Flapping, corrections, stabilization
 }
 ```
 
