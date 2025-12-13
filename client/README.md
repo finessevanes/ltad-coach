@@ -16,11 +16,13 @@ This is the frontend application for the AI Coach platform. It provides a respon
 | TypeScript | 5.x | Type safety |
 | Vite | 5.x | Build tool & dev server |
 | Material-UI | v5 | Component library |
-| MediaPipe.js | Latest | Pose detection (preview only) |
+| MediaPipe.js | 0.10.x | Pose detection (SOURCE OF TRUTH for metrics) |
 | Firebase SDK | v10 | Auth, Firestore, Storage |
 | React Router | v6 | Client-side routing |
 | camelcase-keys | Latest | Case conversion |
 | snakecase-keys | Latest | Case conversion |
+
+> **Note**: The client is the SOURCE OF TRUTH for all CV metrics. MediaPipe.js runs in the browser and calculates all 11 metrics before sending to the backend.
 
 ---
 
@@ -109,53 +111,74 @@ Application will be available at:
 client/
 ├── src/
 │   ├── components/          # Reusable UI components
-│   │   ├── AssessmentCard.tsx
-│   │   ├── ScoreBadge.tsx
-│   │   ├── AthleteList.tsx
-│   │   ├── VideoRecorder.tsx
-│   │   └── ...
+│   │   ├── BalanceTestOverlay.tsx  # Skeleton overlay for video
+│   │   ├── ConsentAlert.tsx        # Consent status alerts
+│   │   ├── EmptyState.tsx          # Empty list placeholder
+│   │   ├── LoadingState.tsx        # Loading spinner
+│   │   ├── ProtectedRoute.tsx      # Auth route guard
+│   │   ├── StatusBadge.tsx         # Consent status badges
+│   │   ├── Layout/                 # App layout components
+│   │   └── AuthForm/               # Auth form components
 │   │
 │   ├── pages/               # Route components
-│   │   ├── Landing.tsx      # Public landing page
-│   │   ├── Login.tsx        # Authentication
-│   │   ├── Register.tsx     # Account creation
-│   │   ├── Dashboard.tsx    # Coach home
-│   │   ├── Athletes.tsx     # Roster management
-│   │   ├── AthleteProfile.tsx   # Individual athlete
-│   │   ├── AssessmentResults.tsx
-│   │   ├── ConsentForm.tsx  # Public consent (no auth)
-│   │   ├── ReportView.tsx   # Public report (PIN protected)
-│   │   └── ...
+│   │   ├── Home.tsx              # Coach dashboard (home)
+│   │   ├── Login.tsx             # Authentication
+│   │   ├── Register.tsx          # Account creation
+│   │   ├── Assessment/           # Assessment flow
+│   │   │   ├── AssessmentFlow.tsx    # Main orchestrator
+│   │   │   ├── AssessmentResults.tsx # Display metrics
+│   │   │   ├── BackupUpload.tsx      # Video upload flow
+│   │   │   ├── steps/
+│   │   │   │   ├── TestSetup.tsx     # Test configuration
+│   │   │   │   ├── RecordingStep.tsx # Camera + recording
+│   │   │   │   ├── ReviewStep.tsx    # Review before submit
+│   │   │   │   └── UploadStep.tsx    # Upload progress
+│   │   │   └── components/
+│   │   │       ├── CameraSelector.tsx
+│   │   │       ├── CountdownOverlay.tsx
+│   │   │       ├── DropZone.tsx
+│   │   │       ├── RecordingTimer.tsx
+│   │   │       └── VideoPreview.tsx
+│   │   ├── Athletes/             # Athlete management
+│   │   │   ├── AthletesList.tsx  # Roster list view
+│   │   │   ├── AthletesTable.tsx # Table component
+│   │   │   └── AddAthlete.tsx    # Add/edit forms
+│   │   └── Consent/              # Public consent flow
+│   │       └── index.tsx         # Consent form (no auth)
 │   │
 │   ├── hooks/               # Custom React hooks
-│   │   ├── useAuth.tsx      # Firebase auth state
-│   │   ├── useEditLock.tsx  # Edit conflict prevention
-│   │   ├── useCamera.tsx    # Camera access
-│   │   └── ...
+│   │   ├── useBalanceTest.ts     # Full test state machine (SOURCE OF TRUTH)
+│   │   ├── useMediaPipe.ts       # Pose detection loop
+│   │   ├── useCamera.ts          # Camera access
+│   │   ├── useVideoRecorder.ts   # MediaRecorder wrapper
+│   │   ├── useFirebaseUpload.ts  # Storage upload
+│   │   └── useAssessmentPolling.ts # Poll for completion
 │   │
 │   ├── services/            # API & external services
-│   │   ├── api.ts           # Backend API client
-│   │   ├── firebase.ts      # Firebase initialization
-│   │   ├── firestore.ts     # Firestore operations
-│   │   ├── storage.ts       # Firebase Storage
+│   │   ├── api.ts           # Backend API client (with case conversion)
+│   │   ├── assessments.ts   # POST metrics to backend
+│   │   ├── athletes.ts      # Athlete CRUD
 │   │   └── ...
+│   │
+│   ├── firebase/            # Firebase configuration
+│   │   └── config.ts        # Firebase initialization
 │   │
 │   ├── types/               # TypeScript interfaces
 │   │   ├── athlete.ts
 │   │   ├── assessment.ts
-│   │   ├── report.ts
-│   │   ├── user.ts
+│   │   ├── mediapipe.ts     # Landmark types
 │   │   └── ...
 │   │
-│   ├── utils/               # Utility functions
-│   │   ├── caseConversion.ts
+│   ├── utils/               # Metrics calculation (SOURCE OF TRUTH)
+│   │   ├── metricsCalculation.ts  # All 11 CV metrics
+│   │   ├── positionDetection.ts   # Pose state machine + failure detection
+│   │   ├── metricsComparison.ts   # Compare test results
 │   │   ├── validation.ts
-│   │   ├── formatting.ts
-│   │   └── ...
+│   │   └── firebaseErrors.ts
 │   │
 │   ├── contexts/            # React Context providers
-│   │   ├── AuthContext.tsx
-│   │   └── ...
+│   │   ├── AuthContext.tsx       # Firebase auth state
+│   │   └── SnackbarContext.tsx   # Toast notifications
 │   │
 │   ├── App.tsx              # Root component with routing
 │   ├── main.tsx             # Application entry point
@@ -184,18 +207,39 @@ client/
 
 ## Key Features
 
-### Camera & Video Capture (FE-008, FE-009)
+### Balance Test Recording (FE-008, FE-009) - SOURCE OF TRUTH
 
-**Location**: `src/components/VideoRecorder.tsx`, `src/hooks/useCamera.tsx`
+**Location**: `src/components/BalanceTest.tsx`, `src/hooks/useBalanceTest.tsx`, `src/utils/metricsCalculation.ts`
+
+The client calculates ALL 11 CV metrics using MediaPipe.js:
 
 - Uses `getUserMedia()` for camera access (webcam or iPhone Continuity Camera)
-- MediaPipe.js renders live skeleton overlay (preview only, not source of truth)
-- MediaRecorder captures raw video (no skeleton baked in)
+- MediaPipe.js streams landmarks at ≥15 FPS via `useMediaPipe` hook
+- `useBalanceTest` accumulates positions and manages test state machine
+- `metricsCalculation.ts` calculates all 11 metrics when test completes
+- `positionDetection.ts` detects failures (foot down, hands off hips, etc.)
 - 3-second countdown before test begins
-- 30-second timer during test
-- Preview and reshoot capability
+- 30-second max timer during test
+- Video recorded and uploaded to Firebase Storage
 
-**Important**: Client-side MediaPipe.js is **PREVIEW ONLY**. Server-side MediaPipe (Python) is the source of truth for all metrics.
+**Metrics Calculated Client-Side** (`utils/metricsCalculation.ts`):
+```typescript
+{
+  holdTime: number;           // Seconds in valid position
+  stabilityScore: number;     // 0-100 composite score
+  swayStdX: number;          // Hip horizontal variance
+  swayStdY: number;          // Hip vertical variance
+  swayPathLength: number;    // Total hip trajectory
+  swayVelocity: number;      // Average hip speed
+  armDeviationLeft: number;  // Left arm movement
+  armDeviationRight: number; // Right arm movement
+  armAsymmetryRatio: number; // L/R compensation ratio
+  correctionsCount: number;  // Balance adjustments
+  failureReason: string | null; // Failure type or null
+}
+```
+
+**Important**: Client-side MediaPipe.js is the **SOURCE OF TRUTH** for all metrics. The backend only validates auth/consent and adds duration scoring.
 
 ### Video Upload (FE-010)
 
@@ -221,17 +265,16 @@ Displays results with:
 
 ### Athlete Management (FE-004, FE-005, FE-012)
 
-**Roster List** (`src/pages/Athletes.tsx`):
+**Roster List** (`src/pages/Athletes/AthletesList.tsx`):
 - View all athletes with consent status badges
 - Search and filter
 - Add new athlete button
 
-**Add/Edit Forms** (`src/components/AthleteForm.tsx`):
+**Add/Edit Forms** (`src/pages/Athletes/AddAthlete.tsx`):
 - Name, age, gender, parent email
 - Validation with clear error messages
-- Edit locking to prevent concurrent edits (see `useEditLock` hook)
 
-**Athlete Profile** (`src/pages/AthleteProfile.tsx`):
+**Athlete Profile**:
 - Assessment history list
 - Progress chart
 - Generate report button
@@ -239,7 +282,7 @@ Displays results with:
 
 ### Consent Status UI (FE-007)
 
-**Location**: `src/components/ConsentBadge.tsx`
+**Location**: `src/components/StatusBadge.tsx`, `src/components/ConsentAlert.tsx`
 
 Visual indicators for consent status:
 - **Pending** (yellow): Awaiting parent consent
@@ -249,7 +292,7 @@ Visual indicators for consent status:
 
 ### Dashboard (FE-015)
 
-**Location**: `src/pages/Dashboard.tsx`
+**Location**: `src/pages/Home.tsx`
 
 Coach home screen showing:
 - Quick stats (total athletes, assessments this month, pending consent)
@@ -392,31 +435,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 ```
 
-### Edit Locking Pattern
-
-Prevent concurrent edits (see [prd.md Section 8.10](../prd.md#810-concurrent-access--edit-locking)):
-
-```typescript
-import { useEditLock } from '@/hooks/useEditLock';
-
-const EditAthleteForm = ({ athleteId }: Props) => {
-  const { hasLock, acquiring, error } = useEditLock('athlete', athleteId);
-
-  if (acquiring) return <CircularProgress />;
-
-  if (!hasLock) {
-    return (
-      <Alert severity="warning">
-        This athlete is being edited in another session.
-        Please try again later.
-      </Alert>
-    );
-  }
-
-  return <form>{/* edit form */}</form>;
-};
-```
-
 ---
 
 ## Environment Variables
@@ -542,27 +560,43 @@ Can also deploy to:
 
 ## Important: MediaPipe.js Usage
 
-### Preview Only
+### Client is Source of Truth (Current Implementation)
 
-Client-side MediaPipe.js is **for visual feedback only**:
-- Renders skeleton overlay during recording
-- Helps coach frame athlete correctly
-- NOT used for metrics calculation
-- NOT stored or submitted to backend
+Client-side MediaPipe.js is the **SOURCE OF TRUTH** for all metrics:
+- Streams pose landmarks at ≥15 FPS during recording
+- Renders skeleton overlay for visual feedback
+- `useBalanceTest` accumulates landmark positions
+- `metricsCalculation.ts` calculates all 11 metrics
+- `positionDetection.ts` detects test failures
+- Pre-calculated metrics sent to backend via POST
 
-### Source of Truth
+### Backend Role
 
-Server-side MediaPipe (Python) is the source of truth:
-- Receives raw video from client
-- Extracts pose landmarks server-side
-- Calculates all official metrics
-- Results stored in Firestore
+Backend acts as a validated write proxy:
+- Validates Firebase auth token
+- Validates athlete ownership and consent status
+- Calculates duration_score (1-5 LTAD scale)
+- Calculates age_expectation (above/meets/below)
+- Stores assessment as "completed" immediately
+
+### Assessment Flow
+
+```
+1. useMediaPipe streams landmarks → useBalanceTest accumulates
+2. On test complete → metricsCalculation.ts calculates 11 metrics
+3. Video uploaded to Firebase Storage
+4. POST /assessments/analyze with client_metrics
+5. Backend validates, adds duration_score, stores assessment
+6. Frontend displays results
+```
 
 **Why this architecture?**
-- Consistent metric calculation across all videos
-- No browser compatibility issues
-- Can re-process videos if algorithm improves
-- Reduces client-side computation
+- Immediate results (no polling, no background processing)
+- Reduced server-side compute requirements
+- Simpler backend (no MediaPipe Python, no OpenCV)
+- All processing happens during recording, not after
+
+> **Note**: This differs from the original PRD which planned for server-side MediaPipe. The implementation was changed to improve user experience and reduce infrastructure complexity.
 
 ---
 

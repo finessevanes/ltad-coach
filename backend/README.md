@@ -1,8 +1,10 @@
 # AI Coach - Backend
 
-> Python + FastAPI REST API with MediaPipe and Claude AI
+> Python + FastAPI REST API with Firebase and Claude AI
 
-This is the backend API for the AI Coach platform. It handles video analysis using MediaPipe, generates AI-powered feedback using Claude, manages data in Firebase, and serves the frontend application.
+This is the backend API for the AI Coach platform. It validates assessments with client-calculated metrics, manages data in Firebase, and serves the frontend application.
+
+> **Note**: The architecture has evolved from the original PRD. Video analysis (MediaPipe) now runs client-side, with the backend serving as a validated write proxy. AI agents (Phase 7) are not yet implemented.
 
 [← Back to Project Overview](../README.md)
 
@@ -15,9 +17,8 @@ This is the backend API for the AI Coach platform. It handles video analysis usi
 | Python | 3.11 | Programming language |
 | FastAPI | Latest | REST API framework |
 | pip + requirements.txt | - | Dependency management |
-| MediaPipe | v0.10.9 | Pose detection |
 | Firebase Admin SDK | Latest | Auth, Firestore, Storage |
-| OpenRouter | API | Claude access |
+| OpenRouter | API | Claude access (Phase 7 - not yet implemented) |
 | Resend | API | Transactional emails |
 | Uvicorn | Latest | ASGI server |
 | Pydantic | v2 | Data validation |
@@ -26,12 +27,12 @@ This is the backend API for the AI Coach platform. It handles video analysis usi
 
 ## Prerequisites
 
-- **Python** 3.11+ (MediaPipe requires 3.11, not 3.12+)
+- **Python** 3.11+
 - **pip** for package management
 - **Firebase** project with Admin SDK credentials
-- **OpenRouter** API key for Claude models
 - **Resend** API key for sending emails
 - **Frontend** running (see [../client/README.md](../client/README.md))
+- **OpenRouter** API key (optional - for Phase 7 AI agents)
 
 ---
 
@@ -142,52 +143,49 @@ curl http://localhost:8000/health
 backend/
 ├── app/
 │   ├── main.py              # FastAPI app initialization
+│   ├── config.py            # Environment configuration
+│   ├── firebase.py          # Firebase Admin SDK initialization
 │   │
-│   ├── routes/              # API endpoints
+│   ├── routers/             # API endpoints
 │   │   ├── __init__.py
 │   │   ├── auth.py          # Authentication endpoints
 │   │   ├── athletes.py      # Athlete CRUD
-│   │   ├── consent.py       # Consent workflow
-│   │   ├── assessments.py   # Video upload & analysis
-│   │   ├── reports.py       # Parent report generation
-│   │   └── dashboard.py     # Coach dashboard data
+│   │   ├── consent.py       # Consent workflow (public)
+│   │   └── assessments.py   # Assessment storage (client-calculated metrics)
 │   │
 │   ├── services/            # Business logic
-│   │   ├── __init__.py
-│   │   ├── auth.py          # Firebase auth verification
-│   │   ├── mediapipe_service.py    # Pose detection
-│   │   ├── metrics_calculator.py   # Metric calculations
-│   │   ├── email_service.py        # Email sending
-│   │   └── storage_service.py      # Firebase Storage
+│   │   ├── email.py         # Email sending via Resend
+│   │   ├── video.py         # Video validation utilities
+│   │   └── metrics.py       # Duration scoring (LTAD benchmarks)
 │   │
-│   ├── agents/              # AI agent implementations
-│   │   ├── __init__.py
-│   │   ├── orchestrator.py         # Routing logic
-│   │   ├── compression_agent.py    # History summarization
-│   │   ├── assessment_agent.py     # Single test feedback
-│   │   └── progress_agent.py       # Trend analysis
+│   ├── repositories/        # Data access layer
+│   │   ├── base.py          # Generic Firestore CRUD
+│   │   ├── user.py          # User operations
+│   │   ├── athlete.py       # Athlete operations
+│   │   └── assessment.py    # Assessment operations
 │   │
 │   ├── models/              # Pydantic schemas
 │   │   ├── __init__.py
-│   │   ├── athlete.py
-│   │   ├── assessment.py
-│   │   ├── report.py
-│   │   ├── user.py
-│   │   └── ...
+│   │   ├── athlete.py       # Athlete models
+│   │   ├── assessment.py    # Assessment + metrics models
+│   │   ├── consent.py       # Consent form models
+│   │   ├── user.py          # User models
+│   │   └── errors.py        # Error response models
 │   │
-│   └── utils/               # Helpers & config
-│       ├── __init__.py
-│       ├── firebase.py      # Firebase initialization
-│       ├── config.py        # Environment config
-│       ├── exceptions.py    # Custom exceptions
-│       └── ...
+│   ├── middleware/          # Request middleware
+│   │   ├── auth.py          # Firebase token validation
+│   │   └── rate_limit.py    # In-memory rate limiting
+│   │
+│   ├── constants/           # Application constants
+│   │   └── scoring.py       # LTAD scoring thresholds
+│   │
+│   ├── agents/              # AI agents (Phase 7 - NOT YET IMPLEMENTED)
+│   │   └── (empty)
+│   │
+│   └── prompts/             # AI prompts (Phase 7 - NOT YET IMPLEMENTED)
+│       └── (empty)
 │
-├── tests/                   # Test suite
-│   ├── __init__.py
-│   ├── test_metrics.py
-│   ├── test_agents.py
-│   ├── test_auth.py
-│   └── ...
+├── tests/                   # Test suite (empty - tests not yet written)
 │
 ├── prds/                    # Backend PRD specifications
 │   ├── BE-001-project-setup.md
@@ -196,6 +194,8 @@ backend/
 │   └── BE-015-dashboard-endpoint.md
 │
 ├── requirements.txt         # Python dependencies
+├── render.yaml              # Render deployment config
+├── runtime.txt              # Python version (3.11.9)
 ├── .env                     # Environment variables (not committed)
 ├── .gitignore
 └── README.md                # This file
@@ -207,241 +207,180 @@ backend/
 
 Interactive documentation with request/response examples available at http://localhost:8000/docs
 
+### Health Check
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/health` | Server status and Firebase connection check | No |
+
 ### Authentication
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/auth/token` | Validate Firebase JWT and create session | Yes (Firebase ID token) |
-| POST | `/auth/logout` | Invalidate session | Yes |
+| POST | `/auth/token` | Validate Firebase JWT and return user data | Yes (Firebase ID token) |
+| POST | `/auth/logout` | Logout (server-side cleanup) | Yes |
 
 ### Athletes
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/athletes` | List all athletes for authenticated coach | Yes |
+| GET | `/athletes` | List all athletes for coach (optional consent status filter) | Yes |
 | POST | `/athletes` | Create athlete (triggers consent email) | Yes |
 | GET | `/athletes/{id}` | Get single athlete details | Yes |
 | PUT | `/athletes/{id}` | Update athlete information | Yes |
 | DELETE | `/athletes/{id}` | Delete athlete from roster | Yes |
+| POST | `/athletes/{id}/resend-consent` | Resend consent email (rate limited) | Yes |
 
-### Consent
+### Consent (Public - No Auth)
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/consent/{token}` | Get consent form (public) | No |
-| POST | `/consent/{token}/sign` | Submit signed consent | No |
-| POST | `/consent/{token}/decline` | Decline consent | No |
-| POST | `/athletes/{id}/resend-consent` | Resend consent email | Yes |
+| GET | `/consent/{token}` | Get consent form data | No |
+| POST | `/consent/{token}/sign` | Parent provides consent | No |
+| POST | `/consent/{token}/decline` | Parent declines consent | No |
 
 ### Assessments
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/assessments/analyze` | Submit video for analysis (multipart) | Yes |
-| GET | `/assessments` | List all assessments for coach (activity feed) | Yes |
-| GET | `/assessments/athlete/{athleteId}` | List assessments for specific athlete | Yes |
+| POST | `/assessments/analyze` | Store assessment with client-calculated metrics | Yes |
 | GET | `/assessments/{id}` | Get single assessment details | Yes |
-| PUT | `/assessments/{id}/notes` | Update coach notes | Yes |
-| DELETE | `/assessments/{id}` | Delete assessment | Yes |
+| GET | `/assessments/athlete/{athlete_id}` | Get all assessments for an athlete | Yes |
 
-### Reports
+> **Note**: The `/assessments/analyze` endpoint now expects client-calculated metrics. The client is the source of truth for all CV metrics. The backend validates ownership/consent and calculates LTAD duration scores.
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/reports/generate/{athleteId}` | Generate parent report preview | Yes |
-| POST | `/reports/{athleteId}/send` | Send report to parent (generates PIN, sends email) | Yes |
-| GET | `/reports/view/{id}` | Get report content (public, requires PIN) | No |
-| POST | `/reports/view/{id}/verify` | Verify PIN for report access | No |
+### Not Yet Implemented (Phase 7+)
 
-### Dashboard
+The following endpoints are documented in PRDs but not yet implemented:
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/dashboard` | Get coach dashboard data (stats, recent activity, pending consent) | Yes |
+| Endpoint | PRD | Status |
+|----------|-----|--------|
+| `/reports/*` | BE-013, BE-014 | Phase 9 |
+| `/dashboard` | BE-015 | Phase 10 |
+| `/assessments/{id}/notes` | BE-012 | Phase 8 |
 
 ---
 
 ## Key Features
 
-### Video Analysis Pipeline (BE-006, BE-007, BE-008)
+### Assessment Storage (Current Implementation)
 
-**Flow**:
-1. Client uploads video via multipart form data
-2. Backend uploads video to Firebase Storage
-3. Create assessment record with status: `"processing"`
-4. Return assessment ID immediately (don't block)
-5. Background task:
-   - Download video from Storage
-   - MediaPipe extracts pose landmarks (33 keypoints)
-   - Calculate derived metrics (duration, sway, stability, etc.)
-   - Store raw keypoints to Storage (context offloading)
-   - Pass metrics to AI agent system
-   - Generate coach-friendly feedback
-6. Update assessment status: `"completed"` or `"failed"`
-7. Frontend polls for completion
+> **Architecture Change**: The original PRD specified server-side MediaPipe analysis. The current implementation uses client-side MediaPipe, with the backend serving as a validated write proxy.
 
-**Performance Requirements**:
-- **NFR-2**: Video analysis <30 seconds
-- **NFR-3**: AI feedback <10 seconds
+**Current Flow**:
+1. Client records video and calculates all metrics using MediaPipe.js
+2. Client uploads video to Firebase Storage
+3. Client sends metrics + video URL to backend via `/assessments/analyze`
+4. Backend validates:
+   - Coach authentication
+   - Athlete ownership
+   - Consent status (must be "active")
+5. Backend calculates LTAD duration score from hold time
+6. Backend stores assessment as "completed" immediately
+7. Returns assessment ID to client
 
-**Example**:
+**Example** (actual implementation):
 ```python
-@router.post("/assessments/analyze")
-async def analyze_video(
-    video: UploadFile,
-    athlete_id: str = Form(...),
-    test_type: str = Form(...),
-    leg_tested: str = Form(...),
-    current_user: str = Depends(get_current_user)
+@router.post("/assessments/analyze", response_model=AnalyzeResponse)
+async def analyze_video_endpoint(
+    data: AssessmentCreate,
+    current_user: User = Depends(get_current_user),
 ):
-    # Upload video to Storage
-    video_url = await storage_service.upload_video(video, athlete_id)
+    """Store assessment with client-calculated metrics.
 
-    # Create assessment record
-    assessment_id = await create_assessment(
-        athlete_id=athlete_id,
-        coach_id=current_user,
-        video_url=video_url,
-        status="processing"
-    )
+    The client is now the source of truth for all metrics. This endpoint:
+    1. Validates athlete ownership and consent
+    2. Calculates backend-only scores (duration_score, age_expectation)
+    3. Stores the assessment as completed immediately
+    """
+    # Client metrics are required
+    if not data.client_metrics:
+        raise HTTPException(status_code=400, detail="Client metrics are required")
 
-    # Queue background task (non-blocking)
-    asyncio.create_task(process_video_async(assessment_id, video_url))
+    # Validate athlete ownership and consent
+    athlete = await athlete_repo.get_if_owned(data.athlete_id, current_user.id)
+    if athlete.consent_status != "active":
+        raise HTTPException(status_code=400, detail="Active consent required")
 
-    # Return immediately
-    return {"assessment_id": assessment_id, "status": "processing"}
+    # Calculate backend-only scores
+    duration_score, label = get_duration_score(data.client_metrics.hold_time)
+    age_expectation = get_age_expectation(athlete.age, duration_score)
+
+    # Create assessment as completed (no background processing)
+    assessment = await assessment_repo.create_completed(...)
+
+    return AnalyzeResponse(id=assessment.id, status="completed")
 ```
 
-### AI Agent System (BE-009, BE-010, BE-011)
+### LTAD Duration Scoring (Backend Calculation)
 
-Four-agent architecture using Claude via OpenRouter:
+The backend calculates duration-based scores using LTAD benchmarks:
 
-| Agent | Model | Input | Output | Cost/Call |
-|-------|-------|-------|--------|-----------|
-| **Orchestrator** | Python logic (no LLM) | Request type | Agent selection | $0 |
-| **Compression** | Claude Haiku | 12 assessments (~6000 tokens) | Summary (~150 tokens) | ~$0.002 |
-| **Assessment** | Claude Sonnet | Metrics + cached LTAD context | Coach feedback | ~$0.05 |
-| **Progress** | Claude Sonnet | Compressed history + team context | Parent report | ~$0.08 |
+| Score | Label | Duration | Ages 5-6 | Age 7 | Ages 8-9 | Ages 10-11 | Ages 12-13 |
+|-------|-------|----------|----------|-------|----------|------------|------------|
+| 1 | Beginning | 1-9 sec | Expected | Below | Below | Below | Below |
+| 2 | Developing | 10-14 sec | Above | Expected | Below | Below | Below |
+| 3 | Competent | 15-19 sec | Above | Above | Expected | Below | Below |
+| 4 | Proficient | 20-24 sec | Above | Above | Above | Expected | Below |
+| 5 | Advanced | 25-30 sec | Above | Above | Above | Above | Expected |
 
-**Deep Agent Patterns**:
-
-1. **Context Offloading**
-   - Store raw keypoints in Firebase Storage (not sent to LLM)
-   - Send only derived metrics (~500 tokens) to agents
-   - Reduces input tokens by 99%
-
-2. **Context Compression**
-   - Use Compression Agent (Haiku) to summarize history
-   - 12 assessments (6000 tokens) → 150 tokens
-   - Pass summary to Progress Agent (Sonnet)
-
-3. **Context Isolation**
-   - Each agent receives only relevant data
-   - Assessment Agent: current test only
-   - Progress Agent: compressed history + team context
-
-4. **Prompt Caching**
-   - Cache static LTAD benchmarks in system prompt
-   - ~90% cost savings on repeated calls
-   - Without caching: ~$0.44/day. With caching: ~$0.04/day (at 100 calls/day)
-
-**Orchestrator Logic**:
+**Implementation** (`app/services/metrics.py`):
 ```python
-def route_request(request_type: str, data: dict) -> str:
-    """Route request to appropriate agent (no LLM, pure logic)"""
-    if request_type == "new_assessment":
-        return await assessment_agent.generate_feedback(data["metrics"])
+def get_duration_score(duration: float) -> tuple[int, str]:
+    """Map duration to LTAD score (1-5) and label."""
+    if duration >= 25:
+        return 5, "Advanced"
+    elif duration >= 20:
+        return 4, "Proficient"
+    elif duration >= 15:
+        return 3, "Competent"
+    elif duration >= 10:
+        return 2, "Developing"
+    else:
+        return 1, "Beginning"
 
-    elif request_type == "generate_report":
-        # First compress history
-        compressed = await compression_agent.summarize(data["history"])
-        # Then generate report
-        return await progress_agent.generate_report(compressed, data["current"])
-
-    elif request_type == "view_progress":
-        compressed = await compression_agent.summarize(data["history"])
-        return await progress_agent.analyze_trends(compressed)
+def get_age_expectation(age: int, score: int) -> str:
+    """Compare score to age-based expectation."""
+    expected = AGE_EXPECTED_SCORES.get(age, 3)
+    if score > expected:
+        return "above"
+    elif score < expected:
+        return "below"
+    return "meets"
 ```
 
-### MediaPipe Analysis (BE-007)
+### AI Agent System (Phase 7 - NOT YET IMPLEMENTED)
 
-**Configuration**:
-- **Model**: BlazePose (33 landmarks)
-- **Frame rate**: 30 FPS minimum
-- **Filtering**: Low-pass Butterworth filter (2 Hz cutoff) on landmark trajectories
-- **Camera angle**: Frontal or 45-degree view preferred
+The following AI agent architecture is planned but not yet implemented:
 
-**Key Landmarks**:
+| Agent | Model | Purpose | Status |
+|-------|-------|---------|--------|
+| **Orchestrator** | Python logic | Route requests | ❌ Not implemented |
+| **Compression** | Claude Haiku | Summarize history | ❌ Not implemented |
+| **Assessment** | Claude Sonnet | Single test feedback | ❌ Not implemented |
+| **Progress** | Claude Sonnet | Trend analysis | ❌ Not implemented |
 
-| Landmark | Index | Purpose |
-|----------|-------|---------|
-| Left Hip | 23 | Hip midpoint calculation for sway |
-| Right Hip | 24 | Hip midpoint calculation for sway |
-| Left Ankle | 27 | Standing foot position, foot touchdown detection |
-| Right Ankle | 28 | Standing foot position, foot touchdown detection |
-| Left Wrist | 15 | Arm excursion, arm stability monitoring |
-| Right Wrist | 16 | Arm excursion, arm stability monitoring |
-| Left Shoulder | 11 | Arm excursion reference point |
-| Right Shoulder | 12 | Arm excursion reference point |
+See PRDs BE-009, BE-010, BE-011 for planned implementation.
 
-**Failure Detection**:
+### Client-Side Metrics (Source of Truth)
 
-| Failure Type | Detection Method | Result |
-|--------------|------------------|--------|
-| Foot Touchdown | Raised foot Y-coordinate drops to standing foot level | Test ends, partial duration recorded |
-| Support Foot Moves | Standing ankle X/Y displacement >5% of pose bounding box | Test ends, partial duration recorded |
-| Time Complete | 30-second timer reaches zero | Test ends, full duration (success) |
+All CV metrics are now calculated client-side. The client sends these metrics:
 
-**Example**:
-```python
-def detect_failure(landmarks: List[Landmark], frame_idx: int) -> Optional[str]:
-    """Detect test failure conditions"""
-    # Check foot touchdown
-    if is_foot_touchdown(landmarks):
-        return "foot_touchdown"
+| Metric | Type | Description |
+|--------|------|-------------|
+| `hold_time` | float | Duration athlete maintained balance (0-30s) |
+| `stability_score` | float | Composite stability score (0-100) |
+| `sway_std_x` | float | Std dev of lateral hip movement |
+| `sway_std_y` | float | Std dev of vertical hip movement |
+| `sway_path_length` | float | Total hip trajectory distance |
+| `sway_velocity` | float | Average hip movement speed |
+| `arm_deviation_left` | float | Left arm deviation from starting position |
+| `arm_deviation_right` | float | Right arm deviation from starting position |
+| `arm_asymmetry_ratio` | float | Left/right arm ratio |
+| `corrections_count` | int | Number of balance corrections |
+| `failure_reason` | string | "time_complete", "foot_touchdown", or "support_foot_moved" |
 
-    # Check support foot moved
-    if has_support_foot_moved(landmarks):
-        return "support_foot_moved"
-
-    # No failure
-    return None
-```
-
-### Metrics Calculation (BE-008)
-
-Derived metrics from pose landmarks:
-
-| Metric | Type | Description | Range |
-|--------|------|-------------|-------|
-| `durationSeconds` | float | Time athlete maintained balance | 0-30 |
-| `stabilityScore` | float | Composite score | 0-100 |
-| `swayStdX` | float | Std dev of lateral hip movement | >0 |
-| `swayStdY` | float | Std dev of anterior-posterior hip movement | >0 |
-| `swayPathLength` | float | Total hip distance traveled (cm) | >0 |
-| `swayVelocity` | float | Path length / duration (cm/s) | >0 |
-| `armExcursionLeft` | float | Total left arm movement | >0 |
-| `armExcursionRight` | float | Total right arm movement | >0 |
-| `armAsymmetryRatio` | float | Left/Right arm ratio | >0 |
-| `correctionsCount` | int | Number of sway threshold crossings | ≥0 |
-| `failureReason` | string | Why test ended | enum |
-
-**Stability Score Formula**:
-```python
-def calculate_stability_score(metrics: dict) -> float:
-    """Composite score (0-100), higher = better"""
-    # Weighted combination of metrics
-    score = 100 - (
-        w1 * metrics['swayStdX'] +
-        w2 * metrics['swayStdY'] +
-        w3 * metrics['armExcursion'] +
-        w4 * metrics['correctionsCount'] +
-        w5 * duration_penalty(metrics['durationSeconds'])
-    )
-    return max(0, min(100, score))
-```
-
-See [prd.md Section 11](../prd.md#11-cv-metrics-specification) for complete formulas.
+See [client/README.md](../client/README.md) for metric calculation details.
 
 ---
 
@@ -451,143 +390,134 @@ See [prd.md Section 11](../prd.md#11-cv-metrics-specification) for complete form
 
 ```python
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.services.auth import get_current_user
+from app.middleware.auth import get_current_user
+from app.models.user import User
+from app.repositories.athlete import AthleteRepository
 
 router = APIRouter(prefix="/athletes", tags=["athletes"])
 
 @router.get("/")
 async def list_athletes(
-    current_user: str = Depends(get_current_user)
-) -> List[Athlete]:
+    consent_status: str | None = None,
+    current_user: User = Depends(get_current_user)
+):
     """Get all athletes for authenticated coach"""
-    athletes = await db.athletes.where("coachId", "==", current_user).get()
-    return [Athlete(**doc.to_dict()) for doc in athletes]
+    athlete_repo = AthleteRepository()
+    athletes = await athlete_repo.get_by_coach(
+        current_user.id,
+        consent_status=consent_status
+    )
+    return {"athletes": athletes, "total": len(athletes)}
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_athlete(
-    athlete: AthleteCreate,
-    current_user: str = Depends(get_current_user)
-) -> Athlete:
+    data: AthleteCreate,
+    current_user: User = Depends(get_current_user)
+):
     """Create new athlete and send consent email"""
-    # Validate coach hasn't exceeded limit
-    if await get_athlete_count(current_user) >= 25:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Athlete limit reached (max 25)"
-        )
-
-    # Create athlete
-    athlete_data = {
-        **athlete.dict(),
-        "coachId": current_user,
-        "consentStatus": "pending",
-        "consentToken": generate_token(),
-        "createdAt": datetime.utcnow()
-    }
-    doc_ref = await db.athletes.add(athlete_data)
-
-    # Send consent email
-    await email_service.send_consent_request(
-        parent_email=athlete.parentEmail,
-        athlete_name=athlete.name,
-        consent_token=athlete_data["consentToken"]
+    athlete_repo = AthleteRepository()
+    athlete = await athlete_repo.create_for_coach(
+        coach_id=current_user.id,
+        data=data.model_dump()
     )
 
-    return Athlete(id=doc_ref.id, **athlete_data)
+    # Send consent email asynchronously
+    asyncio.create_task(
+        send_consent_request(
+            parent_email=data.parent_email,
+            athlete_name=data.name,
+            consent_token=athlete.consent_token
+        )
+    )
+
+    return athlete
 ```
 
-### Async Background Processing
+### Repository Pattern
 
 ```python
-import asyncio
-from app.services.mediapipe_service import extract_keypoints
-from app.services.metrics_calculator import calculate_metrics
-from app.agents.orchestrator import generate_feedback
+from app.repositories.base import BaseRepository
+from app.models.athlete import Athlete
 
-async def process_video_async(assessment_id: str, video_url: str):
-    """Process video in background (non-blocking)"""
-    try:
-        # Extract pose landmarks
-        keypoints = await extract_keypoints(video_url)
+class AthleteRepository(BaseRepository[Athlete]):
+    """Data access layer for athletes"""
 
-        # Calculate metrics
-        metrics = calculate_metrics(keypoints)
+    def __init__(self):
+        super().__init__("athletes", Athlete)
 
-        # Store raw keypoints (context offloading)
-        keypoints_url = await storage_service.upload_keypoints(
-            assessment_id, keypoints
-        )
+    async def get_by_coach(
+        self,
+        coach_id: str,
+        consent_status: str | None = None
+    ) -> list[Athlete]:
+        """Get all athletes for a coach"""
+        query = self.collection.where("coach_id", "==", coach_id)
+        if consent_status:
+            query = query.where("consent_status", "==", consent_status)
+        docs = query.stream()
+        return [self._doc_to_model(doc) for doc in docs]
 
-        # Generate AI feedback
-        feedback = await generate_feedback(metrics)
-
-        # Update assessment
-        await db.assessments.document(assessment_id).update({
-            "status": "completed",
-            "metrics": metrics,
-            "aiFeedback": feedback,
-            "rawKeypointsUrl": keypoints_url,
-            "completedAt": datetime.utcnow()
-        })
-
-    except Exception as e:
-        # Mark as failed
-        await db.assessments.document(assessment_id).update({
-            "status": "failed",
-            "error": str(e),
-            "failedAt": datetime.utcnow()
-        })
-        raise
-
-# In route handler:
-asyncio.create_task(process_video_async(assessment_id, video_url))
+    async def get_if_owned(
+        self,
+        athlete_id: str,
+        coach_id: str
+    ) -> Athlete | None:
+        """Get athlete only if owned by coach (security check)"""
+        athlete = await self.get(athlete_id)
+        if athlete and athlete.coach_id == coach_id:
+            return athlete
+        return None
 ```
 
 ### Pydantic Models
 
 ```python
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from typing import Optional, Literal
+from enum import Enum
+
+class ConsentStatus(str, Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    DECLINED = "declined"
 
 class AthleteCreate(BaseModel):
     """Schema for creating new athlete"""
     name: str = Field(..., min_length=1, max_length=100)
     age: int = Field(..., ge=5, le=13)
-    gender: Literal['male', 'female', 'other']
-    parentEmail: str = Field(..., regex=r'^[\w\.-]+@[\w\.-]+\.\w+$')
+    gender: Literal["male", "female", "other"]
+    parent_email: EmailStr
 
-    @validator('name')
-    def name_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('Name cannot be empty')
-        return v.strip()
-
-class Athlete(AthleteCreate):
+class Athlete(BaseModel):
     """Schema for athlete with DB fields"""
     id: str
-    coachId: str
-    consentStatus: Literal['pending', 'active', 'declined']
-    consentToken: str
-    consentTimestamp: Optional[datetime] = None
-    createdAt: datetime
+    coach_id: str
+    name: str
+    age: int
+    gender: str
+    parent_email: str
+    consent_status: ConsentStatus = ConsentStatus.PENDING
+    consent_token: str
+    consent_timestamp: Optional[datetime] = None
+    created_at: datetime
 
-class AssessmentMetrics(BaseModel):
-    """Schema for CV-derived metrics"""
-    durationSeconds: float = Field(..., ge=0, le=30)
-    stabilityScore: float = Field(..., ge=0, le=100)
-    swayStdX: float = Field(..., gt=0)
-    swayStdY: float = Field(..., gt=0)
-    swayPathLength: float = Field(..., gt=0)
-    swayVelocity: float = Field(..., gt=0)
-    armExcursionLeft: float = Field(..., ge=0)
-    armExcursionRight: float = Field(..., ge=0)
-    armAsymmetryRatio: float = Field(..., gt=0)
-    correctionsCount: int = Field(..., ge=0)
-    failureReason: Literal[
-        'time_complete',
-        'foot_touchdown',
-        'support_foot_moved'
+class ClientMetricsData(BaseModel):
+    """Schema for client-calculated metrics (source of truth)"""
+    hold_time: float = Field(..., ge=0, le=30)
+    stability_score: float = Field(..., ge=0, le=100)
+    sway_std_x: float = Field(..., ge=0)
+    sway_std_y: float = Field(..., ge=0)
+    sway_path_length: float = Field(..., ge=0)
+    sway_velocity: float = Field(..., ge=0)
+    arm_deviation_left: float = Field(..., ge=0)
+    arm_deviation_right: float = Field(..., ge=0)
+    arm_asymmetry_ratio: float = Field(..., ge=0)
+    corrections_count: int = Field(..., ge=0)
+    failure_reason: Literal[
+        "time_complete",
+        "foot_touchdown",
+        "support_foot_moved"
     ]
 ```
 
@@ -783,22 +713,6 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ## Troubleshooting
 
-### MediaPipe Import Errors
-
-**Issue**: `ModuleNotFoundError: No module named 'mediapipe'`
-
-**Solutions**:
-```bash
-# Ensure Python 3.11 (not 3.12+)
-python --version
-
-# Clear cache and reinstall
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
 ### Firebase Authentication Errors
 
 **Issue**: `google.auth.exceptions.DefaultCredentialsError`
@@ -819,29 +733,14 @@ pip install -r requirements.txt
 - Implement exponential backoff for retries
 - Use mock responses during development
 
-### Slow Video Processing
+### Slow API Responses
 
-**Issue**: Analysis takes >60 seconds
-
-**Solutions**:
-- Check MediaPipe frame rate (target: 30 FPS)
-- Ensure video resolution not too high (max 1080p)
-- Verify server has sufficient CPU (2+ cores recommended)
-- Consider offloading to background worker queue
-
-### Memory Errors
-
-**Issue**: `MemoryError` during video processing
+**Issue**: API calls taking too long
 
 **Solutions**:
-```bash
-# Increase worker memory (Render)
-# In Render dashboard: Settings → Instance Type → Upgrade
-
-# For local development
-export UVICORN_WORKER_CLASS=uvicorn.workers.UvicornWorker
-export UVICORN_WORKERS=1  # Reduce workers if memory constrained
-```
+- Check Firestore query indexes in Firebase Console
+- Ensure proper async/await usage (no blocking calls)
+- Consider caching frequently accessed data
 
 ---
 
@@ -870,47 +769,21 @@ def fetch_athlete(athlete_id: str):
 - Use `select()` to fetch only needed fields
 - Batch operations when possible
 
-### Context Offloading
+### Rate Limiting
 
-Store large data externally:
-
-```python
-# ❌ Bad: Store 50KB of keypoints in Firestore document
-await db.assessments.document(id).update({
-    "keypoints": keypoints  # Too large!
-})
-
-# ✅ Good: Store in Firebase Storage, reference in Firestore
-keypoints_url = await storage.upload_keypoints(id, keypoints)
-await db.assessments.document(id).update({
-    "rawKeypointsUrl": keypoints_url  # Just the URL
-})
-```
-
-### Prompt Caching
-
-Cache static content in AI agent prompts:
+The backend uses in-memory rate limiting for MVP:
 
 ```python
-# System prompt (cached)
-CACHED_SYSTEM_PROMPT = """
-You are an AI assistant for youth sports coaches...
-[LTAD benchmarks, scoring rules, etc. - static content]
-"""
+from app.middleware.rate_limit import RateLimiter
 
-# User prompt (dynamic)
-user_prompt = f"Analyze this assessment: {metrics}"
+# 50 requests per hour per user
+analysis_rate_limiter = RateLimiter(max_requests=50, window_seconds=3600)
 
-# OpenRouter API call with caching
-response = await openrouter.chat.completions.create(
-    model="anthropic/claude-sonnet-3.5",
-    messages=[
-        {"role": "system", "content": CACHED_SYSTEM_PROMPT},  # Cached
-        {"role": "user", "content": user_prompt}  # Dynamic
-    ],
-    cache_control={"type": "ephemeral"}  # Enable caching
-)
+# In route handler:
+analysis_rate_limiter.check_or_raise(current_user.id)
 ```
+
+> **Note**: In-memory rate limiting only works for single-instance deployments. For production scaling, migrate to Redis.
 
 ---
 
@@ -920,23 +793,21 @@ response = await openrouter.chat.completions.create(
 
 1. Client obtains Firebase ID token
 2. Client includes token in `Authorization: Bearer <token>` header
-3. Backend validates token with Firebase Admin SDK
+3. Backend validates token with Firebase Admin SDK via `get_current_user()` middleware
 4. Backend extracts user ID from token
-5. Backend enforces data access rules
+5. Backend enforces data access rules via repository layer
 
 ### Data Access Rules
 
 - Coaches can only access their own data
-- Athletes belong to exactly one coach
+- Athletes belong to exactly one coach (enforced via `get_if_owned()`)
 - Assessments belong to exactly one coach
-- Parent reports require valid PIN
+- Consent forms are public (token-based, no auth)
 
-### Rate Limiting
+### Rate Limiting (Current Implementation)
 
-Implemented for security-sensitive endpoints:
-- PIN verification: 5 attempts/minute, 10 total lockout
-- Consent submission: 3 attempts/minute
-- Video upload: 10 uploads/hour per coach
+- Assessment submission: 50 per hour per coach
+- Consent resend: Rate limited to prevent spam
 
 **MVP Implementation**: In-memory rate limiting (single instance)
 **Post-MVP**: Migrate to Redis for multi-instance support
@@ -1010,9 +881,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.services.auth import get_current_user
+from app.middleware.auth import get_current_user
 from app.models.athlete import Athlete
-from app.utils.firebase import db
+from app.repositories.athlete import AthleteRepository
+from app.firebase import db
 ```
 
 ### Naming Conventions

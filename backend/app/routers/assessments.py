@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.assessment import (
     AssessmentCreate,
     AssessmentResponse,
+    AssessmentListResponse,
     AnalyzeResponse,
     AssessmentStatus,
 )
@@ -114,6 +115,66 @@ async def analyze_video_endpoint(
         id=assessment.id,
         status=assessment.status,
         message="Assessment completed",
+    )
+
+
+@router.get("/athlete/{athlete_id}", response_model=AssessmentListResponse)
+async def get_assessments_for_athlete(
+    athlete_id: str,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+):
+    """Get all assessments for a specific athlete.
+
+    Args:
+        athlete_id: Athlete ID
+        limit: Maximum number of assessments to return (default 50, max 100)
+        current_user: Authenticated user
+
+    Returns:
+        List of assessments for the athlete
+
+    Raises:
+        404: Athlete not found or not owned by coach
+    """
+    # Cap limit at 100
+    if limit > 100:
+        limit = 100
+
+    athlete_repo = AthleteRepository()
+    assessment_repo = AssessmentRepository()
+
+    # Verify athlete ownership
+    athlete = await athlete_repo.get_if_owned(athlete_id, current_user.id)
+    if not athlete:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Athlete not found",
+        )
+
+    assessments = await assessment_repo.get_by_athlete(athlete_id, limit=limit)
+
+    # Convert to response objects
+    assessment_responses = [
+        AssessmentResponse(
+            id=a.id,
+            athlete_id=a.athlete_id,
+            test_type=a.test_type,
+            leg_tested=a.leg_tested,
+            status=a.status,
+            created_at=a.created_at,
+            metrics=a.metrics,
+            client_metrics=a.client_metrics,
+            ai_feedback=a.ai_feedback,
+            failure_reason=a.failure_reason,
+            error_message=a.error_message,
+        )
+        for a in assessments
+    ]
+
+    return AssessmentListResponse(
+        assessments=assessment_responses,
+        total=len(assessment_responses),
     )
 
 

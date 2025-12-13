@@ -2,6 +2,8 @@
 
 This document shows the execution order for all PRs. **Deployment must be done in Phase 0** as specified.
 
+> **Implementation Note (December 2025)**: Phase 6 was implemented differently than originally planned. See [Phase 6 Implementation Notes](#phase-6-implementation-notes) below for details.
+
 ## Visual Dependency Graph
 
 ```
@@ -69,16 +71,16 @@ Phase 5: Video Capture (Frontend Heavy) ✅ COMPLETE
     (Video Upload)
 
                     ▼
-Phase 6: CV Analysis (Backend Heavy) ✅ COMPLETE
+Phase 6: CV Analysis ✅ COMPLETE (IMPLEMENTED DIFFERENTLY)
 ═══════════════════════════════════════════════════
     BE-006 ✅ ◄─── BE-002, BE-003, BE-004
-    (Video Upload Endpoint)
+    (Assessment Endpoint - receives client metrics)
 
-    BE-007 ✅ ◄─── BE-006
-    (MediaPipe Analysis)
+    BE-007 ⚠️ ◄─── BE-006
+    (MediaPipe Analysis - CLIENT-SIDE INSTEAD)
 
-    BE-008 ✅ ◄─── BE-007
-    (Metrics Calculation)
+    BE-008 ⚠️ ◄─── BE-007
+    (Metrics Calculation - DURATION SCORING ONLY)
 
                     ▼
 Phase 7: AI Agents (Backend)
@@ -93,13 +95,13 @@ Phase 7: AI Agents (Backend)
     (Progress Agent)
 
                     ▼
-Phase 8: Assessment Results
+Phase 8: Assessment Results (PARTIAL)
 ═══════════════════════════════════════════════════
-    BE-012 ◄─── BE-006, BE-008, BE-010
-    (Assessment CRUD)
+    BE-012 ⏳ ◄─── BE-006, BE-008, BE-010
+    (Assessment CRUD - basic GET exists)
 
-    FE-011 ◄─── FE-009, FE-010
-    (Results Display)
+    FE-011 ⏳ ◄─── FE-009, FE-010
+    (Results Display - AssessmentResults.tsx exists)
 
     FE-012 ◄─── FE-004, FE-011
     (Athlete Profile)
@@ -147,9 +149,9 @@ Items in the same group can be worked on in parallel by different engineers.
 | 3 | E | FE-005 | Add/Edit Forms | 2-3 | ✅ Done |
 | 4 | F | BE-005, FE-006, FE-007 | Consent Workflow | 7-9 | ✅ Done |
 | 5 | G | FE-008, FE-009, FE-010 | Video Capture | 10-12 | ✅ Done |
-| 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | ✅ Done |
+| 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | ⚠️ Different |
 | 7 | I | BE-009, BE-010, BE-011 | AI Agents | 10-12 | |
-| 8 | J | BE-012, FE-011, FE-012 | Results & Profile | 10-12 | |
+| 8 | J | BE-012, FE-011, FE-012 | Results & Profile | 10-12 | ⏳ Partial |
 | 9 | K | BE-013, BE-014, FE-013, FE-014 | Parent Reports | 12-14 | |
 | 10 | L | BE-015, FE-015, FE-016 | Dashboard + Landing | 7-9 | |
 
@@ -160,10 +162,16 @@ Items in the same group can be worked on in parallel by different engineers.
 The minimum sequential path that determines total project duration:
 
 ```
-BE-001 → BE-002 → BE-003 → BE-004 → BE-006 → BE-007 → BE-008 → BE-009 → BE-010 → BE-012 → BE-013 → BE-015
-   ↓
+BE-001 → BE-002 → BE-003 → BE-004 → BE-006 → BE-009 → BE-010 → BE-012 → BE-013 → BE-015
+                                        ↑
+                         (BE-007/BE-008 moved to client-side)
+
 FE-001 → FE-002 → FE-003 → FE-004 → FE-008 → FE-009 → FE-011 → FE-012 → FE-013 → FE-015
+                                        ↑
+                    (Client now calculates all metrics here)
 ```
+
+> **Note**: BE-007 (MediaPipe Analysis) and BE-008 (full Metrics Calculation) were moved to the client-side. The critical path for remaining work skips these backend items.
 
 ## Recommended Execution Strategy
 
@@ -215,9 +223,9 @@ Week 3-4:
 | BE-003 | Auth Endpoints | S | BE-001, BE-002 | ✅ Done |
 | BE-004 | Athlete CRUD | M | BE-002, BE-003 | ✅ Done |
 | BE-005 | Consent + Email | M | BE-002, BE-004 | ✅ Done |
-| BE-006 | Video Upload Endpoint | M | BE-002, BE-003, BE-004 | ✅ Done |
-| BE-007 | MediaPipe Analysis | L | BE-006 | ✅ Done |
-| BE-008 | Metrics Calculation | M | BE-007 | ✅ Done |
+| BE-006 | Assessment Endpoint | M | BE-002, BE-003, BE-004 | ✅ Done |
+| BE-007 | MediaPipe Analysis | L | BE-006 | ⚠️ Client-side |
+| BE-008 | Metrics Calculation | M | BE-007 | ⚠️ Duration only |
 | BE-009 | Orchestrator + Compression | M | BE-008 | |
 | BE-010 | Assessment Agent | S | BE-009 | |
 | BE-011 | Progress Agent | S | BE-009, BE-010 | |
@@ -240,7 +248,7 @@ Week 3-4:
 | FE-008 | Camera + MediaPipe Preview | M | FE-002, FE-007 | ✅ Done |
 | FE-009 | Recording Flow | M | FE-008 | ✅ Done |
 | FE-010 | Video Upload | M | FE-002 | ✅ Done |
-| FE-011 | Assessment Results | M | FE-009, FE-010 | |
+| FE-011 | Assessment Results | M | FE-009, FE-010 | ⏳ Partial |
 | FE-012 | Athlete Profile + History | M | FE-004, FE-011 | |
 | FE-013 | Report Preview + Send | S | FE-004, FE-011, FE-012 | |
 | FE-014 | Public Report View | S | FE-001 | |
@@ -281,3 +289,57 @@ These are key moments where frontend and backend must sync:
 - OpenRouter: Required for AI features (can mock)
 - Resend: Required for emails (can mock)
 - Render/Vercel: Required for deployment
+
+---
+
+## Phase 6 Implementation Notes
+
+Phase 6 (CV Analysis) was implemented differently than originally planned in the PRD. This section documents the changes.
+
+### Original Plan (PRD)
+
+```
+Client (preview only) → Upload video → Backend MediaPipe Python →
+Calculate all metrics → AI Agents → Store results
+```
+
+- **BE-007**: Server-side MediaPipe Python extracts 33 landmarks from video
+- **BE-008**: Backend calculates all 11 metrics using biomechanical formulas
+- Background processing with async tasks
+- Client polls for completion
+
+### Actual Implementation
+
+```
+Client MediaPipe.js (SOURCE OF TRUTH) → Calculate all metrics →
+POST to backend → Backend validates + adds duration score → Store immediately
+```
+
+- **BE-007**: NOT IMPLEMENTED - MediaPipe runs CLIENT-SIDE in `useMediaPipe` hook
+- **BE-008**: Only duration scoring (1-5 LTAD scale) implemented in `services/metrics.py`
+- Synchronous processing - no background tasks
+- No polling needed - assessment completes immediately
+
+### Key Changes
+
+| Component | PRD Plan | Actual Implementation |
+|-----------|----------|----------------------|
+| MediaPipe | Server-side Python | Client-side JavaScript |
+| Metrics Calculation | Backend | Client (`utils/metricsCalculation.ts`) |
+| Failure Detection | Backend | Client (`utils/positionDetection.ts`) |
+| Processing Model | Async background | Synchronous |
+| Backend Role | Full analysis | Validated write proxy |
+
+### Why the Change?
+
+1. **Better UX**: Immediate results instead of waiting for processing
+2. **Simpler Backend**: No MediaPipe Python, OpenCV, or SciPy dependencies
+3. **Lower Infrastructure Cost**: No compute-intensive video processing
+4. **Reduced Complexity**: No async task management or polling logic
+
+### Status Legend
+
+- ✅ = Implemented as planned
+- ⚠️ = Implemented differently (see notes)
+- ⏳ = Partially implemented
+- (empty) = Not yet implemented

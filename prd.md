@@ -34,6 +34,21 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 ---
 
+> ## ⚠️ Implementation Note (December 2025)
+>
+> **Phase 6 was implemented differently than specified below.** The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics.
+>
+> **Key changes from this PRD:**
+> - MediaPipe runs in the browser (not server-side Python)
+> - All 11 CV metrics calculated client-side before upload
+> - Backend validates auth/consent and adds LTAD duration scoring only
+> - Assessments complete synchronously (no background processing or polling)
+> - AI agents (Phase 7) are not yet implemented
+>
+> See [ARCHITECTURE.md](./ARCHITECTURE.md) for the current implementation design.
+
+---
+
 ## 2. Product Overview
 
 ### 2.1 Target Users
@@ -97,7 +112,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 | Database | Firebase Firestore | NoSQL document database for flexible schemas |
 | Authentication | Firebase Auth | Google OAuth and email/password auth |
 | Storage | Firebase Storage | Video and media file storage |
-| CV Processing | MediaPipe | Client-side (JS) for preview, Server-side (Python) for analysis |
+| CV Processing | MediaPipe | Client-side (JS) for metrics calculation (SOURCE OF TRUTH) |
 | AI/LLM | Claude via OpenRouter API | Haiku for compression, Sonnet for assessment/progress |
 | Email | Resend | Transactional emails (consent, reports) |
 | Frontend Hosting | Vercel | Static site hosting with edge functions |
@@ -105,24 +120,24 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 ### 3.2 Architecture Overview
 
-The system follows a client-server architecture with clear separation between real-time preview (client-side) and official analysis (server-side).
+The system follows a client-server architecture with client-side MediaPipe.js as the source of truth for all CV metrics.
 
 #### Client Layer (Browser)
 
 - Camera access via `getUserMedia()` API (webcam or iPhone Continuity Camera)
-- MediaPipe.js for real-time skeleton overlay (visual feedback only, not source of truth)
+- MediaPipe.js (v0.10.9) for real-time skeleton overlay AND metrics calculation (SOURCE OF TRUTH)
 - MediaRecorder for capturing raw video (no skeleton baked in)
 - Canvas overlay for skeleton visualization during preview
+- All 11 CV metrics calculated client-side before upload
 
 #### Server Layer (Cloud)
 
-- FastAPI receives uploaded video blobs
-- MediaPipe (Python) performs official metric extraction
-- Raw keypoints offloaded to storage (context offloading pattern)
-- Derived metrics passed to Deep Agent System
+- FastAPI receives pre-calculated metrics from client
+- Duration-only scoring (LTAD 1-5 scale) and age expectations
+- Deep Agent System generates AI feedback from metrics
 - Results persisted to Firestore
 
-> **Key Architectural Decision**: Client-side MediaPipe.js handles live preview for visual feedback only. After upload, server-side MediaPipe (Python) re-processes the video for official metric extraction. The client-side skeleton is for framing confirmation and user experience, not the source of truth for metrics.
+> **Key Architectural Decision**: Client-side MediaPipe.js is the SOURCE OF TRUTH for all CV metrics. The client calculates all 11 metrics (duration, sway, arm excursion, stability score, etc.) and sends them to the backend. The server only calculates the LTAD duration score (1-5) and generates AI feedback. This simplifies the backend and enables synchronous assessment completion.
 
 ### 3.3 Data Flow
 
@@ -135,11 +150,12 @@ The system follows a client-server architecture with clear separation between re
 5. **Live Preview**: Real-time skeleton overlay via MediaPipe.js
 6. **Recording**: 3-2-1 countdown, then 30-second test with visible timer
 7. **Preview**: Playback of recorded video, coach chooses Analyze or Reshoot
-8. **Upload**: Raw video blob uploaded to Firebase Storage
-9. **Server Analysis**: MediaPipe (Python) extracts keypoints, calculates metrics
-10. **AI Processing**: Deep Agent System generates feedback
-11. **Storage**: Results saved to Firestore, video URL stored
-12. **Display**: Results shown with metrics, AI feedback, peer comparison
+8. **Client Metrics**: MediaPipe.js calculates all 11 CV metrics client-side
+9. **Upload**: Video blob + pre-calculated metrics uploaded to backend
+10. **Server Processing**: Backend validates auth/consent, calculates LTAD duration score (1-5)
+11. **AI Processing**: Deep Agent System generates feedback from metrics
+12. **Storage**: Results saved to Firestore, video URL stored
+13. **Display**: Results shown with metrics, AI feedback, peer comparison (synchronous - no polling needed)
 
 #### Backup Flow: Video Upload
 
@@ -151,64 +167,52 @@ For pre-recorded videos or when live recording is impractical, coaches can uploa
 
 ### 3.4 Assessment Processing Pipeline (Sequence Diagram)
 
-The following sequence shows the async processing flow from video upload through AI feedback generation:
+The following sequence shows the synchronous processing flow with client-side metrics:
 
 ```
-┌─────────┐    ┌──────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐
-│ Client  │    │ Firebase │    │ Backend │    │MediaPipe│    │  Agents  │    │Firestore │
-│(FE-010) │    │ Storage  │    │(BE-006) │    │(BE-007) │    │(BE-009+) │    │          │
-└────┬────┘    └────┬─────┘    └────┬────┘    └────┬────┘    └────┬─────┘    └────┬─────┘
-     │              │               │              │               │               │
-     │ uploadVideo()│               │              │               │               │
-     │─────────────>│               │              │               │               │
-     │              │               │              │               │               │
-     │   videoUrl   │               │              │               │               │
-     │<─────────────│               │              │               │               │
-     │              │               │              │               │               │
-     │ POST /assessments/analyze    │              │               │               │
-     │─────────────────────────────>│              │               │               │
-     │              │               │              │               │               │
-     │              │               │ Create assessment (status: "processing")     │
-     │              │               │─────────────────────────────────────────────>│
-     │              │               │              │               │               │
-     │   { id: "assessment_123" }   │              │               │               │
-     │<─────────────────────────────│              │               │               │
-     │              │               │              │               │               │
-     │ Poll GET /assessments/{id}   │ [ASYNC BACKGROUND TASK]     │               │
-     │─ ─ ─ ─ ─ ─ ─>│               │              │               │               │
-     │              │               │ downloadVideo│               │               │
-     │              │               │<─────────────│               │               │
-     │              │               │              │               │               │
-     │              │               │ processVideo │               │               │
-     │              │               │─────────────>│               │               │
-     │              │               │              │               │               │
-     │              │               │   keypoints  │               │               │
-     │              │               │<─────────────│               │               │
-     │              │               │              │               │               │
-     │              │               │ BE-008: calculateMetrics()   │               │
-     │              │               │──────────────────────────────│               │
-     │              │               │              │               │               │
-     │              │               │ orchestrator.route("assessment")             │
-     │              │               │────────────────────────────────────────────>│               │
-     │              │               │              │               │               │
-     │              │               │              │    aiFeedback │               │
-     │              │               │<─────────────────────────────│               │
-     │              │               │              │               │               │
-     │              │               │ Update assessment (status: "completed")      │
-     │              │               │─────────────────────────────────────────────>│
-     │              │               │              │               │               │
-     │ { status: "completed", metrics, aiFeedback }│               │               │
-     │<─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│              │               │               │
-     │              │               │              │               │               │
+┌─────────┐    ┌──────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐
+│ Client  │    │ Firebase │    │ Backend │    │  Agents  │    │Firestore │
+│(FE-010) │    │ Storage  │    │(BE-006) │    │(BE-009+) │    │          │
+└────┬────┘    └────┬─────┘    └────┬────┘    └────┬─────┘    └────┬─────┘
+     │              │               │               │               │
+     │ MediaPipe.js │               │               │               │
+     │ calculates   │               │               │               │
+     │ 11 metrics   │               │               │               │
+     │              │               │               │               │
+     │ uploadVideo()│               │               │               │
+     │─────────────>│               │               │               │
+     │              │               │               │               │
+     │   videoUrl   │               │               │               │
+     │<─────────────│               │               │               │
+     │              │               │               │               │
+     │ POST /assessments/analyze    │               │               │
+     │ { videoUrl, metrics, ... }   │               │               │
+     │─────────────────────────────>│               │               │
+     │              │               │               │               │
+     │              │               │ Calculate LTAD│               │
+     │              │               │ duration score│               │
+     │              │               │ (1-5)         │               │
+     │              │               │               │               │
+     │              │               │ orchestrator.route("assessment")
+     │              │               │──────────────>│               │
+     │              │               │               │               │
+     │              │               │   aiFeedback  │               │
+     │              │               │<──────────────│               │
+     │              │               │               │               │
+     │              │               │ Save assessment               │
+     │              │               │──────────────────────────────>│
+     │              │               │               │               │
+     │ { metrics, aiFeedback, ltadScore }          │               │
+     │<─────────────────────────────│               │               │
+     │              │               │               │               │
 ```
 
 **Key Implementation Notes:**
-- Client receives assessment ID immediately and polls for completion
-- Backend processes video asynchronously (does not block HTTP response)
-- Raw keypoints stored to Firebase Storage (context offloading)
+- Client calculates all 11 CV metrics using MediaPipe.js before upload
+- Backend receives pre-calculated metrics (no server-side MediaPipe)
+- Processing is synchronous - no polling required
+- Backend only calculates LTAD duration score (1-5) and age expectations
 - Derived metrics (~500 tokens) passed to AI agents
-- Status transitions: `processing` → `completed` | `failed`
-- NFR-2: Analysis must complete in <30 seconds
 - NFR-3: AI feedback must complete in <10 seconds
 
 ---
@@ -587,12 +591,12 @@ The metrics object stored in each assessment contains all derived values from CV
 
 | ID | Requirement |
 |----|-------------|
-| FR-30 | Server-side MediaPipe extracts pose landmarks from uploaded video |
+| FR-30 | Client-side MediaPipe.js (v0.10.9) extracts pose landmarks during recording (SOURCE OF TRUTH) |
 | FR-31 | System auto-detects test failure: foot touchdown |
 | FR-32 | System auto-detects test failure: hands leaving hips |
 | FR-33 | System auto-detects test failure: support foot movement |
-| FR-34 | System calculates all metrics defined in Section 11 |
-| FR-35 | Raw keypoints are stored for potential future re-analysis |
+| FR-34 | Client calculates all 11 metrics defined in Section 11 before upload |
+| FR-35 | Video is stored to Firebase Storage for reference; raw keypoints not persisted separately |
 
 ### 8.7 AI Feedback Generation
 
@@ -625,18 +629,6 @@ The metrics object stored in each assessment contains all derived values from CV
 | FR-50 | System emails report link + PIN to parent automatically |
 | FR-51 | Parents access report via link + PIN (no account required) |
 | FR-52 | Report includes progress trends and team ranking |
-
-### 8.10 Concurrent Access & Edit Locking
-
-| ID | Requirement |
-|----|-------------|
-| FR-53 | When a coach opens an athlete for editing, the system acquires an edit lock |
-| FR-54 | If another session holds the lock, the coach sees a read-only view with "This athlete is being edited in another session" message |
-| FR-55 | Edit locks auto-expire after 5 minutes of inactivity |
-| FR-56 | Edit lock is released when coach navigates away or explicitly saves |
-| FR-57 | Lock owner can refresh their lock by continuing to edit (prevents timeout during active use) |
-
-**Implementation Details**: See [BE-004](backend/prds/BE-004-athlete-crud-endpoints.md) for API endpoints and [FE-005](client/prds/FE-005-add-edit-athlete-forms.md) for the `useEditLock` hook implementation.
 
 ---
 
@@ -869,9 +861,6 @@ The following security trade-offs are accepted for MVP:
 |------|------------|-----------|
 | PIN brute force attacks | 5 attempts/min rate limit + 10 attempt lockout | 6-digit PIN provides 1,000,000 combinations; rate limiting makes brute force impractical |
 | In-memory rate limiting | Single instance deployment | Multi-instance will require Redis (documented as post-MVP) |
-| Edit lock conflicts | 5-minute auto-expiry | Conflicts are rare for single-coach MVP |
-
-For edit locking implementation, see [Section 8.10](#810-concurrent-access--edit-locking).
 
 ---
 

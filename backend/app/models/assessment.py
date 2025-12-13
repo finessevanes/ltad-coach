@@ -114,3 +114,9 @@ class AnalyzeResponse(BaseModel):
     id: str
     status: AssessmentStatus
     message: str = "Assessment completed"
+
+
+class AssessmentListResponse(BaseModel):
+    """Response model for list of assessments."""
+    assessments: list[AssessmentResponse]
+    total: int

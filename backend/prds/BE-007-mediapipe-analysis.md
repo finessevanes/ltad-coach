@@ -2,13 +2,24 @@
 id: BE-007
 depends_on: [BE-006]
 blocks: [BE-008, BE-009]
-status: completed
+status: superseded
 ---
 
 # BE-007: MediaPipe Video Analysis Pipeline
 
+> ## ⚠️ SUPERSEDED
+>
+> **This PRD has been superseded by client-side implementation.**
+>
+> The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics. Server-side MediaPipe processing was never implemented. All pose detection, failure detection, and metrics calculation now happens in the browser.
+>
+> See:
+> - [client/src/hooks/useMediaPipe.ts](../../client/src/hooks/useMediaPipe.ts) - Pose detection
+> - [client/src/utils/metricsCalculation.ts](../../client/src/utils/metricsCalculation.ts) - Metrics calculation
+> - [client/src/utils/positionDetection.ts](../../client/src/utils/positionDetection.ts) - Failure detection
+
 ## Title
-Implement server-side MediaPipe pose analysis for video processing
+~~Implement server-side MediaPipe pose analysis for video processing~~
 
 ## Scope
 
