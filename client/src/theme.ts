@@ -12,9 +12,9 @@ export const theme = createTheme({
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#F97316', // Energy Orange - energy, action, movement (use sparingly)
-      light: '#FB923C',
-      dark: '#EA580C',
+      main: '#60A5FA', // Lighter Blue - complements primary, less jarring than orange
+      light: '#93C5FD',
+      dark: '#3B82F6',
       contrastText: '#FFFFFF',
     },
     success: {
@@ -23,9 +23,9 @@ export const theme = createTheme({
       dark: '#059669',
     },
     warning: {
-      main: '#F59E0B',
-      light: '#FBBF24',
-      dark: '#D97706',
+      main: '#F97316', // Energy Orange - matches the vibrant orange from design
+      light: '#FB923C',
+      dark: '#EA580C',
     },
     error: {
       main: '#EF4444',
@@ -75,27 +75,27 @@ export const theme = createTheme({
       letterSpacing: '-0.01em',
     },
     h3: {
+      fontSize: '1.75rem', // 28px
+      fontWeight: 600,
+      lineHeight: 1.3,
+      letterSpacing: '-0.01em',
+    },
+    h4: {
       fontSize: '1.5rem', // 24px
       fontWeight: 600,
       lineHeight: 1.4,
       letterSpacing: '0',
     },
-    h4: {
-      fontSize: '1.125rem', // 18px
-      fontWeight: 600,
-      lineHeight: 1.4,
-      letterSpacing: '0',
-    },
     h5: {
-      fontSize: '1rem', // 16px
+      fontSize: '1.25rem', // 20px
       fontWeight: 600,
       lineHeight: 1.5,
       letterSpacing: '0',
     },
     h6: {
-      fontSize: '0.875rem', // 14px
+      fontSize: '1.125rem', // 18px
       fontWeight: 600,
-      lineHeight: 1.6,
+      lineHeight: 1.5,
       letterSpacing: '0',
     },
     body1: {
@@ -107,11 +107,11 @@ export const theme = createTheme({
     body2: {
       fontSize: '1rem', // 16px
       fontWeight: 400,
-      lineHeight: 1.5,
+      lineHeight: 1.6,
       letterSpacing: '0',
     },
     caption: {
-      fontSize: '0.875rem', // 14px
+      fontSize: '0.9375rem', // 15px (bumped from 14px)
       fontWeight: 400,
       lineHeight: 1.5,
       letterSpacing: '0',
@@ -204,6 +204,31 @@ export const theme = createTheme({
           fontSize: '14px',
           padding: '6px 16px',
           height: 'auto',
+        },
+        sizeSmall: {
+          fontSize: '13px',
+          height: '24px',
+          padding: '4px 12px',
+        },
+        colorSuccess: {
+          backgroundColor: '#ECFDF5', // Light green background
+          color: '#059669', // Dark green text
+          border: 'none',
+        },
+        colorWarning: {
+          backgroundColor: '#FFF7ED', // Light orange background
+          color: '#EA580C', // Dark orange text
+          border: 'none',
+        },
+        colorError: {
+          backgroundColor: '#FEF2F2', // Light red background
+          color: '#DC2626', // Dark red text
+          border: 'none',
+        },
+        colorPrimary: {
+          backgroundColor: '#EFF6FF', // Light blue background
+          color: '#1E40AF', // Dark blue text
+          border: 'none',
         },
       },
     },
