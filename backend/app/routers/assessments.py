@@ -72,6 +72,7 @@ async def analyze_video_endpoint(
         leg_tested=data.leg_tested.value,
         video_url=data.video_url,
         video_path=data.video_path,
+        client_metrics=data.client_metrics.model_dump() if data.client_metrics else None,
     )
 
     # Queue background task
@@ -135,6 +136,7 @@ async def get_assessment(
         status=assessment.status,
         created_at=assessment.created_at,
         metrics=assessment.metrics,
+        client_metrics=assessment.client_metrics,
         ai_feedback=assessment.ai_feedback,
         failure_reason=assessment.failure_reason,
         error_message=assessment.error_message,

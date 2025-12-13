@@ -69,6 +69,9 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
   useEffect(() => {
     if (!selectedDevice) return;
 
+    // Capture the device ID to help TypeScript narrow the type
+    const deviceId = selectedDevice;
+
     async function startStream() {
       // Stop existing stream
       if (streamRef.current) {
@@ -78,7 +81,7 @@ export function useCamera(initialDeviceId?: string | null): UseCameraResult {
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: selectedDevice },
+            deviceId: { exact: deviceId },
             width: { ideal: 1280 },
             height: { ideal: 720 },
             frameRate: { ideal: 30 },
