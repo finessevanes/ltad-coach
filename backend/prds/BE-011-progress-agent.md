@@ -209,7 +209,6 @@ Generate the report now:
             system=FULL_STATIC_CONTEXT,
             max_tokens=500,
             temperature=0.7,
-            cache_control=True,
         )
         return report.strip()
 
@@ -389,7 +388,6 @@ print(trends)  # {"trend": "improving", ...}
 ```
 
 3. Test fallback report generation
-4. Verify caching is working
 
 ## Notes
 - Reports should feel personal, not templated

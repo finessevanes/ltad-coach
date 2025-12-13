@@ -1,7 +1,7 @@
 """Static context templates for AI agents.
 
-This content is cached using Anthropic's prompt caching feature,
-reducing costs by ~90% on repeated requests.
+This content provides LTAD benchmarks, coaching cues, and output formats
+for assessment and progress agents.
 """
 
 # LTAD Framework Context

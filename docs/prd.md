@@ -221,7 +221,7 @@ The following sequence shows the synchronous processing flow with client-side me
 
 ### 4.1 Architecture Overview
 
-The AI system uses a custom orchestration pattern with Claude models via OpenRouter API, implementing four key deep agent patterns: context offloading, context compression, context isolation, and prompt caching. This architecture minimizes token costs while maximizing output quality.
+The AI system uses a custom orchestration pattern with Claude models via Anthropic API, implementing three key deep agent patterns: context offloading, context compression, and context isolation. This architecture minimizes token costs while maximizing output quality.
 
 ### 4.2 Agent System Components
 
@@ -258,17 +258,9 @@ The AI system uses a custom orchestration pattern with Claude models via OpenRou
 
 **Implementation**: Orchestrator filters and routes appropriate data to each agent.
 
-#### Pattern 4: Prompt Caching
+### 4.4 Static Context for AI Agents
 
-**Problem**: Repeated static content (LTAD definitions, benchmarks, scoring rules) wastes tokens.
-
-**Solution**: Use Claude's native prompt caching for static system prompts. Cache LTAD stages, benchmark tables, scoring interpretation, and output templates.
-
-**Cost Impact**: ~90% savings on repeated calls. Without caching: ~$0.44/day. With caching: ~$0.04/day (at 100 calls/day).
-
-### 4.4 Prompt Cache Contents (Static Context)
-
-The following content is cached using Claude's native prompt caching to reduce token costs by ~90%:
+The following static context is provided to AI agents in system prompts:
 
 - LTAD developmental stage definitions (FUNdamentals, Learn to Train)
 - One-Leg Balance Test protocol and failure detection rules
@@ -279,7 +271,7 @@ The following content is cached using Claude's native prompt caching to reduce t
 - Score + quality combination interpretation matrix
 - Trend analysis patterns for Progress Agent
 
-> **Reference**: See `prompt_cache_static_context.md` for the complete cached system prompt.
+> **Reference**: See `static_context.py` for the complete system prompt content.
 
 ### 4.5 Request Routing Logic
 
@@ -358,9 +350,9 @@ The Orchestrator (pure Python, no LLM) routes requests based on type:
 
 #### Collection: `benchmarks` (NOT USED IN MVP)
 
-> **Note**: For MVP, benchmark data (LTAD scoring tiers, age expectations) is stored in the **prompt cache** (see BE-009) rather than Firestore. This is because:
+> **Note**: For MVP, benchmark data (LTAD scoring tiers, age expectations) is stored in **static context** (see BE-009) rather than Firestore. This is because:
 > - The data is static and rarely changes
-> - It's needed for every AI call (prompt caching provides 90% cost savings)
+> - It's needed for every AI call as system prompt context
 > - Hardcoding in the frontend `ScoreBadge.tsx` (FE-011) is sufficient for display
 >
 > A Firestore `benchmarks` collection may be added post-MVP if coaches need custom benchmark overrides.
@@ -874,7 +866,6 @@ The following security trade-offs are accepted for MVP:
 | MediaPipe | Google's open-source ML framework for pose estimation |
 | BlazePose | MediaPipe's pose estimation model with 33 body landmarks |
 | Context Offloading | Deep agent pattern: store large data externally, send only summaries to LLM |
-| Prompt Caching | Claude feature that caches static system prompts to reduce token costs |
 | Postural Sway | Body movement while attempting to maintain balance, measured via hip position |
 | Continuity Camera | macOS feature allowing iPhone camera as webcam |
 

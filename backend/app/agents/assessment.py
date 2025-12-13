@@ -62,12 +62,11 @@ Provide feedback following the Assessment Feedback Format from the context. Reme
             {"role": "user", "content": user_prompt}
         ]
 
-        # Use Sonnet with cached static context
+        # Use Sonnet with static context
         response = await client.chat(
             model=settings.sonnet_model,
             messages=messages,
             system=FULL_STATIC_CONTEXT,
-            cache_control=True,  # Cache the LTAD context
             temperature=0.7,
             max_tokens=400,  # ~200 words
         )

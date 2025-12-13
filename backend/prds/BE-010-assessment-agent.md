@@ -17,7 +17,7 @@ Implement Assessment Agent for single test feedback generation
 - Generate coach-friendly feedback from metrics
 - Include specific coaching cues
 - Reference age-appropriate expectations
-- Use prompt caching for static context
+- Use static LTAD context for guidance
 
 ### Out of Scope
 - Historical trend analysis (BE-011)
@@ -29,7 +29,6 @@ Implement Assessment Agent for single test feedback generation
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Model | Claude Sonnet | Better reasoning for coaching feedback |
-| Caching | Static LTAD context | 90% cost reduction |
 | Output Length | 150-200 words | Concise, actionable feedback |
 
 ## Acceptance Criteria
@@ -38,7 +37,7 @@ Implement Assessment Agent for single test feedback generation
 - [x] Includes duration score with age comparison
 - [x] Highlights strengths and areas for improvement
 - [x] Provides specific, actionable coaching cues
-- [x] Uses cached static context (LTAD, coaching cues)
+- [x] Uses static LTAD context (LTAD benchmarks, coaching cues)
 - [x] Feedback is encouraging but honest
 - [x] Handles edge cases (very low scores, perfect scores)
 
@@ -195,7 +194,6 @@ Generate the feedback now:
             system=FULL_STATIC_CONTEXT,
             max_tokens=350,
             temperature=0.7,
-            cache_control=True,  # Cache the static context
         )
         return feedback.strip()
 
@@ -427,11 +425,10 @@ print(feedback_low)
    - 0 duration (test failed immediately)
    - Perfect score (30 seconds, minimal sway)
    - Missing temporal/events data (should handle gracefully)
-3. Verify prompt caching is working (check logs for cache hits)
-4. Validate temporal degradation detection in focus areas
+3. Validate temporal degradation detection in focus areas
 
 ## Notes
 - Sonnet model provides better coaching insight than Haiku
-- Cached context significantly reduces costs
+- Static LTAD context provides consistent guidance
 - Fallback feedback ensures reliability
 - Monitor output quality and adjust prompts as needed
