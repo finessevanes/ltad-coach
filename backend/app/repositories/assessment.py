@@ -3,7 +3,7 @@
 from typing import Optional, List, Dict
 from datetime import datetime
 from app.repositories.base import BaseRepository
-from app.models.assessment import Assessment, AssessmentStatus, MetricsData
+from app.models.assessment import Assessment, AssessmentStatus, MetricsData, ClientMetricsData
 
 
 class AssessmentRepository(BaseRepository[Assessment]):
@@ -21,6 +21,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
         leg_tested: str,
         video_url: str,
         video_path: str,
+        client_metrics: Optional[Dict] = None,
     ) -> Assessment:
         """Create assessment in processing state.
 
@@ -31,6 +32,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             leg_tested: Which leg was tested
             video_url: Firebase Storage download URL
             video_path: Firebase Storage path
+            client_metrics: Optional client-side metrics for comparison
 
         Returns:
             Created assessment
@@ -46,6 +48,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "created_at": datetime.utcnow(),
             "raw_keypoints_url": None,
             "metrics": None,
+            "client_metrics": client_metrics,
             "ai_feedback": None,
             "failure_reason": None,
             "error_message": None,

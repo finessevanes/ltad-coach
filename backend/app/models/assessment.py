@@ -32,20 +32,29 @@ class FailureReason(str, Enum):
 
 
 class MetricsData(BaseModel):
-    """Balance test metrics."""
-    duration_seconds: float = Field(..., description="Test duration in seconds")
+    """Balance test metrics (server-calculated)."""
+    hold_time: float = Field(..., description="Test hold time in seconds")
     stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
     sway_std_x: float = Field(..., description="Sway standard deviation in X (normalized)")
     sway_std_y: float = Field(..., description="Sway standard deviation in Y (normalized)")
     sway_path_length: float = Field(..., description="Total sway path length (normalized)")
     sway_velocity: float = Field(..., description="Average sway velocity (normalized)")
-    arm_excursion_left: float = Field(..., description="Left arm angular movement (degrees)")
-    arm_excursion_right: float = Field(..., description="Right arm angular movement (degrees)")
-    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm movement ratio")
+    arm_deviation_left: float = Field(..., description="Left arm deviation from T-position (wrist Y - shoulder Y)")
+    arm_deviation_right: float = Field(..., description="Right arm deviation from T-position (wrist Y - shoulder Y)")
+    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm deviation ratio")
     corrections_count: int = Field(..., description="Number of balance corrections detected")
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
     duration_score_label: str = Field(..., description="LTAD score label (Beginning, Developing, etc.)")
     age_expectation: Optional[str] = Field(None, description="Meets/Above/Below age expectation")
+
+
+class ClientMetricsData(BaseModel):
+    """Client-side metrics from browser-based balance test (for comparison)."""
+    success: bool = Field(..., description="Whether the test was passed")
+    hold_time: float = Field(..., ge=0, description="Duration held in seconds")
+    failure_reason: Optional[str] = Field(None, description="Reason for test failure")
+    arm_deviation_left: float = Field(..., description="Left arm deviation from T-position (wrist Y - shoulder Y)")
+    arm_deviation_right: float = Field(..., description="Right arm deviation from T-position (wrist Y - shoulder Y)")
 
 
 class Assessment(BaseModel):
@@ -61,6 +70,7 @@ class Assessment(BaseModel):
     created_at: datetime
     raw_keypoints_url: Optional[str] = None
     metrics: Optional[MetricsData] = None
+    client_metrics: Optional[ClientMetricsData] = None  # For comparison
     ai_feedback: Optional[str] = None  # Populated in Phase 7
     failure_reason: Optional[str] = None
     error_message: Optional[str] = None
@@ -74,6 +84,7 @@ class AssessmentCreate(BaseModel):
     video_url: str = Field(..., min_length=1)
     video_path: str = Field(..., min_length=1)
     duration: float = Field(..., gt=0, le=40, description="Client-measured video duration in seconds")
+    client_metrics: Optional[ClientMetricsData] = Field(None, description="Client-side metrics for comparison")
 
 
 class AssessmentResponse(BaseModel):
@@ -85,6 +96,7 @@ class AssessmentResponse(BaseModel):
     status: AssessmentStatus
     created_at: datetime
     metrics: Optional[MetricsData] = None
+    client_metrics: Optional[ClientMetricsData] = None  # For comparison
     ai_feedback: Optional[str] = None
     failure_reason: Optional[str] = None
     error_message: Optional[str] = None
