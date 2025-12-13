@@ -1,7 +1,11 @@
 /**
  * Client-side metrics calculation for balance test.
  *
- * All metrics are calculated from MediaPipe's worldLandmarks in real-world units:
+ * COORDINATE SYSTEM NOTES (see CV_METRICS_GUIDE.md for details):
+ * - Sway metrics: Uses NORMALIZED landmarks (tracks screen position) + smoothing + calibrated scale
+ * - Arm angles: Uses WORLD landmarks (accurate for joint angles)
+ *
+ * Output units:
  * - Sway metrics: centimeters (cm)
  * - Arm angles: degrees
  * - Velocity: cm/s
@@ -40,8 +44,168 @@ export const STABILITY_WEIGHTS = {
   corrections: 0.20,
 } as const;
 
-/** Threshold for detecting balance corrections in meters (2cm) */
-export const CORRECTION_THRESHOLD_METERS = 0.02;
+/** Threshold for detecting balance corrections in cm */
+export const CORRECTION_THRESHOLD_CM = 2.0;
+
+/** Average shoulder width in cm (used for scale calibration) */
+const AVERAGE_SHOULDER_WIDTH_CM = 40.0;
+
+/** Fallback scale if shoulder width can't be measured */
+const FALLBACK_SCALE_CM = 150.0;
+
+// ============================================================================
+// One-Euro Filter (for smoothing landmark jitter)
+// ============================================================================
+
+/**
+ * One-Euro Filter - adaptive low-pass filter for noisy signals.
+ *
+ * This filter is commonly used in motion tracking and was used internally
+ * by MediaPipe's legacy pose solution. It adapts its cutoff frequency based
+ * on the speed of movement: more smoothing when still, more responsive when moving.
+ *
+ * Reference: http://cristal.univ-lille.fr/~casiez/1euro/
+ */
+class LowPassFilter {
+  private y: number | null = null;
+  private s: number | null = null;
+
+  constructor(private alpha: number) {}
+
+  setAlpha(alpha: number): void {
+    this.alpha = alpha;
+  }
+
+  filter(value: number): number {
+    if (this.y === null) {
+      this.y = value;
+      this.s = value;
+    } else {
+      this.y = this.alpha * value + (1 - this.alpha) * (this.s as number);
+      this.s = this.y;
+    }
+    return this.y;
+  }
+
+  lastValue(): number | null {
+    return this.y;
+  }
+}
+
+class OneEuroFilter {
+  private freq: number;
+  private minCutoff: number;
+  private beta: number;
+  private xFilter: LowPassFilter;
+  private dxFilter: LowPassFilter;
+  private lastTime: number | null = null;
+
+  /**
+   * Create a One-Euro filter.
+   * @param freq - Data frequency in Hz (e.g., 30 for 30fps)
+   * @param minCutoff - Minimum cutoff frequency (lower = more smoothing when still)
+   * @param beta - Speed coefficient (higher = more responsive to fast movements)
+   * @param dCutoff - Derivative cutoff frequency
+   */
+  constructor(freq: number = 30, minCutoff: number = 1.0, beta: number = 0.007, dCutoff: number = 1.0) {
+    this.freq = freq;
+    this.minCutoff = minCutoff;
+    this.beta = beta;
+    this.xFilter = new LowPassFilter(this.alpha(minCutoff));
+    this.dxFilter = new LowPassFilter(this.alpha(dCutoff));
+  }
+
+  private alpha(cutoff: number): number {
+    const te = 1.0 / this.freq;
+    const tau = 1.0 / (2 * Math.PI * cutoff);
+    return 1.0 / (1.0 + tau / te);
+  }
+
+  filter(value: number, timestamp?: number): number {
+    // Update frequency estimate if timestamp provided
+    if (timestamp !== undefined && this.lastTime !== null) {
+      const dt = timestamp - this.lastTime;
+      if (dt > 0) {
+        this.freq = 1.0 / dt;
+      }
+    }
+    this.lastTime = timestamp ?? null;
+
+    // Estimate derivative
+    const prevX = this.xFilter.lastValue();
+    const dx = prevX !== null ? (value - prevX) * this.freq : 0;
+    const edx = this.dxFilter.filter(dx);
+
+    // Adaptive cutoff based on derivative magnitude
+    const cutoff = this.minCutoff + this.beta * Math.abs(edx);
+    this.xFilter.setAlpha(this.alpha(cutoff));
+
+    return this.xFilter.filter(value);
+  }
+}
+
+/**
+ * Apply One-Euro filter to smooth a trajectory.
+ * Creates separate filters for X and Y to preserve independent smoothing.
+ */
+function smoothTrajectory(
+  rawPoints: Point2D[],
+  timestamps?: number[]
+): Point2D[] {
+  if (rawPoints.length === 0) return [];
+
+  // Parameters tuned for 30fps pose data
+  // minCutoff=1.0: moderate smoothing when still
+  // beta=0.007: responsive to intentional movement
+  const filterX = new OneEuroFilter(30, 1.0, 0.007, 1.0);
+  const filterY = new OneEuroFilter(30, 1.0, 0.007, 1.0);
+
+  return rawPoints.map((point, i) => {
+    const t = timestamps?.[i];
+    return {
+      x: filterX.filter(point.x, t),
+      y: filterY.filter(point.y, t),
+    };
+  });
+}
+
+// ============================================================================
+// Scale Calibration (shoulder-width based)
+// ============================================================================
+
+/**
+ * Calculate scale factor from shoulder width in normalized coordinates.
+ * Uses average human shoulder width (~40cm) to convert normalized coords to cm.
+ *
+ * This adapts to:
+ * - Different camera distances
+ * - Different body sizes
+ * - Different frame sizes
+ */
+function calculateScaleFactor(landmarkHistory: TimestampedLandmarks[]): number {
+  // Try to get shoulder width from first few frames with valid data
+  for (const frame of landmarkHistory.slice(0, 10)) {
+    const landmarks = frame.landmarks;
+    if (!landmarks || landmarks.length === 0) continue;
+
+    const leftShoulder = landmarks[FILTERED_INDEX.LEFT_SHOULDER];
+    const rightShoulder = landmarks[FILTERED_INDEX.RIGHT_SHOULDER];
+
+    if (!leftShoulder || !rightShoulder) continue;
+
+    // Calculate shoulder width in normalized coordinates
+    const shoulderWidthNorm = Math.abs(rightShoulder.x - leftShoulder.x);
+
+    // Avoid division by zero or unrealistic values
+    if (shoulderWidthNorm > 0.05 && shoulderWidthNorm < 0.8) {
+      // Scale factor: cm per normalized unit
+      return AVERAGE_SHOULDER_WIDTH_CM / shoulderWidthNorm;
+    }
+  }
+
+  // Fallback if shoulders not detected
+  return FALLBACK_SCALE_CM;
+}
 
 // ============================================================================
 // Types
@@ -135,27 +299,30 @@ function countThresholdCrossings(
   return corrections;
 }
 
+// ============================================================================
+// Hip trajectory extraction (smoothed normalized landmarks + calibrated scale)
+// ============================================================================
+
 /**
- * Fixed scale factor: approximate conversion from normalized coords to meters.
- * Assumes typical webcam setup where person fills ~50% of frame width,
- * and frame represents ~1.5m of real space.
+ * Extract hip trajectory from NORMALIZED landmarks with smoothing.
+ * Returns displacement from initial position in CENTIMETERS.
  *
- * This is approximate but sufficient for relative comparisons (MVP).
- */
-const NORMALIZED_TO_METERS_SCALE = 1.5;
-
-// ============================================================================
-// Hip trajectory extraction (HYBRID: normalized landmarks + scale factor)
-// ============================================================================
-
-/**
- * Extract hip trajectory from NORMALIZED landmarks.
- * Returns displacement from initial position in approximate METERS.
+ * Process:
+ * 1. Extract raw hip center positions (normalized coords)
+ * 2. Apply One-Euro filter to remove jitter
+ * 3. Calculate displacement from initial position
+ * 4. Scale to cm using shoulder-width calibration
  */
 function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[] {
-  const trajectory: Point2D[] = [];
-  let initialX: number | null = null;
-  let initialY: number | null = null;
+  if (landmarkHistory.length === 0) return [];
+
+  // Step 1: Calculate scale factor from shoulder width
+  const scaleFactor = calculateScaleFactor(landmarkHistory);
+  console.log('[HipTrajectory] Scale factor (cm per normalized unit):', scaleFactor.toFixed(2));
+
+  // Step 2: Extract raw hip positions and timestamps
+  const rawPositions: Point2D[] = [];
+  const timestamps: number[] = [];
 
   for (const frame of landmarkHistory) {
     const normalizedLandmarks = frame.landmarks;
@@ -167,21 +334,39 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
     if (!leftHip || !rightHip) continue;
 
     // Hip center in normalized coordinates
-    const centerX = (leftHip.x + rightHip.x) / 2;
-    const centerY = (leftHip.y + rightHip.y) / 2;
-
-    // Set initial position on first valid frame
-    if (initialX === null) {
-      initialX = centerX;
-      initialY = centerY;
-    }
-
-    // Track displacement from initial, convert to approximate meters
-    trajectory.push({
-      x: (centerX - initialX) * NORMALIZED_TO_METERS_SCALE,
-      y: (centerY - initialY!) * NORMALIZED_TO_METERS_SCALE,
+    rawPositions.push({
+      x: (leftHip.x + rightHip.x) / 2,
+      y: (leftHip.y + rightHip.y) / 2,
     });
+    timestamps.push(frame.timestamp / 1000); // Convert ms to seconds for filter
   }
+
+  if (rawPositions.length === 0) return [];
+
+  // Step 3: Apply One-Euro filter to smooth jitter
+  const smoothedPositions = smoothTrajectory(rawPositions, timestamps);
+
+  // DEBUG: Compare raw vs smoothed
+  const rawXRange = Math.max(...rawPositions.map(p => p.x)) - Math.min(...rawPositions.map(p => p.x));
+  const smoothedXRange = Math.max(...smoothedPositions.map(p => p.x)) - Math.min(...smoothedPositions.map(p => p.x));
+  console.log('[HipTrajectory] Raw X range (normalized):', rawXRange.toFixed(4));
+  console.log('[HipTrajectory] Smoothed X range (normalized):', smoothedXRange.toFixed(4));
+  console.log('[HipTrajectory] Smoothing reduced noise by:', ((1 - smoothedXRange/rawXRange) * 100).toFixed(1) + '%');
+
+  // Step 4: Calculate displacement from initial position, convert to cm
+  const initialX = smoothedPositions[0].x;
+  const initialY = smoothedPositions[0].y;
+
+  const trajectory = smoothedPositions.map((pos) => ({
+    x: (pos.x - initialX) * scaleFactor,
+    y: (pos.y - initialY) * scaleFactor,
+  }));
+
+  // DEBUG: Log trajectory stats
+  const maxX = Math.max(...trajectory.map(p => Math.abs(p.x)));
+  const maxY = Math.max(...trajectory.map(p => Math.abs(p.y)));
+  console.log('[HipTrajectory] Max X displacement (cm):', maxX.toFixed(2));
+  console.log('[HipTrajectory] Max Y displacement (cm):', maxY.toFixed(2));
 
   return trajectory;
 }
@@ -211,10 +396,10 @@ function calculateSwayStd(trajectory: Point2D[]): { stdX: number; stdY: number }
  * Count balance corrections using 2D Euclidean distance from starting position.
  * A correction = moving beyond threshold, then returning within threshold.
  *
- * @param trajectory - Hip trajectory (displacement from initial position in meters)
- * @param thresholdMeters - Distance threshold in meters (default 0.02m = 2cm)
+ * @param trajectory - Hip trajectory (displacement from initial position in CM)
+ * @param thresholdCm - Distance threshold in cm (default 2cm)
  */
-function countCorrections(trajectory: Point2D[], thresholdMeters: number = 0.02): number {
+function countCorrections(trajectory: Point2D[], thresholdCm: number = CORRECTION_THRESHOLD_CM): number {
   if (trajectory.length === 0) return 0;
 
   // Use 2D Euclidean distance from origin (initial position)
@@ -222,7 +407,7 @@ function countCorrections(trajectory: Point2D[], thresholdMeters: number = 0.02)
   const distances = trajectory.map((p) => Math.sqrt(p.x * p.x + p.y * p.y));
 
   // Count threshold crossings using distance from origin (center = 0)
-  return countThresholdCrossings(distances, thresholdMeters, 0);
+  return countThresholdCrossings(distances, thresholdCm, 0);
 }
 
 // ============================================================================
@@ -334,14 +519,14 @@ function calculateSegmentMetrics(
   const avgArmAngleLeft = armCount > 0 ? totalArmAngleLeft / armCount : 0;
   const avgArmAngleRight = armCount > 0 ? totalArmAngleRight / armCount : 0;
 
-  // Calculate sway for this segment using normalized landmarks
+  // Calculate sway for this segment using smoothed normalized landmarks
+  // extractHipTrajectory now returns trajectory in CM (already scaled)
   const trajectory = extractHipTrajectory(segment);
-  const pathLengthMeters = calculatePathLength(trajectory);
-  const pathLengthCm = pathLengthMeters * 100;
+  const pathLengthCm = calculatePathLength(trajectory);
   const swayVelocityCmS = segmentDuration > 0 ? pathLengthCm / segmentDuration : 0;
 
-  // Count corrections in this segment
-  const correctionsCount = countCorrections(trajectory, 0.02);
+  // Count corrections in this segment (threshold in cm)
+  const correctionsCount = countCorrections(trajectory, CORRECTION_THRESHOLD_CM);
 
   return {
     armAngleLeft: Math.round(avgArmAngleLeft * 10) / 10,
@@ -414,9 +599,10 @@ export interface CalculatedMetrics {
  * Calculate all metrics from landmark history.
  * Returns metrics in real-world units (cm, degrees).
  *
- * HYBRID APPROACH:
- * - Sway metrics: Uses NORMALIZED landmarks (tracks position in frame)
- *   converted to meters using scale factor from world landmarks
+ * APPROACH (see CV_METRICS_GUIDE.md):
+ * - Sway metrics: Uses NORMALIZED landmarks (tracks screen position)
+ *   + One-Euro smoothing (removes jitter)
+ *   + Shoulder-width calibration (converts to cm)
  * - Arm angles: Uses WORLD landmarks (accurate for joint angles)
  *
  * @param landmarkHistory - Array of timestamped filtered landmarks
@@ -437,7 +623,8 @@ export function calculateMetrics(
     return null;
   }
 
-  // Extract hip trajectory using NORMALIZED landmarks
+  // Extract hip trajectory using smoothed NORMALIZED landmarks
+  // Returns trajectory already in CM (shoulder-width calibrated)
   const hipTrajectory = extractHipTrajectory(landmarkHistory);
 
   if (hipTrajectory.length === 0) {
@@ -445,16 +632,13 @@ export function calculateMetrics(
     return null;
   }
 
-  // Calculate sway metrics (trajectory is in approximate meters)
+  // Calculate sway metrics (trajectory is already in CM)
   const { stdX, stdY } = calculateSwayStd(hipTrajectory);
-  const swayStdXCm = stdX * 100;
-  const swayStdYCm = stdY * 100;
+  const swayStdXCm = stdX;
+  const swayStdYCm = stdY;
 
-  const pathLengthMeters = calculatePathLength(hipTrajectory);
-  const swayPathLengthCm = pathLengthMeters * 100;
-
-  const swayVelocityMetersSec = holdTime > 0 ? pathLengthMeters / holdTime : 0;
-  const swayVelocityCmS = swayVelocityMetersSec * 100;
+  const swayPathLengthCm = calculatePathLength(hipTrajectory);
+  const swayVelocityCmS = holdTime > 0 ? swayPathLengthCm / holdTime : 0;
 
   // Calculate temporal metrics (fatigue analysis) - do this first so we can sum corrections
   const temporal = calculateTemporalMetrics(landmarkHistory, holdTime);
@@ -504,6 +688,61 @@ export function calculateMetrics(
     avgArmAngle,
     correctionsCount
   );
+
+  // DEBUG: Log final metrics summary
+  console.log('\n========== METRICS SUMMARY ==========');
+  console.log('[Metrics] Hold time:', holdTime.toFixed(1), 's');
+  console.log('[Metrics] Frames processed:', landmarkHistory.length);
+  console.log('--- SWAY (should be LOW if standing still, HIGHER if swaying) ---');
+  console.log('[Metrics] Sway Std X:', swayStdXCm.toFixed(2), 'cm');
+  console.log('[Metrics] Sway Std Y:', swayStdYCm.toFixed(2), 'cm');
+  console.log('[Metrics] Path Length:', swayPathLengthCm.toFixed(2), 'cm');
+  console.log('[Metrics] Velocity:', swayVelocityCmS.toFixed(2), 'cm/s');
+  console.log('--- CORRECTIONS (should match intentional balance adjustments) ---');
+  console.log('[Metrics] Total Corrections:', correctionsCount);
+  console.log('[Metrics] By segment: 1st=' + temporal.firstThird.correctionsCount +
+              ', 2nd=' + temporal.middleThird.correctionsCount +
+              ', 3rd=' + temporal.lastThird.correctionsCount);
+  console.log('--- ARM ANGLES (should change with arm flapping) ---');
+  console.log('[Metrics] Left Arm Angle:', armAngleLeft.toFixed(1), '°');
+  console.log('[Metrics] Right Arm Angle:', armAngleRight.toFixed(1), '°');
+  console.log('--- FINAL SCORE ---');
+  console.log('[Metrics] Stability Score:', stabilityScore.toFixed(1), '/ 100');
+  console.log('=====================================\n');
+
+  // DEBUG: Download full trajectory data as JSON for analysis
+  const debugData = {
+    timestamp: new Date().toISOString(),
+    holdTime,
+    frameCount: landmarkHistory.length,
+    scaleFactor: calculateScaleFactor(landmarkHistory),
+    trajectory: hipTrajectory.map((p, i) => ({
+      frame: i,
+      x_cm: Math.round(p.x * 100) / 100,
+      y_cm: Math.round(p.y * 100) / 100,
+      distance_cm: Math.round(Math.sqrt(p.x * p.x + p.y * p.y) * 100) / 100,
+    })),
+    metrics: {
+      swayStdX: swayStdXCm,
+      swayStdY: swayStdYCm,
+      swayPathLength: swayPathLengthCm,
+      swayVelocity: swayVelocityCmS,
+      correctionsCount,
+      armAngleLeft,
+      armAngleRight,
+      stabilityScore,
+    },
+    temporal,
+    referenceValues: REFERENCE_VALUES,
+  };
+  const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `balance-test-debug-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  console.log('[Metrics] Debug data downloaded as JSON');
 
   return {
     swayStdX: Math.round(swayStdXCm * 100) / 100,
