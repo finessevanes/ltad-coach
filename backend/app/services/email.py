@@ -17,7 +17,7 @@ def send_email(
     to: str,
     subject: str,
     html: str,
-    from_email: str = "AI Coach <onboarding@resend.dev>",
+    from_email: str = "AI Coach <noreply@coachlens.laschicas.ai>",
 ) -> bool:
     """Send an email via Resend API.
 
@@ -25,7 +25,7 @@ def send_email(
         to: Recipient email address
         subject: Email subject line
         html: HTML email body
-        from_email: Sender email (default: onboarding@resend.dev for testing)
+        from_email: Sender email (verified domain)
 
     Returns:
         True if email sent successfully, False otherwise
