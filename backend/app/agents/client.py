@@ -54,17 +54,25 @@ class AnthropicClient:
         """
         # Build system parameter
         # CRITICAL: system is a separate parameter, NOT in messages array
-        system_param = system if system else None
+        # As of SDK 0.75.0, system must be a list of text blocks
+        if system:
+            system_param = [{"type": "text", "text": system}]
+        else:
+            system_param = None
 
         try:
             # Call Anthropic API
-            response = await self.client.messages.create(
-                model=model,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                system=system_param,
-                messages=messages,
-            )
+            # Only include system parameter if provided
+            kwargs = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "messages": messages,
+            }
+            if system_param is not None:
+                kwargs["system"] = system_param
+
+            response = await self.client.messages.create(**kwargs)
 
             # Log token usage
             usage = response.usage
