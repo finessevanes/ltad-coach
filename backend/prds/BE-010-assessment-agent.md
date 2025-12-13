@@ -103,9 +103,10 @@ async def generate_assessment_feedback(
 - Age Expectation: {age_comparison.capitalize()} expected for age {athlete_age}
 
 **Quality Metrics**:
-- Stability Score: {metrics.get('stability_score', 0):.1f}/100
 - Sway Velocity: {metrics.get('sway_velocity', 0):.2f} cm/s
-- Arm Excursion (L/R): {metrics.get('arm_excursion_left', 0):.1f}° / {metrics.get('arm_excursion_right', 0):.1f}°
+- Sway Std (X/Y): {metrics.get('sway_std_x', 0):.2f} cm / {metrics.get('sway_std_y', 0):.2f} cm
+- Sway Path Length: {metrics.get('sway_path_length', 0):.2f} cm
+- Arm Angle (L/R): {metrics.get('arm_angle_left', 0):.1f}° / {metrics.get('arm_angle_right', 0):.1f}°
 - Arm Asymmetry: {metrics.get('arm_asymmetry_ratio', 1):.2f}
 - Corrections: {metrics.get('corrections_count', 0)}
 - Result: {metrics.get('failure_reason', 'Unknown').replace('_', ' ').title()}
@@ -115,7 +116,61 @@ async def generate_assessment_feedback(
     if team_rank:
         rank, total = team_rank
         dynamic_context += f"""
-**Team Ranking**: #{rank} of {total} athletes (by stability score)
+**Team Ranking**: #{rank} of {total} athletes
+"""
+
+    # Add temporal breakdown if available
+    if metrics.get('temporal'):
+        temporal = metrics['temporal']
+        dynamic_context += f"""
+**Temporal Breakdown**:
+First Third (0-{duration/3:.1f}s):
+  - Arm Angle (L/R): {temporal['first_third']['arm_angle_left']:.1f}° / {temporal['first_third']['arm_angle_right']:.1f}°
+  - Sway Velocity: {temporal['first_third']['sway_velocity']:.2f} cm/s
+  - Corrections: {temporal['first_third']['corrections_count']}
+
+Middle Third ({duration/3:.1f}-{2*duration/3:.1f}s):
+  - Arm Angle (L/R): {temporal['middle_third']['arm_angle_left']:.1f}° / {temporal['middle_third']['arm_angle_right']:.1f}°
+  - Sway Velocity: {temporal['middle_third']['sway_velocity']:.2f} cm/s
+  - Corrections: {temporal['middle_third']['corrections_count']}
+
+Last Third ({2*duration/3:.1f}-{duration:.1f}s):
+  - Arm Angle (L/R): {temporal['last_third']['arm_angle_left']:.1f}° / {temporal['last_third']['arm_angle_right']:.1f}°
+  - Sway Velocity: {temporal['last_third']['sway_velocity']:.2f} cm/s
+  - Corrections: {temporal['last_third']['corrections_count']}
+
+"""
+
+    # Add 5-second timeline if available
+    if metrics.get('five_second_segments'):
+        segments = metrics['five_second_segments']
+        segment_lines = []
+        for seg in segments:
+            segment_lines.append(
+                f"{seg['start_time']:.0f}-{seg['end_time']:.0f}s: "
+                f"velocity {seg['avg_velocity']:.1f} cm/s, "
+                f"corrections {seg['corrections']}, "
+                f"arms {seg['arm_angle_left']:.1f}°/{seg['arm_angle_right']:.1f}°"
+            )
+        dynamic_context += f"""
+**Five-Second Timeline**:
+{chr(10).join(segment_lines)}
+
+"""
+
+    # Add detected events if available
+    if metrics.get('events'):
+        events = metrics['events']
+        event_lines = []
+        for event in events:
+            severity_str = f" ({event['severity']} severity)" if event.get('severity') else ""
+            event_lines.append(
+                f"- {event['time']:.1f}s: {event['type'].replace('_', ' ').title()}{severity_str} - {event['detail']}"
+            )
+        dynamic_context += f"""
+**Events Detected**:
+{chr(10).join(event_lines)}
+
 """
 
     # Determine focus areas based on metrics
@@ -161,37 +216,48 @@ Generate the feedback now:
 def _identify_focus_areas(metrics: dict) -> list:
     """Identify areas needing improvement based on metrics.
 
-    Thresholds are based on research reference values, not athlete-specific
-    normalization. These fixed thresholds work because metrics are stored
-    in normalized pose coordinates (consistent frame-of-reference).
+    Thresholds are based on research reference values and typical performance
+    ranges for ages 5-13. All metrics are in real-world units (cm, degrees).
     """
     focus = []
 
-    # Stability score is already scaled 0-100 using reference values
-    stability = metrics.get("stability_score", 100)
-    if stability < 60:
-        focus.append("overall stability")
-
-    # Sway velocity threshold based on research data (normalized pose coords/sec)
+    # Sway velocity in cm/s (high indicates reactive balancing)
     sway_velocity = metrics.get("sway_velocity", 0)
-    if sway_velocity > 0.02:  # Threshold in normalized pose coordinates
+    if sway_velocity > 4.0:  # >4 cm/s suggests excessive movement
         focus.append("sway control")
 
-    # Arm excursion in degrees (not normalized, directly measured)
-    arm_excursion = (
-        metrics.get("arm_excursion_left", 0) +
-        metrics.get("arm_excursion_right", 0)
-    ) / 2
-    if arm_excursion > 30:  # High arm movement in degrees
+    # Sway standard deviation in cm (high indicates poor positioning)
+    sway_std_x = metrics.get("sway_std_x", 0)
+    sway_std_y = metrics.get("sway_std_y", 0)
+    avg_sway_std = (sway_std_x + sway_std_y) / 2
+    if avg_sway_std > 2.5:  # >2.5 cm average std dev
+        focus.append("overall stability")
+
+    # Arm angles in degrees (high indicates compensation)
+    arm_angle_left = abs(metrics.get("arm_angle_left", 0))
+    arm_angle_right = abs(metrics.get("arm_angle_right", 0))
+    avg_arm_angle = (arm_angle_left + arm_angle_right) / 2
+    if avg_arm_angle > 20:  # Arms dropped >20° from horizontal
         focus.append("arm compensation")
 
+    # Corrections count (frequent indicates instability)
     corrections = metrics.get("corrections_count", 0)
     if corrections > 5:
         focus.append("consistency")
 
+    # Arm asymmetry ratio (imbalance detection)
     asymmetry = metrics.get("arm_asymmetry_ratio", 1)
     if asymmetry < 0.7 or asymmetry > 1.3:
         focus.append("bilateral symmetry")
+
+    # Temporal degradation (fatigue detection)
+    if metrics.get("temporal"):
+        temporal = metrics["temporal"]
+        first_velocity = temporal["first_third"]["sway_velocity"]
+        last_velocity = temporal["last_third"]["sway_velocity"]
+        # If velocity increases by >50% in last third
+        if last_velocity > first_velocity * 1.5:
+            focus.append("endurance/fatigue")
 
     return focus
 
@@ -205,7 +271,9 @@ def _generate_fallback_feedback(
     metrics: dict
 ) -> str:
     """Generate simple feedback when AI fails"""
-    stability = metrics.get("stability_score", 0)
+    sway_velocity = metrics.get("sway_velocity", 0)
+    corrections = metrics.get("corrections_count", 0)
+    avg_arm_angle = (abs(metrics.get("arm_angle_left", 0)) + abs(metrics.get("arm_angle_right", 0))) / 2
 
     feedback = f"""
 **Score Summary**
@@ -214,10 +282,12 @@ def _generate_fallback_feedback(
 **Performance Highlights**
 """
 
-    if stability >= 70:
-        feedback += "- Good overall stability score\n"
-    if metrics.get("corrections_count", 0) <= 2:
-        feedback += "- Minimal corrections needed during the test\n"
+    if sway_velocity < 3.0:
+        feedback += "- Good sway control (low movement speed)\n"
+    if corrections <= 3:
+        feedback += "- Minimal balance corrections needed\n"
+    if avg_arm_angle < 10:
+        feedback += "- Maintained good arm position throughout test\n"
     if duration >= 15:
         feedback += "- Solid balance duration achieved\n"
 
@@ -225,10 +295,12 @@ def _generate_fallback_feedback(
 **Areas for Improvement**
 """
 
-    if stability < 70:
-        feedback += "- Work on overall stability through core exercises\n"
-    if metrics.get("sway_velocity", 0) > 2:
-        feedback += "- Practice maintaining stillness with focused breathing\n"
+    if sway_velocity > 4.0:
+        feedback += "- Work on reducing reactive balancing (high sway velocity)\n"
+    if corrections > 5:
+        feedback += "- Practice maintaining consistent positioning\n"
+    if avg_arm_angle > 20:
+        feedback += "- Focus on keeping arms in T-position (currently dropped)\n"
 
     feedback += """
 **Coaching Recommendations**
@@ -305,21 +377,70 @@ feedback = await generate_assessment_feedback(
     leg_tested="left",
     metrics={
         "duration_seconds": 25,
-        "stability_score": 85,
-        "sway_velocity": 1.5,
-        "arm_excursion_left": 15,
-        "arm_excursion_right": 12,
+        "sway_velocity": 1.8,
+        "sway_std_x": 0.9,
+        "sway_std_y": 1.2,
+        "sway_path_length": 45.0,
+        "arm_angle_left": 2.5,
+        "arm_angle_right": 3.1,
+        "arm_asymmetry_ratio": 0.95,
         "corrections_count": 2,
         "failure_reason": "time_complete",
+        "temporal": {
+            "first_third": {"arm_angle_left": 1.2, "arm_angle_right": 2.0, "sway_velocity": 2.1, "corrections_count": 1},
+            "middle_third": {"arm_angle_left": 2.5, "arm_angle_right": 3.0, "sway_velocity": 1.7, "corrections_count": 0},
+            "last_third": {"arm_angle_left": 3.8, "arm_angle_right": 4.2, "sway_velocity": 1.6, "corrections_count": 1},
+        },
+        "five_second_segments": [
+            {"start_time": 0, "end_time": 5, "avg_velocity": 2.3, "corrections": 1, "arm_angle_left": 1.0, "arm_angle_right": 1.8, "sway_std_x": 1.1, "sway_std_y": 1.4},
+            {"start_time": 5, "end_time": 10, "avg_velocity": 1.9, "corrections": 0, "arm_angle_left": 2.1, "arm_angle_right": 2.7, "sway_std_x": 0.9, "sway_std_y": 1.2},
+            # ... more segments
+        ],
+        "events": [
+            {"time": 3.2, "type": "stabilized", "detail": "Velocity dropped below 2 cm/s and maintained for 2+ seconds"}
+        ],
     },
     team_rank=(1, 8),
 )
 print(feedback)
+
+# Low performer with fatigue
+feedback_low = await generate_assessment_feedback(
+    athlete_name="Sarah Johnson",
+    athlete_age=10,
+    leg_tested="right",
+    metrics={
+        "duration_seconds": 12.5,
+        "sway_velocity": 5.8,
+        "sway_std_x": 3.2,
+        "sway_std_y": 2.9,
+        "sway_path_length": 72.5,
+        "arm_angle_left": 18.5,
+        "arm_angle_right": 24.3,
+        "arm_asymmetry_ratio": 0.76,
+        "corrections_count": 11,
+        "failure_reason": "foot_touchdown",
+        "temporal": {
+            "first_third": {"arm_angle_left": 8.2, "arm_angle_right": 12.1, "sway_velocity": 4.1, "corrections_count": 2},
+            "middle_third": {"arm_angle_left": 15.8, "arm_angle_right": 22.5, "sway_velocity": 6.2, "corrections_count": 4},
+            "last_third": {"arm_angle_left": 25.5, "arm_angle_right": 32.1, "sway_velocity": 7.1, "corrections_count": 5},
+        },
+        "events": [
+            {"time": 2.8, "type": "flapping", "severity": "medium", "detail": "Arm velocity spike: 14.2 (threshold: 8.1)"},
+            {"time": 7.3, "type": "correction_burst", "severity": "high", "detail": "6 corrections in 2s"},
+        ],
+    },
+    team_rank=(7, 8),
+)
+print(feedback_low)
 ```
 
-2. Test low performer scenario
-3. Test edge cases (0 duration, perfect score)
-4. Verify prompt caching is working (check logs)
+2. Test edge cases:
+   - 0 duration (test failed immediately)
+   - Perfect score (30 seconds, minimal sway)
+   - Missing temporal/events data (should handle gracefully)
+3. Verify prompt caching is working (check logs for cache hits)
+4. Validate temporal degradation detection in focus areas
 
 ## Notes
 - Sonnet model provides better coaching insight than Haiku
