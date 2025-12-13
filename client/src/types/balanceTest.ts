@@ -44,10 +44,16 @@ export interface TemporalMetrics {
 }
 
 /**
- * World landmark metrics - real-world units (cm, degrees)
- * These are calculated from MediaPipe's worldLandmarks (in meters)
+ * Test result with metrics in real-world units (cm, degrees).
+ * Calculated from MediaPipe's worldLandmarks.
  */
-export interface WorldMetrics {
+export interface TestResult {
+  success: boolean;
+  holdTime: number;
+  failureReason?: string;
+  landmarkHistory: TimestampedLandmarks[];
+
+  // ========== METRICS (real-world units: cm, degrees) ==========
   /** Sway standard deviation in X (cm) */
   swayStdX: number;
   /** Sway standard deviation in Y (cm) */
@@ -66,39 +72,8 @@ export interface WorldMetrics {
   armAsymmetryRatio: number;
   /** Composite stability score (0-100, higher is better) */
   stabilityScore: number;
-  /** Temporal breakdown of metrics */
+  /** Temporal breakdown of metrics (fatigue analysis) */
   temporal: TemporalMetrics;
-}
-
-export interface TestResult {
-  success: boolean;
-  holdTime: number;
-  failureReason?: string;
-  landmarkHistory: TimestampedLandmarks[];
-
-  // ========== NORMALIZED METRICS (existing - for comparison) ==========
-  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
-  armDeviationLeft: number;
-  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
-  armDeviationRight: number;
-  /** Left/Right arm deviation ratio */
-  armAsymmetryRatio: number;
-  /** Sway standard deviation in X (normalized 0-1) */
-  swayStdX: number;
-  /** Sway standard deviation in Y (normalized 0-1) */
-  swayStdY: number;
-  /** Total sway path length (normalized 0-1) */
-  swayPathLength: number;
-  /** Average sway velocity (normalized units/s) */
-  swayVelocity: number;
-  /** Number of balance corrections detected */
-  correctionsCount: number;
-  /** Composite stability score (0-100, higher is better) */
-  stabilityScore: number;
-
-  // ========== WORLD METRICS (new - real units) ==========
-  /** World landmark metrics in real-world units (cm, degrees) */
-  worldMetrics?: WorldMetrics;
 }
 
 // Constants for position detection

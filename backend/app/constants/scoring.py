@@ -40,15 +40,15 @@ STABILITY_WEIGHTS = {
     "corrections": 0.20,      # Weight for number of corrections
 }
 
-# Correction Threshold (normalized coordinates)
-CORRECTION_THRESHOLD = 0.02  # Threshold for detecting balance corrections
+# Correction Threshold (in meters - world coordinates)
+CORRECTION_THRESHOLD = 0.02  # 2cm threshold for detecting balance corrections
 
-# Reference Values for Normalization
-# Used to scale metrics to 0-1 range for stability score calculation
-# Based on empirical data from youth athletes
+# Reference Values for Stability Score Calculation
+# All metrics in real-world units (cm, degrees)
+# Used to normalize metrics to 0-1 range before applying weights
 REFERENCE_VALUES = {
-    "sway_std_max": 0.08,           # Max expected sway std (normalized)
-    "sway_velocity_max": 0.015,     # Max expected sway velocity
-    "arm_excursion_max": 90.0,      # Max expected arm excursion (degrees) - arms extended wide
-    "corrections_max": 15,          # Max expected corrections
+    "sway_std_max": 8.0,          # Max expected sway std in cm
+    "sway_velocity_max": 5.0,     # Max expected sway velocity in cm/s
+    "arm_angle_max": 45.0,        # Max expected arm angle drop in degrees
+    "corrections_max": 15,        # Max expected corrections
 }

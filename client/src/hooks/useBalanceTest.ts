@@ -21,11 +21,10 @@ import {
   checkBalancePosition,
   checkFootTouchdown,
   checkSupportFootMoved,
-  calculateArmDeviation,
   getInitialPositions,
   InitialPositions,
 } from '../utils/positionDetection';
-import { calculateAllMetrics, calculateWorldMetrics } from '../utils/metricsCalculation';
+import { calculateMetrics } from '../utils/metricsCalculation';
 
 interface UseBalanceTestOptions {
   targetDuration?: number;
@@ -99,9 +98,6 @@ export function useBalanceTest(
   const lastTrackingTimeRef = useRef<number>(Date.now());
   const initialPositionsRef = useRef<InitialPositions | null>(null);
   const landmarkHistoryRef = useRef<TimestampedLandmarks[]>([]);
-  // Track arm deviation: sum of deviations and count for averaging
-  const armDeviationSumRef = useRef<{ left: number; right: number }>({ left: 0, right: 0 });
-  const armDeviationCountRef = useRef(0);
   const holdTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Consecutive failure frame tracking (prevents false positives from occlusion)
   const consecutiveTouchdownFramesRef = useRef(0);
@@ -117,8 +113,6 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armDeviationSumRef.current = { left: 0, right: 0 };
-    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
   }, []);
@@ -133,8 +127,6 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armDeviationSumRef.current = { left: 0, right: 0 };
-    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
     if (holdTimeIntervalRef.current) {
@@ -162,52 +154,66 @@ export function useBalanceTest(
       setFailureReason(reason || null);
       setHoldTime(finalHoldTime);
 
-      // Calculate average arm deviation (sum / count)
-      const count = armDeviationCountRef.current || 1; // Avoid division by zero
-      const avgArmDeviationLeft = armDeviationSumRef.current.left / count;
-      const avgArmDeviationRight = armDeviationSumRef.current.right / count;
-
-      // Calculate all metrics from landmark history (normalized)
-      const metrics = calculateAllMetrics(
-        landmarkHistoryRef.current,
-        finalHoldTime,
-        success,
-        reason,
-        avgArmDeviationLeft,
-        avgArmDeviationRight
-      );
-
-      // Calculate world metrics (real-world units: cm, degrees)
-      const worldMetrics = calculateWorldMetrics(
+      // Calculate metrics from landmark history (world landmarks - real units: cm, degrees)
+      const metrics = calculateMetrics(
         landmarkHistoryRef.current,
         finalHoldTime
       );
 
+      if (!metrics) {
+        console.error('[BalanceTest] Failed to calculate metrics - world landmarks not available');
+        // Create result with zero metrics as fallback
+        const result: TestResult = {
+          success: false,
+          holdTime: Math.round(finalHoldTime * 100) / 100,
+          failureReason: 'Failed to calculate metrics',
+          landmarkHistory: [...landmarkHistoryRef.current],
+          swayStdX: 0,
+          swayStdY: 0,
+          swayPathLength: 0,
+          swayVelocity: 0,
+          correctionsCount: 0,
+          armAngleLeft: 0,
+          armAngleRight: 0,
+          armAsymmetryRatio: 1,
+          stabilityScore: 0,
+          temporal: {
+            firstThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+            middleThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+            lastThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+          },
+        };
+        setTestResult(result);
+        return;
+      }
+
       const result: TestResult = {
         success,
-        holdTime: metrics.holdTime,
+        holdTime: Math.round(finalHoldTime * 100) / 100,
         failureReason: reason,
         landmarkHistory: [...landmarkHistoryRef.current],
-        // Normalized metrics (existing)
-        armDeviationLeft: metrics.armDeviationLeft,
-        armDeviationRight: metrics.armDeviationRight,
-        armAsymmetryRatio: metrics.armAsymmetryRatio,
+        // Metrics in real-world units (cm, degrees)
         swayStdX: metrics.swayStdX,
         swayStdY: metrics.swayStdY,
         swayPathLength: metrics.swayPathLength,
         swayVelocity: metrics.swayVelocity,
         correctionsCount: metrics.correctionsCount,
+        armAngleLeft: metrics.armAngleLeft,
+        armAngleRight: metrics.armAngleRight,
+        armAsymmetryRatio: metrics.armAsymmetryRatio,
         stabilityScore: metrics.stabilityScore,
-        // World metrics (new - real units)
-        worldMetrics: worldMetrics || undefined,
+        temporal: metrics.temporal,
       };
 
       console.log('[BalanceTest] Setting test result with metrics:', result);
-      if (worldMetrics) {
-        console.log('[BalanceTest] World metrics (cm, degrees):', worldMetrics);
-      } else {
-        console.warn('[BalanceTest] World landmarks not available - world metrics not calculated');
-      }
+      console.log('[BalanceTest] Metrics (cm, degrees):', {
+        swayStdX: metrics.swayStdX,
+        swayStdY: metrics.swayStdY,
+        swayVelocity: metrics.swayVelocity,
+        armAngleLeft: metrics.armAngleLeft,
+        armAngleRight: metrics.armAngleRight,
+        stabilityScore: metrics.stabilityScore,
+      });
       setTestResult(result);
     },
     []
@@ -247,14 +253,6 @@ export function useBalanceTest(
       landmarks: filteredLandmarks,
       worldLandmarks: filteredWorldLandmarks,
     });
-
-    // Calculate arm deviation during HOLDING (for averaging later)
-    if (testState === 'holding') {
-      const deviation = calculateArmDeviation(landmarks);
-      armDeviationSumRef.current.left += deviation.left;
-      armDeviationSumRef.current.right += deviation.right;
-      armDeviationCountRef.current++;
-    }
 
     // READY state logic
     if (testState === 'ready') {

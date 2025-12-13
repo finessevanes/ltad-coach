@@ -5,7 +5,6 @@ import assessmentsService from '../../../services/assessments';
 import { useSnackbar } from '../../../contexts/SnackbarContext';
 import { TestType, LegTested, ClientMetrics } from '../../../types/assessment';
 import { TestResult } from '../../../types/balanceTest';
-import { printMetricsComparison } from '../../../utils/metricsComparison';
 
 interface UploadStepProps {
   athleteId: string;
@@ -37,12 +36,6 @@ export const UploadStep: React.FC<UploadStepProps> = ({
       return;
     }
 
-    // Log metrics comparison (normalized vs world landmarks) to console
-    if (testResult?.landmarkHistory && testResult.landmarkHistory.length > 0) {
-      console.log('\n🔬 METRICS COMPARISON - Check console for normalized vs world landmark analysis');
-      printMetricsComparison(testResult.landmarkHistory, testResult.holdTime);
-    }
-
     async function uploadAndSave() {
       try {
         // Upload to Firebase Storage
@@ -50,24 +43,26 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 
         setSaving(true);
 
-        // Build client metrics from test result (includes normalized + world metrics)
+        // Build client metrics from test result (real-world units: cm, degrees)
         const clientMetrics: ClientMetrics | undefined = testResult
           ? {
               success: testResult.success,
               holdTime: testResult.holdTime,
               failureReason: testResult.failureReason,
-              // Normalized metrics
-              armDeviationLeft: testResult.armDeviationLeft,
-              armDeviationRight: testResult.armDeviationRight,
-              armAsymmetryRatio: testResult.armAsymmetryRatio,
+              // Sway metrics (cm)
               swayStdX: testResult.swayStdX,
               swayStdY: testResult.swayStdY,
               swayPathLength: testResult.swayPathLength,
               swayVelocity: testResult.swayVelocity,
               correctionsCount: testResult.correctionsCount,
+              // Arm metrics (degrees)
+              armAngleLeft: testResult.armAngleLeft,
+              armAngleRight: testResult.armAngleRight,
+              armAsymmetryRatio: testResult.armAsymmetryRatio,
+              // Scores
               stabilityScore: testResult.stabilityScore,
-              // World metrics (real units: cm, degrees)
-              worldMetrics: testResult.worldMetrics,
+              // Temporal analysis
+              temporal: testResult.temporal,
             }
           : undefined;
 

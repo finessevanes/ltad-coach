@@ -79,22 +79,26 @@ async def analyze_video_endpoint(
     age_expectation = get_age_expectation(athlete.age, duration_score) if athlete.age else None
 
     # Build full metrics from client data + backend calculations
+    # All metrics in real-world units (cm, degrees)
     metrics = {
         "hold_time": client_metrics.hold_time,
-        "stability_score": client_metrics.stability_score,
+        # Sway metrics (cm)
         "sway_std_x": client_metrics.sway_std_x,
         "sway_std_y": client_metrics.sway_std_y,
         "sway_path_length": client_metrics.sway_path_length,
         "sway_velocity": client_metrics.sway_velocity,
-        "arm_deviation_left": client_metrics.arm_deviation_left,
-        "arm_deviation_right": client_metrics.arm_deviation_right,
-        "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
         "corrections_count": client_metrics.corrections_count,
+        # Arm metrics (degrees)
+        "arm_angle_left": client_metrics.arm_angle_left,
+        "arm_angle_right": client_metrics.arm_angle_right,
+        "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
+        # Scores
+        "stability_score": client_metrics.stability_score,
         "duration_score": duration_score,
         "duration_score_label": duration_score_label,
         "age_expectation": age_expectation,
-        # World metrics (real units: cm, degrees) - pass through from client
-        "world_metrics": client_metrics.world_metrics.model_dump() if client_metrics.world_metrics else None,
+        # Temporal analysis
+        "temporal": client_metrics.temporal.model_dump() if client_metrics.temporal else None,
     }
 
     # Create assessment as completed (no background processing needed)

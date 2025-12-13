@@ -2,21 +2,26 @@
 id: BE-008
 depends_on: [BE-007]
 blocks: [BE-009, BE-010, BE-012]
-status: partially-superseded
+status: superseded
 ---
 
 # BE-008: Metrics Calculation
 
-> ## ⚠️ PARTIALLY SUPERSEDED
+> ## ⚠️ FULLY SUPERSEDED
 >
-> **Most of this PRD has been superseded by client-side implementation.**
+> **This PRD has been superseded by client-side implementation.**
 >
-> The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics. The backend now only implements:
+> The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics. **All metrics are now in real-world units (cm, degrees)** calculated from MediaPipe's `worldLandmarks`. The backend only implements:
 > - **LTAD duration score (1-5)** - `get_duration_score()` in [backend/app/services/metrics.py](../app/services/metrics.py)
 > - **Age expectation** - `get_age_expectation()` in the same file
 >
-> All other metrics (stability score, sway, arm excursion, corrections count) are calculated client-side:
+> All other metrics are calculated client-side in real-world units:
 > - [client/src/utils/metricsCalculation.ts](../../client/src/utils/metricsCalculation.ts)
+>
+> **Metrics use world landmarks (not normalized coordinates)**:
+> - Sway metrics: cm (swayStdX, swayStdY, swayPathLength, swayVelocity)
+> - Arm metrics: degrees (armAngleLeft, armAngleRight from horizontal)
+> - Temporal analysis: fatigue pattern across test thirds
 
 ## Title
 ~~Implement balance test metrics calculation from pose landmarks~~

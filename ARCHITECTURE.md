@@ -324,20 +324,36 @@ erDiagram
     }
 ```
 
-**Assessment Metrics Object** (11 fields):
+**Assessment Metrics Object** (all metrics in real-world units):
 ```typescript
 {
-  durationSeconds: number;        // 0-30 seconds
-  stabilityScore: number;         // 0-100 composite score
+  // Time
+  holdTime: number;              // 0-30 seconds
+
+  // Sway metrics (cm)
   swayStdX: number;              // Hip horizontal variance (cm)
   swayStdY: number;              // Hip vertical variance (cm)
   swayPathLength: number;        // Total hip trajectory (cm)
   swayVelocity: number;          // Average hip speed (cm/s)
-  armExcursionLeft: number;      // Left arm movement from hips (cm)
-  armExcursionRight: number;     // Right arm movement from hips (cm)
-  armAsymmetryRatio: number;     // Left/right compensation ratio
   correctionsCount: number;      // Balance adjustment events
-  failureReason: string | null;  // "foot_touchdown"|"hands_off_hips"|"support_foot_moved"|null
+
+  // Arm metrics (degrees)
+  armAngleLeft: number;          // Left arm angle from horizontal (degrees, 0° = T-position)
+  armAngleRight: number;         // Right arm angle from horizontal (degrees)
+  armAsymmetryRatio: number;     // Left/right angle ratio
+
+  // Scores
+  stabilityScore: number;        // 0-100 composite score
+  durationScore: number;         // 1-5 LTAD score
+  durationScoreLabel: string;    // "Beginning"|"Developing"|"Competent"|"Proficient"|"Advanced"
+  ageExpectation?: string;       // "above"|"meets"|"below"
+
+  // Temporal analysis (fatigue pattern)
+  temporal?: {
+    firstThird: SegmentMetrics;  // Metrics for first 33% of test
+    middleThird: SegmentMetrics; // Metrics for 33-66% of test
+    lastThird: SegmentMetrics;   // Metrics for final 33% of test
+  }
 }
 ```
 

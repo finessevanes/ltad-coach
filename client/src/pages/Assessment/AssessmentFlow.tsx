@@ -46,12 +46,14 @@ export default function AssessmentFlow() {
   const handleRecordingComplete = (blob: Blob, duration: number, result?: TestResult) => {
     console.log('Recording complete:', { duration, result });
     if (result) {
-      console.log('Test Result:', {
+      console.log('Test Result (cm, degrees):', {
         success: result.success,
         holdTime: result.holdTime,
         failureReason: result.failureReason,
-        armDeviationLeft: result.armDeviationLeft,
-        armDeviationRight: result.armDeviationRight,
+        swayVelocity: result.swayVelocity,
+        armAngleLeft: result.armAngleLeft,
+        armAngleRight: result.armAngleRight,
+        stabilityScore: result.stabilityScore,
         landmarkFrames: result.landmarkHistory.length,
       });
     }

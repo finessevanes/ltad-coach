@@ -35,58 +35,52 @@ export interface ClientTemporalMetrics {
 }
 
 /**
- * World landmark metrics - real-world units (cm, degrees)
- */
-export interface ClientWorldMetrics {
-  swayStdX: number;           // cm
-  swayStdY: number;           // cm
-  swayPathLength: number;     // cm
-  swayVelocity: number;       // cm/s
-  correctionsCount: number;
-  armAngleLeft: number;       // degrees
-  armAngleRight: number;      // degrees
-  armAsymmetryRatio: number;
-  stabilityScore: number;     // 0-100
-  temporal: ClientTemporalMetrics;
-}
-
-/**
- * Client-calculated metrics (normalized coordinates)
+ * Client-calculated metrics in real-world units (cm, degrees).
+ * Calculated from MediaPipe's worldLandmarks.
  */
 export interface ClientMetrics {
   success: boolean;
   holdTime: number;
   failureReason?: string;
-  // Normalized metrics (0-1 scale)
-  armDeviationLeft: number;
-  armDeviationRight: number;
-  armAsymmetryRatio: number;
-  swayStdX: number;
-  swayStdY: number;
-  swayPathLength: number;
-  swayVelocity: number;
+  // Sway metrics (cm)
+  swayStdX: number;           // cm
+  swayStdY: number;           // cm
+  swayPathLength: number;     // cm
+  swayVelocity: number;       // cm/s
   correctionsCount: number;
-  stabilityScore: number;
-  // World metrics (real units: cm, degrees)
-  worldMetrics?: ClientWorldMetrics;
+  // Arm metrics (degrees)
+  armAngleLeft: number;       // degrees from horizontal (0° = T-position)
+  armAngleRight: number;      // degrees from horizontal (0° = T-position)
+  armAsymmetryRatio: number;
+  // Scores
+  stabilityScore: number;     // 0-100
+  // Temporal analysis
+  temporal: ClientTemporalMetrics;
 }
 
+/**
+ * Assessment metrics returned from backend.
+ * All metrics in real-world units (cm, degrees).
+ */
 export interface AssessmentMetrics {
   holdTime: number;
-  stabilityScore: number;
-  swayVelocity: number;
-  swayStdX: number;
-  swayStdY: number;
-  swayPathLength: number;
-  armDeviationLeft: number;
-  armDeviationRight: number;
-  armAsymmetryRatio: number;
+  // Sway metrics (cm)
+  swayStdX: number;           // cm
+  swayStdY: number;           // cm
+  swayPathLength: number;     // cm
+  swayVelocity: number;       // cm/s
   correctionsCount: number;
-  durationScore: number;
-  durationScoreLabel: string;
-  ageExpectation?: string;
-  // World metrics (real units)
-  worldMetrics?: ClientWorldMetrics;
+  // Arm metrics (degrees)
+  armAngleLeft: number;       // degrees from horizontal (0° = T-position)
+  armAngleRight: number;      // degrees from horizontal (0° = T-position)
+  armAsymmetryRatio: number;
+  // Scores
+  stabilityScore: number;     // 0-100
+  durationScore: number;      // 1-5 LTAD scale
+  durationScoreLabel: string; // "Beginning", "Developing", etc.
+  ageExpectation?: string;    // "above", "meets", "below"
+  // Temporal analysis
+  temporal?: ClientTemporalMetrics;
 }
 
 export interface Assessment {

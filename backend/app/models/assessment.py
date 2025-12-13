@@ -46,56 +46,53 @@ class TemporalMetrics(BaseModel):
     last_third: SegmentMetrics = Field(..., description="Metrics for last third of test (66-100%)")
 
 
-class WorldMetricsData(BaseModel):
-    """World landmark metrics - real-world units (cm, degrees)."""
+class ClientMetricsData(BaseModel):
+    """
+    Client-side metrics from browser-based balance test (source of truth).
+    All metrics in real-world units (cm, degrees).
+    """
+    success: bool = Field(..., description="Whether the test was passed")
+    hold_time: float = Field(..., ge=0, description="Duration held in seconds")
+    failure_reason: Optional[str] = Field(None, description="Reason for test failure")
+    # Sway metrics (cm)
     sway_std_x: float = Field(..., description="Sway standard deviation in X (cm)")
     sway_std_y: float = Field(..., description="Sway standard deviation in Y (cm)")
     sway_path_length: float = Field(..., description="Total sway path length (cm)")
     sway_velocity: float = Field(..., description="Average sway velocity (cm/s)")
     corrections_count: int = Field(..., description="Number of balance corrections detected")
-    arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees)")
-    arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees)")
+    # Arm metrics (degrees)
+    arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees, 0° = T-position)")
+    arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
+    # Scores
     stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
+    # Temporal analysis
     temporal: TemporalMetrics = Field(..., description="Temporal breakdown of metrics")
 
 
 class MetricsData(BaseModel):
-    """Balance test metrics (server-calculated)."""
+    """
+    Balance test metrics (stored in assessment).
+    All metrics in real-world units (cm, degrees).
+    """
     hold_time: float = Field(..., description="Test hold time in seconds")
-    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
-    sway_std_x: float = Field(..., description="Sway standard deviation in X (normalized)")
-    sway_std_y: float = Field(..., description="Sway standard deviation in Y (normalized)")
-    sway_path_length: float = Field(..., description="Total sway path length (normalized)")
-    sway_velocity: float = Field(..., description="Average sway velocity (normalized)")
-    arm_deviation_left: float = Field(..., description="Left arm deviation from T-position (wrist Y - shoulder Y)")
-    arm_deviation_right: float = Field(..., description="Right arm deviation from T-position (wrist Y - shoulder Y)")
-    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm deviation ratio")
+    # Sway metrics (cm)
+    sway_std_x: float = Field(..., description="Sway standard deviation in X (cm)")
+    sway_std_y: float = Field(..., description="Sway standard deviation in Y (cm)")
+    sway_path_length: float = Field(..., description="Total sway path length (cm)")
+    sway_velocity: float = Field(..., description="Average sway velocity (cm/s)")
     corrections_count: int = Field(..., description="Number of balance corrections detected")
+    # Arm metrics (degrees)
+    arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees, 0° = T-position)")
+    arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
+    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
+    # Scores
+    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
     duration_score_label: str = Field(..., description="LTAD score label (Beginning, Developing, etc.)")
     age_expectation: Optional[str] = Field(None, description="Meets/Above/Below age expectation")
-    # World metrics (real units: cm, degrees)
-    world_metrics: Optional[WorldMetricsData] = Field(None, description="World landmark metrics in real units")
-
-
-class ClientMetricsData(BaseModel):
-    """Client-side metrics from browser-based balance test (now source of truth)."""
-    success: bool = Field(..., description="Whether the test was passed")
-    hold_time: float = Field(..., ge=0, description="Duration held in seconds")
-    failure_reason: Optional[str] = Field(None, description="Reason for test failure")
-    # Normalized metrics (0-1 scale)
-    arm_deviation_left: float = Field(..., description="Left arm deviation from T-position (wrist Y - shoulder Y)")
-    arm_deviation_right: float = Field(..., description="Right arm deviation from T-position (wrist Y - shoulder Y)")
-    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm deviation ratio")
-    sway_std_x: float = Field(..., description="Sway standard deviation in X (normalized)")
-    sway_std_y: float = Field(..., description="Sway standard deviation in Y (normalized)")
-    sway_path_length: float = Field(..., description="Total sway path length (normalized)")
-    sway_velocity: float = Field(..., description="Average sway velocity (normalized)")
-    corrections_count: int = Field(..., description="Number of balance corrections detected")
-    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
-    # World metrics (real units: cm, degrees)
-    world_metrics: Optional[WorldMetricsData] = Field(None, description="World landmark metrics in real units")
+    # Temporal analysis
+    temporal: Optional[TemporalMetrics] = Field(None, description="Temporal breakdown of metrics")
 
 
 class Assessment(BaseModel):
@@ -111,7 +108,7 @@ class Assessment(BaseModel):
     created_at: datetime
     raw_keypoints_url: Optional[str] = None
     metrics: Optional[MetricsData] = None
-    client_metrics: Optional[ClientMetricsData] = None  # For comparison
+    client_metrics: Optional[ClientMetricsData] = None
     ai_feedback: Optional[str] = None  # Populated in Phase 7
     failure_reason: Optional[str] = None
     error_message: Optional[str] = None
@@ -125,7 +122,7 @@ class AssessmentCreate(BaseModel):
     video_url: str = Field(..., min_length=1)
     video_path: str = Field(..., min_length=1)
     duration: float = Field(..., gt=0, le=40, description="Client-measured video duration in seconds")
-    client_metrics: Optional[ClientMetricsData] = Field(None, description="Client-side metrics for comparison")
+    client_metrics: Optional[ClientMetricsData] = Field(None, description="Client-side metrics (source of truth)")
 
 
 class AssessmentResponse(BaseModel):
@@ -137,7 +134,7 @@ class AssessmentResponse(BaseModel):
     status: AssessmentStatus
     created_at: datetime
     metrics: Optional[MetricsData] = None
-    client_metrics: Optional[ClientMetricsData] = None  # For comparison
+    client_metrics: Optional[ClientMetricsData] = None
     ai_feedback: Optional[str] = None
     failure_reason: Optional[str] = None
     error_message: Optional[str] = None

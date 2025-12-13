@@ -84,7 +84,7 @@ export default function AssessmentResults() {
     );
   }
 
-  // Use metrics (from backend) which now use client-calculated values
+  // Use metrics (from backend) - all in real-world units (cm, degrees)
   const { metrics } = assessment;
 
   // Format date
@@ -209,14 +209,14 @@ export default function AssessmentResults() {
         </Grid>
       )}
 
-      {/* Metrics Comparison: Normalized vs World */}
+      {/* Detailed Metrics Table */}
       {metrics && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Metrics Comparison
+            Detailed Metrics
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Comparing normalized (0-1 scale) vs world landmarks (real units: cm, degrees)
+            All metrics in real-world units (cm, degrees)
           </Typography>
 
           <TableContainer>
@@ -225,89 +225,59 @@ export default function AssessmentResults() {
                 {/* Sway Metrics Header */}
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell><strong>Sway Metrics</strong></TableCell>
-                  <TableCell align="center"><strong>Normalized</strong></TableCell>
-                  <TableCell align="center"><strong>World (cm)</strong></TableCell>
+                  <TableCell align="right"><strong>Value</strong></TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Sway Std X</TableCell>
-                  <TableCell align="center">{formatNum(metrics.swayStdX, 6)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.swayStdX, 2)} cm` : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.swayStdX, 2)} cm</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Sway Std Y</TableCell>
-                  <TableCell align="center">{formatNum(metrics.swayStdY, 6)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.swayStdY, 2)} cm` : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.swayStdY, 2)} cm</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Sway Path Length</TableCell>
-                  <TableCell align="center">{formatNum(metrics.swayPathLength, 6)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.swayPathLength, 2)} cm` : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.swayPathLength, 2)} cm</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Sway Velocity</TableCell>
-                  <TableCell align="center">{formatNum(metrics.swayVelocity, 6)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.swayVelocity, 2)} cm/s` : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.swayVelocity, 2)} cm/s</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Corrections</TableCell>
-                  <TableCell align="center">{metrics.correctionsCount}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? metrics.worldMetrics.correctionsCount : '-'}
-                  </TableCell>
+                  <TableCell align="right">{metrics.correctionsCount}</TableCell>
                 </TableRow>
 
                 {/* Arm Metrics Header */}
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell><strong>Arm Metrics</strong></TableCell>
-                  <TableCell align="center"><strong>Normalized</strong></TableCell>
-                  <TableCell align="center"><strong>World (degrees)</strong></TableCell>
+                  <TableCell align="right"><strong>Value</strong></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ pl: 2 }}>Left Arm</TableCell>
-                  <TableCell align="center">{formatNum(metrics.armDeviationLeft, 4)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.armAngleLeft, 1)}°` : '-'}
-                  </TableCell>
+                  <TableCell sx={{ pl: 2 }}>Left Arm Angle</TableCell>
+                  <TableCell align="right">{formatNum(metrics.armAngleLeft, 1)}°</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ pl: 2 }}>Right Arm</TableCell>
-                  <TableCell align="center">{formatNum(metrics.armDeviationRight, 4)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? `${formatNum(metrics.worldMetrics.armAngleRight, 1)}°` : '-'}
-                  </TableCell>
+                  <TableCell sx={{ pl: 2 }}>Right Arm Angle</TableCell>
+                  <TableCell align="right">{formatNum(metrics.armAngleRight, 1)}°</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Asymmetry Ratio</TableCell>
-                  <TableCell align="center">{formatNum(metrics.armAsymmetryRatio, 2)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? formatNum(metrics.worldMetrics.armAsymmetryRatio, 2) : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.armAsymmetryRatio, 2)}</TableCell>
                 </TableRow>
 
                 {/* Scores Header */}
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell><strong>Scores</strong></TableCell>
-                  <TableCell align="center"><strong>Normalized</strong></TableCell>
-                  <TableCell align="center"><strong>World</strong></TableCell>
+                  <TableCell align="right"><strong>Value</strong></TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>Stability Score</TableCell>
-                  <TableCell align="center">{formatNum(metrics.stabilityScore, 1)}</TableCell>
-                  <TableCell align="center">
-                    {metrics.worldMetrics ? formatNum(metrics.worldMetrics.stabilityScore, 1) : '-'}
-                  </TableCell>
+                  <TableCell align="right">{formatNum(metrics.stabilityScore, 1)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>LTAD Score</TableCell>
-                  <TableCell align="center" colSpan={2}>
+                  <TableCell align="right">
                     <Chip
                       label={`${metrics.durationScore} - ${metrics.durationScoreLabel}`}
                       color="primary"
@@ -318,7 +288,7 @@ export default function AssessmentResults() {
                 {metrics.ageExpectation && (
                   <TableRow>
                     <TableCell sx={{ pl: 2 }}>Age Expectation</TableCell>
-                    <TableCell align="center" colSpan={2}>
+                    <TableCell align="right">
                       <Chip
                         label={metrics.ageExpectation}
                         color={
@@ -337,7 +307,7 @@ export default function AssessmentResults() {
       )}
 
       {/* Temporal Analysis (Fatigue Pattern) */}
-      {metrics?.worldMetrics?.temporal && (
+      {metrics?.temporal && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
             Temporal Analysis (Fatigue Pattern)
@@ -359,46 +329,46 @@ export default function AssessmentResults() {
                 <TableRow>
                   <TableCell>First Third (0-33%)</TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.firstThird.armAngleLeft, 1)}°
+                    {formatNum(metrics.temporal.firstThird.armAngleLeft, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.firstThird.armAngleRight, 1)}°
+                    {formatNum(metrics.temporal.firstThird.armAngleRight, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.firstThird.swayVelocity, 2)} cm/s
+                    {formatNum(metrics.temporal.firstThird.swayVelocity, 2)} cm/s
                   </TableCell>
                   <TableCell align="center">
-                    {metrics.worldMetrics.temporal.firstThird.correctionsCount}
+                    {metrics.temporal.firstThird.correctionsCount}
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Middle Third (33-66%)</TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.middleThird.armAngleLeft, 1)}°
+                    {formatNum(metrics.temporal.middleThird.armAngleLeft, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.middleThird.armAngleRight, 1)}°
+                    {formatNum(metrics.temporal.middleThird.armAngleRight, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.middleThird.swayVelocity, 2)} cm/s
+                    {formatNum(metrics.temporal.middleThird.swayVelocity, 2)} cm/s
                   </TableCell>
                   <TableCell align="center">
-                    {metrics.worldMetrics.temporal.middleThird.correctionsCount}
+                    {metrics.temporal.middleThird.correctionsCount}
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Last Third (66-100%)</TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.lastThird.armAngleLeft, 1)}°
+                    {formatNum(metrics.temporal.lastThird.armAngleLeft, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.lastThird.armAngleRight, 1)}°
+                    {formatNum(metrics.temporal.lastThird.armAngleRight, 1)}°
                   </TableCell>
                   <TableCell align="center">
-                    {formatNum(metrics.worldMetrics.temporal.lastThird.swayVelocity, 2)} cm/s
+                    {formatNum(metrics.temporal.lastThird.swayVelocity, 2)} cm/s
                   </TableCell>
                   <TableCell align="center">
-                    {metrics.worldMetrics.temporal.lastThird.correctionsCount}
+                    {metrics.temporal.lastThird.correctionsCount}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -407,7 +377,7 @@ export default function AssessmentResults() {
 
           {/* Fatigue Pattern Analysis */}
           {(() => {
-            const temporal = metrics.worldMetrics!.temporal;
+            const temporal = metrics.temporal;
             const armDrop = temporal.lastThird.armAngleLeft - temporal.firstThird.armAngleLeft;
             const swayIncrease = temporal.lastThird.swayVelocity - temporal.firstThird.swayVelocity;
             const showFatigue = armDrop > 5 || swayIncrease > 0.5;
@@ -430,13 +400,6 @@ export default function AssessmentResults() {
             );
           })()}
         </Paper>
-      )}
-
-      {/* World metrics not available warning */}
-      {metrics && !metrics.worldMetrics && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          World landmark metrics not available for this assessment. Real-world unit comparisons (cm, degrees) require world landmarks from MediaPipe.
-        </Alert>
       )}
 
       {/* No metrics fallback */}
