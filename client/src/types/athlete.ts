@@ -2,7 +2,7 @@
 export type ConsentStatus = 'pending' | 'active' | 'declined';
 
 // Gender types
-export type Gender = 'male' | 'female' | 'other';
+export type Gender = 'male' | 'female';
 
 // Athlete interface - full athlete object from API
 export interface Athlete {

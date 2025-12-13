@@ -14,15 +14,17 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import { PersonOutline, Videocam as VideocamIcon, CloudUpload, Assessment } from '@mui/icons-material';
+import { Edit as EditIcon, Videocam as VideocamIcon, CloudUpload, Assessment } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Athlete } from '../../types/athlete';
 import { StatusBadge } from '../../components/StatusBadge';
+import { EditAthleteModal } from './EditAthleteModal';
 
 interface AthletesTableProps {
   athletes: Athlete[];
   loading: boolean;
+  onAthleteUpdated?: () => void;
 }
 
 /**
@@ -32,14 +34,29 @@ interface AthletesTableProps {
 export const AthletesTable: React.FC<AthletesTableProps> = ({
   athletes,
   loading,
+  onAthleteUpdated,
 }) => {
   const navigate = useNavigate();
   const [assessmentMenuAnchor, setAssessmentMenuAnchor] = useState<{
     [athleteId: string]: HTMLElement | null;
   }>({});
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
 
-  const handleViewAthlete = (athleteId: string) => {
-    navigate(`/athletes/${athleteId}`);
+  const handleEditAthlete = (athlete: Athlete) => {
+    setSelectedAthlete(athlete);
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedAthlete(null);
+  };
+
+  const handleEditSuccess = () => {
+    if (onAthleteUpdated) {
+      onAthleteUpdated();
+    }
   };
 
   const handleOpenAssessmentMenu = (
@@ -124,8 +141,9 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
   }
 
   return (
-    <TableContainer component={Paper} elevation={1}>
-      <Table>
+    <>
+      <TableContainer component={Paper} elevation={1}>
+        <Table>
         <TableHead>
           <TableRow>
             <TableCell>Name</TableCell>
@@ -140,8 +158,6 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
             <TableRow
               key={athlete.id}
               hover
-              sx={{ cursor: 'pointer' }}
-              onClick={() => handleViewAthlete(athlete.id)}
             >
               <TableCell>
                 <Typography variant="body2" fontWeight={500}>
@@ -198,21 +214,31 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
                     </Menu>
                   </>
                 )}
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewAthlete(athlete.id);
-                  }}
-                  aria-label={`View ${athlete.name}`}
-                >
-                  <PersonOutline />
-                </IconButton>
+                <Tooltip title="Edit Athlete">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditAthlete(athlete);
+                    }}
+                    aria-label={`Edit ${athlete.name}`}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
-      </Table>
-    </TableContainer>
+        </Table>
+      </TableContainer>
+
+      <EditAthleteModal
+        open={editModalOpen}
+        athlete={selectedAthlete}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
+      />
+    </>
   );
 };
