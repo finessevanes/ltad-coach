@@ -139,13 +139,13 @@ export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
                     borderRadius: 2,
                     cursor: 'pointer',
                     backgroundColor:
-                      selectedAthleteId === athlete.id ? 'primary.lighter' : 'transparent',
+                      selectedAthleteId === athlete.id ? '#EFF6FF' : 'transparent',
                     border: '1px solid',
                     borderColor:
                       selectedAthleteId === athlete.id ? 'primary.main' : 'divider',
                     '&:hover': {
                       backgroundColor:
-                        selectedAthleteId === athlete.id ? 'primary.lighter' : 'action.hover',
+                        selectedAthleteId === athlete.id ? '#EFF6FF' : 'action.hover',
                     },
                   }}
                   onClick={() => onSelectAthlete?.(athlete.id)}
