@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, LinearProgress, Alert, CircularProgress } from '@mui/material';
 import { useFirebaseUpload } from '../../../hooks/useFirebaseUpload';
 import assessmentsService from '../../../services/assessments';
@@ -29,8 +29,12 @@ export const UploadStep: React.FC<UploadStepProps> = ({
   const { upload, progress, uploading } = useFirebaseUpload();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
     if (!videoBlob) {
       setError('No video to upload');
       return;
