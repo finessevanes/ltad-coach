@@ -78,7 +78,7 @@ export default function Register() {
             Create Account
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Join AI Coach to track athlete progress
+            Join CoachLens to track athlete progress
           </Typography>
 
           {error && (
