@@ -57,18 +57,20 @@ class MetricsCalculator:
         sway_path_length = calculate_path_length(hip_trajectory)
         sway_velocity = sway_path_length / self.duration if self.duration > 0 else 0
 
-        # Calculate arm excursion
-        arm_left, arm_right = self._calculate_arm_excursion()
-        arm_asymmetry = arm_left / arm_right if arm_right > 0 else 1.0
+        # Calculate arm deviation from T-position
+        arm_left, arm_right = self._calculate_arm_deviation()
+        # For asymmetry, use absolute values since deviation can be negative
+        arm_asymmetry = abs(arm_left) / abs(arm_right) if abs(arm_right) > 0 else 1.0
 
         # Count corrections
         corrections = self._count_corrections(hip_trajectory)
 
         # Calculate stability score (0-100, higher is better)
+        # For arm deviation in stability score, use absolute average (deviation from horizontal)
         stability_score = self._calculate_stability_score(
             sway_std_x + sway_std_y,  # Combined sway
             sway_velocity,
-            (arm_left + arm_right) / 2,  # Average arm movement
+            (abs(arm_left) + abs(arm_right)) / 2,  # Average absolute arm deviation
             corrections,
         )
 
@@ -76,14 +78,14 @@ class MetricsCalculator:
         duration_score, duration_label = get_duration_score(self.duration)
 
         return {
-            "duration_seconds": round(self.duration, 2),
+            "hold_time": round(self.duration, 2),
             "stability_score": round(stability_score, 2),
             "sway_std_x": round(sway_std_x, 6),
             "sway_std_y": round(sway_std_y, 6),
             "sway_path_length": round(sway_path_length, 6),
             "sway_velocity": round(sway_velocity, 6),
-            "arm_excursion_left": round(arm_left, 2),
-            "arm_excursion_right": round(arm_right, 2),
+            "arm_deviation_left": round(arm_left, 6),
+            "arm_deviation_right": round(arm_right, 6),
             "arm_asymmetry_ratio": round(arm_asymmetry, 2),
             "corrections_count": corrections,
             "duration_score": duration_score,
@@ -129,52 +131,35 @@ class MetricsCalculator:
 
         return np.std(x_values), np.std(y_values)
 
-    def _calculate_arm_excursion(self) -> Tuple[float, float]:
-        """Calculate total arm angular movement.
+    def _calculate_arm_deviation(self) -> Tuple[float, float]:
+        """Calculate average arm deviation from T-position.
+
+        Per balance-test-measurement-guide.md.pdf:
+        "Measure how far each wrist drops below its corresponding shoulder height.
+         The ideal T-position has wrists at shoulder level (zero deviation)."
 
         Returns:
-            (left_arm_excursion_degrees, right_arm_excursion_degrees)
+            (left_arm_deviation, right_arm_deviation) in normalized coordinates.
+            Positive values = wrist below shoulder (dropped from T-position).
         """
-        left_total = 0.0
-        right_total = 0.0
+        left_deviations = []
+        right_deviations = []
 
-        for i in range(1, len(self.landmarks)):
-            prev_frame = self.landmarks[i - 1]
-            curr_frame = self.landmarks[i]
+        for frame in self.landmarks:
+            left_shoulder = frame[lm.LEFT_SHOULDER]
+            left_wrist = frame[lm.LEFT_WRIST]
+            right_shoulder = frame[lm.RIGHT_SHOULDER]
+            right_wrist = frame[lm.RIGHT_WRIST]
 
-            # Left arm: shoulder to wrist angle
-            left_shoulder_prev = prev_frame[lm.LEFT_SHOULDER]
-            left_wrist_prev = prev_frame[lm.LEFT_WRIST]
-            left_shoulder_curr = curr_frame[lm.LEFT_SHOULDER]
-            left_wrist_curr = curr_frame[lm.LEFT_WRIST]
+            # In normalized coordinates, Y increases downward (0=top, 1=bottom)
+            # Positive deviation = wrist below shoulder (dropped from T-position)
+            left_deviations.append(left_wrist[1] - left_shoulder[1])
+            right_deviations.append(right_wrist[1] - right_shoulder[1])
 
-            angle_prev = np.arctan2(
-                left_wrist_prev[1] - left_shoulder_prev[1],
-                left_wrist_prev[0] - left_shoulder_prev[0],
-            )
-            angle_curr = np.arctan2(
-                left_wrist_curr[1] - left_shoulder_curr[1],
-                left_wrist_curr[0] - left_shoulder_curr[0],
-            )
-            left_total += abs(np.degrees(angle_curr - angle_prev))
+        if not left_deviations:
+            return 0.0, 0.0
 
-            # Right arm
-            right_shoulder_prev = prev_frame[lm.RIGHT_SHOULDER]
-            right_wrist_prev = prev_frame[lm.RIGHT_WRIST]
-            right_shoulder_curr = curr_frame[lm.RIGHT_SHOULDER]
-            right_wrist_curr = curr_frame[lm.RIGHT_WRIST]
-
-            angle_prev = np.arctan2(
-                right_wrist_prev[1] - right_shoulder_prev[1],
-                right_wrist_prev[0] - right_shoulder_prev[0],
-            )
-            angle_curr = np.arctan2(
-                right_wrist_curr[1] - right_shoulder_curr[1],
-                right_wrist_curr[0] - right_shoulder_curr[0],
-            )
-            right_total += abs(np.degrees(angle_curr - angle_prev))
-
-        return left_total, right_total
+        return float(np.mean(left_deviations)), float(np.mean(right_deviations))
 
     def _count_corrections(
         self,
@@ -204,7 +189,7 @@ class MetricsCalculator:
         self,
         sway_std: float,
         sway_velocity: float,
-        arm_excursion: float,
+        arm_deviation: float,
         corrections: int,
     ) -> float:
         """Calculate composite stability score (0-100).
@@ -212,7 +197,7 @@ class MetricsCalculator:
         Args:
             sway_std: Combined sway standard deviation
             sway_velocity: Sway velocity
-            arm_excursion: Average arm excursion
+            arm_deviation: Average absolute arm deviation from T-position
             corrections: Number of corrections
 
         Returns:
@@ -228,7 +213,7 @@ class MetricsCalculator:
             1.0
         )
         norm_arm = min(
-            arm_excursion / scoring.REFERENCE_VALUES["arm_excursion_max"],
+            arm_deviation / scoring.REFERENCE_VALUES["arm_excursion_max"],
             1.0
         )
         norm_corrections = min(
@@ -252,14 +237,14 @@ class MetricsCalculator:
     def _empty_metrics(self) -> Dict:
         """Return empty metrics for failed analysis."""
         return {
-            "duration_seconds": 0.0,
+            "hold_time": 0.0,
             "stability_score": 0.0,
             "sway_std_x": 0.0,
             "sway_std_y": 0.0,
             "sway_path_length": 0.0,
             "sway_velocity": 0.0,
-            "arm_excursion_left": 0.0,
-            "arm_excursion_right": 0.0,
+            "arm_deviation_left": 0.0,
+            "arm_deviation_right": 0.0,
             "arm_asymmetry_ratio": 1.0,
             "corrections_count": 0,
             "duration_score": 1,

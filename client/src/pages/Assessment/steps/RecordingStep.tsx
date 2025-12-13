@@ -17,22 +17,21 @@ import {
   Videocam as CameraIcon,
   ExpandMore as ExpandMoreIcon,
   Info as InfoIcon,
+  Replay as ReplayIcon,
 } from '@mui/icons-material';
 import { useCamera } from '../../../hooks/useCamera';
 import { useMediaPipe } from '../../../hooks/useMediaPipe';
 import { useVideoRecorder } from '../../../hooks/useVideoRecorder';
+import { useBalanceTest } from '../../../hooks/useBalanceTest';
 import { VideoPreview } from '../components/VideoPreview';
-import { CountdownOverlay } from '../components/CountdownOverlay';
-import { RecordingTimer } from '../components/RecordingTimer';
 import { CameraSelector } from '../components/CameraSelector';
-import { EarlyStopWarningModal } from '../components/EarlyStopWarningModal';
+import { BalanceTestOverlay } from '../../../components/BalanceTestOverlay';
 import { TestType, LegTested } from '../../../types/assessment';
+import { TestResult } from '../../../types/balanceTest';
 
-type RecordingPhase = 'setup' | 'countdown' | 'recording';
+type RecordingPhase = 'setup' | 'testing';
 
-const TEST_DURATION = 30; // seconds
 const COMPOSITE_FPS = 30;
-const MIN_RECORDING_DURATION = 5; // seconds - minimum before warning
 
 interface RecordingStepProps {
   athleteId: string;
@@ -40,21 +39,19 @@ interface RecordingStepProps {
   onDeviceSelect: (deviceId: string) => void;
   testType: TestType;
   legTested: LegTested;
-  onRecordingComplete: (blob: Blob, duration: number) => void;
+  onRecordingComplete: (blob: Blob, duration: number, testResult?: TestResult) => void;
   onBack: () => void;
 }
 
 export const RecordingStep: React.FC<RecordingStepProps> = ({
   selectedDevice: parentSelectedDevice,
   onDeviceSelect,
+  legTested: parentLegTested,
   onRecordingComplete,
   onBack,
 }) => {
   const [phase, setPhase] = useState<RecordingPhase>('setup');
-  const [timeRemaining, setTimeRemaining] = useState(TEST_DURATION);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [compositeStream, setCompositeStream] = useState<MediaStream | null>(null);
-  const [showEarlyStopWarning, setShowEarlyStopWarning] = useState(false);
   const [showPositioningTips, setShowPositioningTips] = useState(false);
 
   // Camera hook - manages device list and stream
@@ -67,14 +64,34 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     videoRef,
   } = useCamera(parentSelectedDevice);
 
-  // MediaPipe hook - skeleton + validation
+  // MediaPipe hook - skeleton + leg tested state
   const {
     loading: mpLoading,
     error: mpError,
+    poseResult,
     fps,
     isPersonDetected,
     canvasRef,
+    legTested,
+    setLegTested,
   } = useMediaPipe(videoRef, true);
+
+  // Sync legTested from parent prop
+  useEffect(() => {
+    setLegTested(parentLegTested);
+  }, [parentLegTested, setLegTested]);
+
+  // Balance test state machine - debug mode enabled
+  const {
+    testState,
+    holdTime,
+    failureReason,
+    positionStatus,
+    testResult,
+    debugInfo,
+    startTest,
+    resetTest,
+  } = useBalanceTest(poseResult, legTested, { debug: true });
 
   // Create composite canvas for recording video + skeleton
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -82,8 +99,6 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
   const compositeAnimationRef = useRef<number>(0);
 
   const { startRecording, stopRecording, videoBlob } = useVideoRecorder(compositeStream);
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const error = cameraError || mpError;
   const loading = cameraLoading || mpLoading;
@@ -118,7 +133,7 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     const skeletonCanvas = canvasRef.current;
     const compositeCanvas = compositeCanvasRef.current;
 
-    if (!video || !compositeCanvas || phase !== 'recording') {
+    if (!video || !compositeCanvas || phase !== 'testing') {
       return;
     }
 
@@ -138,9 +153,9 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     compositeAnimationRef.current = requestAnimationFrame(renderComposite);
   }, [videoRef, canvasRef, phase]);
 
-  // Start composite rendering when recording
+  // Start composite rendering when in testing phase
   useEffect(() => {
-    if (phase === 'recording') {
+    if (phase === 'testing') {
       renderComposite();
     } else {
       if (compositeAnimationRef.current) {
@@ -155,71 +170,44 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     onDeviceSelect(deviceId);
   };
 
-  // Start Test button (setup → countdown)
+  // Start Test button - enter testing phase and start recording
   const handleStartTest = useCallback(() => {
     if (!isPersonDetected) return;
-    setPhase('countdown');
-  }, [isPersonDetected]);
-
-  const handleCountdownComplete = useCallback(() => {
-    setPhase('recording');
-    setElapsedTime(0);
+    setPhase('testing');
     startRecording();
+    startTest();
+  }, [isPersonDetected, startRecording, startTest]);
 
-    // Start 30-second timer
-    const interval = setInterval(() => {
-      setElapsedTime((prev) => prev + 1);
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          stopRecording();
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    timerRef.current = interval;
-  }, [startRecording, stopRecording]);
-
-  // Stop Early button click
-  const handleStopEarly = useCallback(() => {
-    if (elapsedTime < MIN_RECORDING_DURATION) {
-      setShowEarlyStopWarning(true);
-    } else {
-      stopRecording();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    }
-  }, [elapsedTime, stopRecording]);
-
-  // Early stop warning - confirm stop
-  const handleConfirmEarlyStop = () => {
-    setShowEarlyStopWarning(false);
-    stopRecording();
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  };
-
-  // Early stop warning - cancel
-  const handleCancelEarlyStop = () => {
-    setShowEarlyStopWarning(false);
-  };
-
+  // Stop recording when test completes or fails
   useEffect(() => {
-    if (videoBlob) {
-      onRecordingComplete(videoBlob, elapsedTime);
+    if (testState === 'completed' || testState === 'failed') {
+      stopRecording();
     }
-  }, [videoBlob, elapsedTime, onRecordingComplete]);
+  }, [testState, stopRecording]);
+
+  // Handle recording complete - pass blob and test result to parent
+  useEffect(() => {
+    if (videoBlob && testResult) {
+      onRecordingComplete(videoBlob, testResult.holdTime, testResult);
+    }
+  }, [videoBlob, testResult, onRecordingComplete]);
+
+  // Reset and try again
+  const handleTryAgain = useCallback(() => {
+    resetTest();
+    setPhase('setup');
+  }, [resetTest]);
+
+  // Cancel test (go back to setup without completing)
+  const handleCancelTest = useCallback(() => {
+    stopRecording();
+    resetTest();
+    setPhase('setup');
+  }, [stopRecording, resetTest]);
 
   // Cleanup on component unmount
   useEffect(() => {
     return () => {
-      // Clear timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
       // Stop composite stream
       if (compositeStreamRef.current) {
         compositeStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -237,6 +225,9 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
       setShowPositioningTips(false);
     }
   }, [isPersonDetected]);
+
+  const isTestActive = testState === 'ready' || testState === 'holding';
+  const isTestEnded = testState === 'completed' || testState === 'failed';
 
   return (
     <Box>
@@ -336,42 +327,47 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
           </Box>
         )}
 
-        {phase === 'countdown' && (
-          <CountdownOverlay onComplete={handleCountdownComplete} />
+        {/* Balance Test Overlay - during testing phase */}
+        {phase === 'testing' && (
+          <BalanceTestOverlay
+            testState={testState}
+            holdTime={holdTime}
+            failureReason={failureReason}
+            positionStatus={positionStatus}
+            debugInfo={debugInfo}
+          />
         )}
 
-        {phase === 'recording' && (
-          <>
-            <RecordingTimer timeRemaining={timeRemaining} />
+        {/* Recording indicator - during active test */}
+        {phase === 'testing' && isTestActive && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 16,
+              left: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              zIndex: 15,
+            }}
+          >
             <Box
               sx={{
-                position: 'absolute',
-                top: 16,
-                left: 16,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                zIndex: 5,
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: 'error.main',
+                animation: 'pulse 1s infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': { opacity: 1 },
+                  '50%': { opacity: 0.5 },
+                },
               }}
-            >
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  bgcolor: 'error.main',
-                  animation: 'pulse 1s infinite',
-                  '@keyframes pulse': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0.5 },
-                  },
-                }}
-              />
-              <Typography color="white" fontWeight="bold">
-                REC
-              </Typography>
-            </Box>
-          </>
+            />
+            <Typography color="white" fontWeight="bold">
+              REC
+            </Typography>
+          </Box>
         )}
 
         {/* Status Chips - top-right corner */}
@@ -382,7 +378,7 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
             right: 8,
             display: 'flex',
             gap: 1,
-            zIndex: 5,
+            zIndex: 15,
           }}
         >
           {/* FPS Chip - always visible */}
@@ -422,13 +418,15 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
               <li>Full body should be visible in frame</li>
               <li>Ensure good lighting on the athlete</li>
               <li>Avoid busy backgrounds if possible</li>
-              <li>Camera should be at athlete's chest height</li>
+              <li>Camera should be at athlete&apos;s chest height</li>
+              <li>Athlete should raise their {legTested} foot for this test</li>
             </ul>
           </AccordionDetails>
         </Accordion>
       )}
 
       <Box display="flex" justifyContent="center" gap={2}>
+        {/* Setup phase buttons */}
         {phase === 'setup' && (
           <>
             <Button variant="outlined" onClick={onBack}>
@@ -446,16 +444,32 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
           </>
         )}
 
-        {phase === 'recording' && (
+        {/* Testing phase - active test buttons */}
+        {phase === 'testing' && isTestActive && (
           <Button
             variant="contained"
             color="error"
             size="large"
             startIcon={<StopIcon />}
-            onClick={handleStopEarly}
+            onClick={handleCancelTest}
           >
-            Stop Early
+            Cancel Test
           </Button>
+        )}
+
+        {/* Testing phase - test ended buttons */}
+        {phase === 'testing' && isTestEnded && (
+          <>
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<ReplayIcon />}
+              onClick={handleTryAgain}
+            >
+              Try Again
+            </Button>
+            {/* Note: Continue button could be added here if needed */}
+          </>
         )}
       </Box>
 
@@ -469,17 +483,9 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
         >
           {!isPersonDetected
             ? 'Position athlete in frame until green skeleton appears'
-            : 'Ready to start! Click "Start Test" to begin the 30-second recording.'}
+            : `Ready to start! Click "Start Test" - the timer will begin when the athlete holds the ${legTested}-foot balance position for 1 second.`}
         </Typography>
       )}
-
-      {/* Early Stop Warning Modal */}
-      <EarlyStopWarningModal
-        open={showEarlyStopWarning}
-        elapsedTime={elapsedTime}
-        onConfirm={handleConfirmEarlyStop}
-        onCancel={handleCancelEarlyStop}
-      />
     </Box>
   );
 };
