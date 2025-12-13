@@ -86,6 +86,283 @@ Duration scores are based on hold time and age-appropriate expectations:
 - **Hip**: Large corrections at hip (compensatory, less efficient)
 """
 
+# Balance Events Interpretation
+BALANCE_EVENTS_GUIDANCE = """# Balance Events Interpretation
+
+## Event Types and Coaching Responses
+
+### Flapping (Arm Movement Events)
+**What it means**: Arms moving away from hips to regain balance
+**Root causes**:
+- Poor core stability
+- Inadequate proprioception
+- Panic response to instability
+- Insufficient confidence
+
+**Coaching approach**:
+- Early test (0-10s): Technique issue - teach proper setup
+- Mid test (10-20s): Control issue - practice core engagement
+- Late test (20-30s): Fatigue - build muscular endurance
+- Clustered events: Panic response - practice breathing, focus techniques
+
+**Specific drills**:
+- Hands-on-hips balance with eyes closed (proprioception)
+- Plank holds and dead bugs (core stability)
+- Balance with distraction tasks (confidence building)
+
+### Correction Burst
+**What it means**: Multiple rapid balance adjustments in quick succession
+**Root causes**:
+- Loss of focus on fixed point
+- Reactive corrections (not predictive)
+- Hip strategy overuse vs ankle strategy
+- Cascading instability
+
+**Coaching approach**:
+- Single burst: Normal, shows good recovery ability
+- Multiple bursts: Over-correcting - teach subtle ankle adjustments
+- Increasing severity: Fatigue or technique breakdown
+
+**Specific drills**:
+- Eyes-open then eyes-closed balance (reduce visual dependence)
+- Slow-motion balance shifts (learn controlled corrections)
+- Balance on wobble board (practice recovery)
+
+### Stabilized Events
+**What it means**: Successfully regaining solid balance after perturbation
+**Root causes**: POSITIVE - shows resilience and motor learning
+
+**Coaching approach**:
+- Celebrate recovery ability
+- Progress to more challenging balance tasks
+- Introduce dynamic balance (reaching, catching)
+
+### Arm Drop Events
+**What it means**: Arms lowering from hip position
+**Root causes**:
+- Fatigue (late test)
+- Reduced vigilance (mid test)
+- False confidence (early test)
+
+**Coaching approach**:
+- Consistent with other fatigue signs: Build endurance
+- Isolated event: Remind about form throughout practice
+
+## Event Timing Patterns
+
+### Early Test Events (0-10 seconds)
+**Interpretation**: Technique or setup issues
+**Focus**: Proper positioning, gaze focus, initial stability
+
+### Mid Test Events (10-20 seconds)
+**Interpretation**: Control or strategy issues
+**Focus**: Sustained engagement, efficient corrections
+
+### Late Test Events (20-30 seconds)
+**Interpretation**: Endurance or fatigue
+**Focus**: Muscular endurance, mental toughness
+
+### Event Clusters
+**Multiple events within 5 seconds**:
+- Panic response or cascading failure
+- Teach recovery strategies, breathing techniques
+- Practice "save" drills
+
+### Event Escalation
+**Severity increasing over time**:
+- Progressive fatigue
+- Poor pacing (too much effort early)
+- Need endurance-focused training
+"""
+
+# Failure Modes Guidance
+FAILURE_MODES_GUIDANCE = """# Test Failure Modes and Interpretation
+
+## Failure Reasons
+
+### Foot Touchdown (Non-Support Foot)
+**What happened**: Free foot touched the ground
+
+**Early failure (0-10s)**:
+- **Likely cause**: Poor initial balance, technique issue
+- **Coaching focus**: Setup positioning, gaze stability
+- **Drills**: Assisted balance, visual focus training
+- **Prognosis**: Quick improvement with technique work
+
+**Mid failure (10-20s)**:
+- **Likely cause**: Loss of concentration or control
+- **Coaching focus**: Mental engagement, focus cues
+- **Drills**: Balance with distractions, mindfulness practice
+- **Prognosis**: Moderate improvement, needs consistency
+
+**Late failure (20-30s)**:
+- **Likely cause**: Fatigue, almost successful
+- **Coaching focus**: Celebrate near-success, build endurance
+- **Drills**: Extended hold practice, interval training
+- **Prognosis**: Very close to success, highly encouraging
+
+### Support Foot Moved
+**What happened**: Standing foot shifted position
+
+**Early failure (0-10s)**:
+- **Likely cause**: Improper weight distribution, poor setup
+- **Coaching focus**: Foot placement, pressure awareness
+- **Drills**: Barefoot balance, foot strengthening
+- **Prognosis**: Foundational work needed
+
+**Mid failure (10-20s)**:
+- **Likely cause**: Base of support instability
+- **Coaching focus**: Ankle strength, proprioception
+- **Drills**: Single-leg strength work, balance progression
+- **Prognosis**: Moderate improvement path
+
+**Late failure (20-30s)**:
+- **Likely cause**: Muscular fatigue (very impressive!)
+- **Coaching focus**: Endurance, celebrate strong performance
+- **Drills**: Longer duration holds, fatigue resistance
+- **Prognosis**: Elite-level performance, minimal improvement needed
+
+### Time Complete (30 seconds)
+**What happened**: Successfully completed full test
+
+**Coaching approach**:
+- Celebrate achievement
+- Shift focus to quality metrics (sway, symmetry)
+- Progress to more challenging variations:
+  - Eyes closed
+  - Unstable surface
+  - Dynamic tasks (catching, reaching)
+  - Dual-task challenges
+
+## Proximity to Success Analysis
+
+### Very Close (25-30s)
+- Frame as "almost there" - highly encouraging
+- Small improvements will achieve success
+- Focus on mental endurance and confidence
+
+### Moderate (15-25s)
+- Solid foundation, clear improvement path
+- Focus on identified weak areas
+- Realistic timeline: 2-4 weeks of practice
+
+### Early Failure (<15s)
+- Needs foundational work
+- Celebrate small incremental gains
+- Realistic timeline: 4-8 weeks of consistent practice
+"""
+
+# Temporal Trends Guidance
+TEMPORAL_TRENDS_GUIDANCE = """# Five-Second Segment Trend Analysis
+
+## Pattern Recognition
+
+### Stable Performance
+**Pattern**: Low variance across all segments (±10%)
+**Interpretation**: Excellent neuromuscular control and endurance
+**Coaching**: Progress to more challenging balance tasks
+
+### Linear Decline
+**Pattern**: Steady increase in sway each segment
+**Interpretation**: Progressive fatigue, expected pattern
+**Coaching**: Normal for age/duration, build endurance gradually
+
+### Early Peak (High → Low → Stable)
+**Pattern**: High sway in segments 1-2, then improvement
+**Interpretation**:
+- Warm-up effect
+- Initial anxiety settling
+- Learning/adaptation during test
+
+**Coaching**:
+- Pre-test warm-up routine
+- Mental preparation techniques
+- Earlier tests may underestimate ability
+
+### Mid-Test Dip (Stable → High → Recovery)
+**Pattern**: Stability drops mid-test then recovers
+**Interpretation**:
+- Temporary loss of focus
+- Brief fatigue followed by mental push
+- Shows resilience and recovery ability
+
+**Coaching**:
+- Positive sign - demonstrates grit
+- Practice sustained focus techniques
+- Build mental endurance
+
+### Late Collapse (Stable → Stable → High)
+**Pattern**: Sudden instability in final segments
+**Interpretation**:
+- Muscular fatigue
+- Mental fatigue
+- "Finish line" anticipation affecting form
+
+**Coaching**:
+- Very common pattern
+- Build specific late-test endurance
+- Practice through fatigue
+
+### Increasing Instability (Accelerating Decline)
+**Pattern**: Sway velocity increasing at increasing rate
+**Interpretation**:
+- Cascading fatigue
+- Compensation strategies failing
+- May indicate pushing beyond current capacity
+
+**Coaching**:
+- Build foundational endurance first
+- Practice at shorter durations initially
+- Progress gradually
+
+### Roller Coaster (High variability between segments)
+**Pattern**: Inconsistent performance across segments
+**Interpretation**:
+- Inconsistent focus or effort
+- Reactive rather than controlled balance
+- May be testing limits/experimenting
+
+**Coaching**:
+- Teach consistent strategy
+- Practice maintaining steady effort
+- Develop rhythm and pacing
+
+## Segment-Specific Metrics
+
+### Sway Velocity Progression
+- Calculate rate of change between segments
+- Identify inflection points
+- Compare to age norms
+
+### Arm Angle Evolution
+- Track symmetry changes over time
+- Identify compensation onset
+- Note recovery patterns
+
+### Corrections Frequency by Segment
+- Early corrections: Technique
+- Mid corrections: Endurance
+- Late corrections: Fatigue
+- Clustering: Control issues
+
+## Coaching Applications
+
+### For Improving Trends (Velocity decreasing)
+- Celebrate self-correction ability
+- This is a strength - athlete can feel and respond
+- Build on this kinesthetic awareness
+
+### For Declining Trends (Velocity increasing)
+- Normal for duration
+- Focus on identified weakness (endurance/control)
+- Set realistic improvement targets
+
+### For Stable Trends
+- Elite pattern
+- Challenge with harder variations
+- Use as benchmark for other assessments
+"""
+
 # Coaching Cues Library
 COACHING_CUES = """# Coaching Cues by Issue Type
 
@@ -190,6 +467,12 @@ Generate parent-friendly report in the following structure (250-350 words total)
 
 # Combined Context for Caching
 FULL_STATIC_CONTEXT = f"""{LTAD_CONTEXT}
+
+{BALANCE_EVENTS_GUIDANCE}
+
+{FAILURE_MODES_GUIDANCE}
+
+{TEMPORAL_TRENDS_GUIDANCE}
 
 {COACHING_CUES}
 

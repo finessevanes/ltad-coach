@@ -6,7 +6,7 @@ and provide actionable coaching feedback (150-200 words).
 
 import logging
 from typing import Dict, Any, Optional, Tuple
-from app.agents.client import get_openrouter_client
+from app.agents.client import get_anthropic_client
 from app.prompts.static_context import FULL_STATIC_CONTEXT
 from app.config import get_settings
 
@@ -35,7 +35,7 @@ async def generate_assessment_feedback(
     """
     try:
         settings = get_settings()
-        client = get_openrouter_client()
+        client = get_anthropic_client()
 
         # Identify focus areas
         focus_areas = _identify_focus_areas(metrics, athlete_age)

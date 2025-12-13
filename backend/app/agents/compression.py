@@ -6,7 +6,7 @@ summary for use by the Progress Agent. This reduces context size and costs.
 
 import logging
 from typing import List, Dict, Any
-from app.agents.client import get_openrouter_client
+from app.agents.client import get_anthropic_client
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ async def compress_history(
 
     try:
         settings = get_settings()
-        client = get_openrouter_client()
+        client = get_anthropic_client()
 
         # Build assessment summary for compression
         assessment_data = _format_assessments_for_compression(assessments)

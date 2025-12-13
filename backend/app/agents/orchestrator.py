@@ -77,7 +77,7 @@ class AgentOrchestrator:
                 {
                     "id": a.id,
                     "created_at": a.created_at,
-                    "metrics": a.metrics,
+                    "metrics": a.metrics.model_dump() if hasattr(a.metrics, 'model_dump') else a.metrics,
                     "status": a.status,
                 }
                 for a in assessments

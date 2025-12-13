@@ -6,7 +6,7 @@ parent-friendly progress reports (250-350 words).
 
 import logging
 from typing import Dict, Any, Optional, Tuple
-from app.agents.client import get_openrouter_client
+from app.agents.client import get_anthropic_client
 from app.prompts.static_context import FULL_STATIC_CONTEXT
 from app.config import get_settings
 
@@ -35,9 +35,11 @@ async def generate_progress_report(
     Raises:
         Exception: If report generation fails (caller should handle with fallback)
     """
+    trend_analysis = "Performance data being analyzed"  # Initialize for fallback
+
     try:
         settings = get_settings()
-        client = get_openrouter_client()
+        client = get_anthropic_client()
 
         # Analyze trends
         trend_analysis = _analyze_trends(current_metrics, compressed_history)
