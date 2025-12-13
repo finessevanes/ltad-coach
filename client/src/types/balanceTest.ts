@@ -44,6 +44,32 @@ export interface TemporalMetrics {
 }
 
 /**
+ * Metrics for a 5-second segment of the test (for LLM temporal analysis).
+ * Provides granular timeline data so LLM can understand *when* things happened.
+ */
+export interface FiveSecondSegment {
+  startTime: number;      // seconds
+  endTime: number;        // seconds
+  avgVelocity: number;    // cm/s
+  corrections: number;    // count
+  armAngleLeft: number;   // degrees (average)
+  armAngleRight: number;  // degrees (average)
+  swayStdX: number;       // cm
+  swayStdY: number;       // cm
+}
+
+/**
+ * Significant events detected during balance test.
+ * Highlights key moments for LLM coaching feedback.
+ */
+export interface BalanceEvent {
+  time: number;           // seconds into test
+  type: 'flapping' | 'correction_burst' | 'stabilized' | 'arm_drop';
+  severity?: 'low' | 'medium' | 'high';
+  detail: string;
+}
+
+/**
  * Test result with metrics in real-world units (cm, degrees).
  * Calculated from MediaPipe's worldLandmarks.
  */

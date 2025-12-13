@@ -17,6 +17,8 @@ import {
   TimestampedLandmarks,
   SegmentMetrics,
   TemporalMetrics,
+  FiveSecondSegment,
+  BalanceEvent,
 } from '../types/balanceTest';
 import { PoseLandmark } from '../types/mediapipe';
 
@@ -576,6 +578,324 @@ function calculateTemporalMetrics(
 }
 
 // ============================================================================
+// Five-Second Segment Calculation (for LLM temporal analysis)
+// ============================================================================
+
+/**
+ * Calculate metrics for 5-second segments of the test.
+ * Provides granular timeline data so LLM can understand *when* things happened.
+ */
+function calculateFiveSecondSegments(
+  landmarkHistory: TimestampedLandmarks[],
+  holdTime: number
+): FiveSecondSegment[] {
+  if (landmarkHistory.length === 0 || holdTime <= 0) return [];
+
+  const segments: FiveSecondSegment[] = [];
+  const segmentDuration = 5; // 5 seconds per segment
+  const numSegments = Math.ceil(holdTime / segmentDuration);
+  const totalFrames = landmarkHistory.length;
+
+  for (let i = 0; i < numSegments; i++) {
+    const startTime = i * segmentDuration;
+    const endTime = Math.min((i + 1) * segmentDuration, holdTime);
+    const actualDuration = endTime - startTime;
+
+    // Calculate frame indices for this segment
+    const startIdx = Math.floor((startTime / holdTime) * totalFrames);
+    const endIdx = Math.min(Math.floor((endTime / holdTime) * totalFrames), totalFrames);
+
+    const segmentFrames = landmarkHistory.slice(startIdx, endIdx);
+    if (segmentFrames.length === 0) continue;
+
+    // Extract hip trajectory for this segment
+    const trajectory = extractHipTrajectory(segmentFrames);
+
+    // Calculate sway std for this segment
+    const { stdX, stdY } = calculateSwayStd(trajectory);
+
+    // Calculate velocity for this segment
+    const pathLength = calculatePathLength(trajectory);
+    const avgVelocity = actualDuration > 0 ? pathLength / actualDuration : 0;
+
+    // Count corrections in this segment
+    const corrections = countCorrections(trajectory, CORRECTION_THRESHOLD_CM);
+
+    // Calculate arm angles for this segment
+    let totalArmAngleLeft = 0;
+    let totalArmAngleRight = 0;
+    let armCount = 0;
+
+    for (const frame of segmentFrames) {
+      const worldLandmarks = frame.worldLandmarks;
+      if (!worldLandmarks || worldLandmarks.length === 0) continue;
+
+      const leftShoulder = worldLandmarks[FILTERED_INDEX.LEFT_SHOULDER];
+      const leftWrist = worldLandmarks[FILTERED_INDEX.LEFT_WRIST];
+      const rightShoulder = worldLandmarks[FILTERED_INDEX.RIGHT_SHOULDER];
+      const rightWrist = worldLandmarks[FILTERED_INDEX.RIGHT_WRIST];
+
+      if (leftShoulder && leftWrist && rightShoulder && rightWrist) {
+        totalArmAngleLeft += calculateArmAngle(leftShoulder, leftWrist);
+        totalArmAngleRight += calculateArmAngle(rightShoulder, rightWrist);
+        armCount++;
+      }
+    }
+
+    const avgArmAngleLeft = armCount > 0 ? totalArmAngleLeft / armCount : 0;
+    const avgArmAngleRight = armCount > 0 ? totalArmAngleRight / armCount : 0;
+
+    segments.push({
+      startTime: Math.round(startTime * 10) / 10,
+      endTime: Math.round(endTime * 10) / 10,
+      avgVelocity: Math.round(avgVelocity * 100) / 100,
+      corrections,
+      armAngleLeft: Math.round(avgArmAngleLeft * 10) / 10,
+      armAngleRight: Math.round(avgArmAngleRight * 10) / 10,
+      swayStdX: Math.round(stdX * 100) / 100,
+      swayStdY: Math.round(stdY * 100) / 100,
+    });
+  }
+
+  return segments;
+}
+
+// ============================================================================
+// Event Detection (for LLM coaching insights)
+// ============================================================================
+
+/**
+ * Detect arm flapping events - velocity spikes indicating balance recovery attempts.
+ * Returns events where arm movement velocity exceeds 2 standard deviations above mean.
+ */
+function detectFlappingEvents(
+  landmarkHistory: TimestampedLandmarks[],
+  holdTime: number
+): BalanceEvent[] {
+  if (landmarkHistory.length < 2 || holdTime <= 0) return [];
+
+  const events: BalanceEvent[] = [];
+  const fps = landmarkHistory.length / holdTime;
+
+  // Calculate frame-to-frame arm velocity (average of both wrists)
+  const armVelocities: { time: number; velocity: number }[] = [];
+
+  for (let i = 1; i < landmarkHistory.length; i++) {
+    const prevFrame = landmarkHistory[i - 1];
+    const currFrame = landmarkHistory[i];
+
+    const prevLandmarks = prevFrame.landmarks;
+    const currLandmarks = currFrame.landmarks;
+
+    if (!prevLandmarks?.length || !currLandmarks?.length) continue;
+
+    const prevLeftWrist = prevLandmarks[FILTERED_INDEX.LEFT_WRIST];
+    const currLeftWrist = currLandmarks[FILTERED_INDEX.LEFT_WRIST];
+    const prevRightWrist = prevLandmarks[FILTERED_INDEX.RIGHT_WRIST];
+    const currRightWrist = currLandmarks[FILTERED_INDEX.RIGHT_WRIST];
+
+    if (!prevLeftWrist || !currLeftWrist || !prevRightWrist || !currRightWrist) continue;
+
+    // Calculate displacement for each wrist
+    const leftDist = Math.sqrt(
+      (currLeftWrist.x - prevLeftWrist.x) ** 2 +
+      (currLeftWrist.y - prevLeftWrist.y) ** 2
+    );
+    const rightDist = Math.sqrt(
+      (currRightWrist.x - prevRightWrist.x) ** 2 +
+      (currRightWrist.y - prevRightWrist.y) ** 2
+    );
+
+    // Average velocity (in normalized units per frame, convert to per second)
+    const avgVelocity = ((leftDist + rightDist) / 2) * fps;
+    const time = (currFrame.timestamp - landmarkHistory[0].timestamp) / 1000;
+
+    armVelocities.push({ time, velocity: avgVelocity });
+  }
+
+  if (armVelocities.length === 0) return [];
+
+  // Calculate mean and std dev
+  const velocities = armVelocities.map(v => v.velocity);
+  const mean = velocities.reduce((a, b) => a + b, 0) / velocities.length;
+  const stdDev = calculateStdDev(velocities);
+
+  // Threshold: 2 standard deviations above mean
+  const threshold = mean + 2 * stdDev;
+
+  // Find peaks above threshold (with cooldown to avoid duplicate events)
+  const cooldownSeconds = 1.0;
+  let lastEventTime = -cooldownSeconds;
+
+  for (const { time, velocity } of armVelocities) {
+    if (velocity > threshold && time - lastEventTime >= cooldownSeconds) {
+      // Determine severity based on how far above threshold
+      const ratio = velocity / threshold;
+      let severity: 'low' | 'medium' | 'high';
+      if (ratio > 2.0) severity = 'high';
+      else if (ratio > 1.5) severity = 'medium';
+      else severity = 'low';
+
+      events.push({
+        time: Math.round(time * 10) / 10,
+        type: 'flapping',
+        severity,
+        detail: `Arm velocity spike: ${(velocity * 100).toFixed(1)} (threshold: ${(threshold * 100).toFixed(1)})`,
+      });
+
+      lastEventTime = time;
+    }
+  }
+
+  return events;
+}
+
+/**
+ * Detect correction bursts - clusters of balance corrections indicating instability.
+ * Returns events where >3 corrections occur within 2 seconds.
+ */
+function detectCorrectionBursts(
+  landmarkHistory: TimestampedLandmarks[],
+  holdTime: number
+): BalanceEvent[] {
+  if (landmarkHistory.length === 0 || holdTime <= 0) return [];
+
+  const events: BalanceEvent[] = [];
+  const trajectory = extractHipTrajectory(landmarkHistory);
+
+  if (trajectory.length < 2) return [];
+
+  // Get timestamps for each point
+  const timestamps = landmarkHistory
+    .filter(f => f.landmarks?.length > 0)
+    .map(f => (f.timestamp - landmarkHistory[0].timestamp) / 1000);
+
+  // Track when corrections happen
+  const correctionTimes: number[] = [];
+  let outside = false;
+
+  for (let i = 0; i < trajectory.length; i++) {
+    const distance = Math.sqrt(trajectory[i].x ** 2 + trajectory[i].y ** 2);
+    const time = timestamps[i] || 0;
+
+    if (!outside && distance > CORRECTION_THRESHOLD_CM) {
+      outside = true;
+    } else if (outside && distance < CORRECTION_THRESHOLD_CM) {
+      correctionTimes.push(time);
+      outside = false;
+    }
+  }
+
+  // Find bursts: >3 corrections in 2 seconds
+  const windowSize = 2.0;
+  let lastBurstEnd = -windowSize;
+
+  for (let i = 0; i < correctionTimes.length; i++) {
+    const windowStart = correctionTimes[i];
+    const windowEnd = windowStart + windowSize;
+
+    if (windowStart < lastBurstEnd) continue; // Skip if overlapping with previous burst
+
+    // Count corrections in this window
+    const correctionsInWindow = correctionTimes.filter(
+      t => t >= windowStart && t <= windowEnd
+    ).length;
+
+    if (correctionsInWindow > 3) {
+      events.push({
+        time: Math.round(windowStart * 10) / 10,
+        type: 'correction_burst',
+        severity: correctionsInWindow > 5 ? 'high' : 'medium',
+        detail: `${correctionsInWindow} corrections in ${windowSize}s`,
+      });
+      lastBurstEnd = windowEnd;
+    }
+  }
+
+  return events;
+}
+
+/**
+ * Detect stabilization - when athlete achieves and maintains low sway.
+ * Returns event when velocity drops below 2 cm/s for 2+ seconds.
+ */
+function detectStabilization(
+  landmarkHistory: TimestampedLandmarks[],
+  holdTime: number
+): BalanceEvent | null {
+  if (landmarkHistory.length === 0 || holdTime <= 0) return null;
+
+  const trajectory = extractHipTrajectory(landmarkHistory);
+  if (trajectory.length < 2) return null;
+
+  const fps = landmarkHistory.length / holdTime;
+  const velocityThreshold = 2.0; // cm/s
+  const requiredDuration = 2.0; // seconds
+  const requiredFrames = Math.floor(requiredDuration * fps);
+
+  // Calculate rolling velocity (using small windows)
+  const windowFrames = Math.max(Math.floor(fps * 0.5), 2); // 0.5 second window
+  const velocities: { time: number; velocity: number }[] = [];
+
+  for (let i = windowFrames; i < trajectory.length; i++) {
+    const windowStart = i - windowFrames;
+    const windowTrajectory = trajectory.slice(windowStart, i);
+    const pathLength = calculatePathLength(windowTrajectory);
+    const velocity = pathLength / (windowFrames / fps);
+    const time = (i / trajectory.length) * holdTime;
+    velocities.push({ time, velocity });
+  }
+
+  // Find first point where velocity stays below threshold for required duration
+  let stableCount = 0;
+  let stableStartTime = 0;
+
+  for (const { time, velocity } of velocities) {
+    if (velocity < velocityThreshold) {
+      if (stableCount === 0) stableStartTime = time;
+      stableCount++;
+
+      if (stableCount >= requiredFrames) {
+        return {
+          time: Math.round(stableStartTime * 10) / 10,
+          type: 'stabilized',
+          detail: `Velocity dropped below ${velocityThreshold} cm/s and maintained for ${requiredDuration}+ seconds`,
+        };
+      }
+    } else {
+      stableCount = 0;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Detect all balance events in the test.
+ */
+function detectAllEvents(
+  landmarkHistory: TimestampedLandmarks[],
+  holdTime: number
+): BalanceEvent[] {
+  const events: BalanceEvent[] = [];
+
+  // Detect flapping events
+  events.push(...detectFlappingEvents(landmarkHistory, holdTime));
+
+  // Detect correction bursts
+  events.push(...detectCorrectionBursts(landmarkHistory, holdTime));
+
+  // Detect stabilization
+  const stabilization = detectStabilization(landmarkHistory, holdTime);
+  if (stabilization) events.push(stabilization);
+
+  // Sort by time
+  events.sort((a, b) => a.time - b.time);
+
+  return events;
+}
+
+// ============================================================================
 // Main calculation function
 // ============================================================================
 
@@ -598,6 +918,9 @@ export interface CalculatedMetrics {
   timeArmsAboveHorizontal: number; // percentage (0-100)
   stabilityScore: number;
   temporal: TemporalMetrics;
+  // Enhanced temporal data for LLM
+  fiveSecondSegments: FiveSecondSegment[];
+  events: BalanceEvent[];
 }
 
 /**
@@ -776,6 +1099,18 @@ export function calculateMetrics(
   console.log('[Metrics] Stability Score:', stabilityScore.toFixed(1), '/ 100');
   console.log('=====================================\n');
 
+  // Calculate enhanced temporal data for LLM
+  const fiveSecondSegments = calculateFiveSecondSegments(landmarkHistory, holdTime);
+  const events = detectAllEvents(landmarkHistory, holdTime);
+
+  console.log('--- ENHANCED TEMPORAL DATA (for LLM) ---');
+  console.log('[Metrics] 5-second segments:', fiveSecondSegments.length);
+  console.log('[Metrics] Events detected:', events.length);
+  if (events.length > 0) {
+    events.forEach(e => console.log(`  - ${e.time}s: ${e.type} (${e.severity || 'n/a'}) - ${e.detail}`));
+  }
+  console.log('=====================================\n');
+
   // DEBUG: Download full trajectory data as JSON for analysis
   const debugData = {
     timestamp: new Date().toISOString(),
@@ -804,6 +1139,8 @@ export function calculateMetrics(
       stabilityScore,
     },
     temporal,
+    fiveSecondSegments,
+    events,
     referenceValues: REFERENCE_VALUES,
   };
   const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
@@ -831,5 +1168,7 @@ export function calculateMetrics(
     timeArmsAboveHorizontal: Math.round(timeArmsAboveHorizontal * 10) / 10,
     stabilityScore,
     temporal,
+    fiveSecondSegments,
+    events,
   };
 }

@@ -15,6 +15,8 @@ export interface RecordingState {
   duration: number;
 }
 
+import { FiveSecondSegment, BalanceEvent } from './balanceTest';
+
 /**
  * Metrics for a temporal segment (first/middle/last third of test)
  */
@@ -23,6 +25,8 @@ export interface ClientSegmentMetrics {
   armAngleRight: number;     // degrees
   swayVelocity: number;      // cm/s
   correctionsCount: number;
+  swayStdX?: number;         // cm (optional for backward compat)
+  swayStdY?: number;         // cm (optional for backward compat)
 }
 
 /**
@@ -56,6 +60,9 @@ export interface ClientMetrics {
   stabilityScore: number;     // 0-100
   // Temporal analysis
   temporal: ClientTemporalMetrics;
+  // Enhanced temporal data for LLM (optional for backward compat)
+  fiveSecondSegments?: FiveSecondSegment[];
+  events?: BalanceEvent[];
 }
 
 /**
