@@ -184,16 +184,16 @@ export default function ConsentForm() {
                 disabled={!acknowledged || submitting}
                 sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
               >
-                {submitting ? 'Processing...' : 'Provide Consent'}
+                {submitting ? 'Processing...' : 'I Agree'}
               </Button>
               <Button
-                variant="contained"
-                color="error"
+                variant="outlined"
+                color="primary"
                 onClick={handleDecline}
                 disabled={submitting}
                 sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
               >
-                Decline Consent
+                Decline
               </Button>
             </Box>
           </>
