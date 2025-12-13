@@ -19,6 +19,7 @@ from app.models.assessment import (
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
 from app.services.metrics import get_duration_score
+from app.agents.assessment import generate_assessment_feedback
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 logger = logging.getLogger(__name__)
@@ -116,6 +117,27 @@ async def analyze_video_endpoint(
     )
 
     logger.info(f"Assessment {assessment.id} created and completed immediately")
+
+    # Generate AI feedback (Phase 7)
+    ai_feedback = ""
+    try:
+        ai_feedback = await generate_assessment_feedback(
+            athlete_name=athlete.name,
+            athlete_age=athlete.age,
+            leg_tested=data.leg_tested.value,
+            metrics=metrics,
+        )
+
+        # Update assessment with AI feedback
+        await assessment_repo.update(
+            assessment.id,
+            {"ai_feedback": ai_feedback}
+        )
+        logger.info(f"AI feedback generated for assessment {assessment.id}")
+
+    except Exception as e:
+        logger.error(f"Failed to generate AI feedback for {assessment.id}: {e}")
+        # Continue without AI feedback - assessment is still valid
 
     return AnalyzeResponse(
         id=assessment.id,

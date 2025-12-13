@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     openrouter_api_key: str
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
+    # Claude Model IDs (via OpenRouter)
+    haiku_model: str = "anthropic/claude-3-haiku-20240307"
+    sonnet_model: str = "anthropic/claude-3-5-sonnet-20241022"
+
     # Email Service (Resend)
     resend_api_key: str
 
