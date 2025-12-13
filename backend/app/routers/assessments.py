@@ -19,7 +19,7 @@ from app.models.assessment import (
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
 from app.services.metrics import get_duration_score
-from app.agents.assessment import generate_assessment_feedback
+from app.agents.orchestrator import get_orchestrator
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 logger = logging.getLogger(__name__)
@@ -118,10 +118,13 @@ async def analyze_video_endpoint(
 
     logger.info(f"Assessment {assessment.id} created and completed immediately")
 
-    # Generate coach assessment feedback (Phase 7)
+    # Generate coach assessment feedback via orchestrator (Phase 7)
     ai_coach_assessment = ""
     try:
-        ai_coach_assessment = await generate_assessment_feedback(
+        orchestrator = get_orchestrator()
+        ai_coach_assessment = await orchestrator.generate_feedback(
+            request_type="assessment_feedback",
+            athlete_id=data.athlete_id,
             athlete_name=athlete.name,
             athlete_age=athlete.age,
             leg_tested=data.leg_tested.value,
@@ -273,9 +276,6 @@ async def test_progress(
     Raises:
         404: Athlete not found
     """
-    from app.agents.orchestrator import AgentOrchestrator
-    from app.agents.progress import generate_progress_report
-
     athlete_repo = AthleteRepository()
     assessment_repo = AssessmentRepository()
 
@@ -302,22 +302,14 @@ async def test_progress(
     latest_assessment = assessments[0] if assessments else None
     current_metrics = latest_assessment.metrics.model_dump() if (latest_assessment and latest_assessment.metrics) else {}
 
-    # Use orchestrator to get compressed history
-    orchestrator = AgentOrchestrator()
-    routing = await orchestrator.route(
+    # Use orchestrator to generate progress report
+    orchestrator = get_orchestrator()
+    report = await orchestrator.generate_feedback(
         request_type="progress_trends",
         athlete_id=athlete_id,
         athlete_name=athlete.name,
-        athlete_age=athlete.age
-    )
-
-    # Generate progress report
-    report = await generate_progress_report(
-        athlete_name=athlete.name,
         athlete_age=athlete.age,
-        compressed_history=routing["compressed_history"],
-        current_metrics=current_metrics,
-        assessment_count=assessment_count
+        metrics=current_metrics,
     )
 
     # Print to console with nice formatting
@@ -325,8 +317,6 @@ async def test_progress(
     print(f"PROGRESS REPORT FOR {athlete.name} (Age {athlete.age})")
     print("="*80)
     print(f"Assessment Count: {assessment_count}")
-    compressed_preview = routing["compressed_history"][:200] if routing["compressed_history"] else "No history"
-    print(f"Compressed History Preview: {compressed_preview}...")
     print("-"*80)
     print(report)
     print("="*80 + "\n")
@@ -335,6 +325,5 @@ async def test_progress(
         "athlete_name": athlete.name,
         "athlete_age": athlete.age,
         "assessment_count": assessment_count,
-        "compressed_history": routing.compressed_history,
         "report": report,
     }

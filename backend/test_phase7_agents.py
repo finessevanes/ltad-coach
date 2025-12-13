@@ -201,7 +201,7 @@ async def test_progress_agent():
 
 
 async def test_orchestrator():
-    """Test the Agent Orchestrator routing logic."""
+    """Test the Agent Orchestrator routing and generation logic."""
     print("\n" + "=" * 80)
     print("TEST 4: Agent Orchestrator")
     print("=" * 80)
@@ -226,6 +226,27 @@ async def test_orchestrator():
         print(f"   ✅ Routes to: {result['route']}")
         print(f"   ✅ No history needed: {result['compressed_history'] is None}")
 
+        # Test assessment feedback generation via orchestrator
+        print("\n📝 Testing assessment feedback generation via orchestrator...")
+        mock_metrics = {
+            "success": True,
+            "hold_time": 12.5,
+            "duration_score": 3,
+            "sway_velocity": 2.1,
+        }
+
+        feedback = await orchestrator.generate_feedback(
+            request_type="assessment_feedback",
+            athlete_id="test_athlete_123",
+            athlete_name="Test Athlete",
+            athlete_age=9,
+            leg_tested="left",
+            metrics=mock_metrics,
+        )
+
+        assert len(feedback) > 0, "Feedback should not be empty"
+        print(f"   ✅ Generated feedback via orchestrator ({len(feedback)} chars)")
+
         # Test progress trends routing (will fail gracefully if no DB)
         print("\n📝 Testing progress_trends routing...")
         try:
@@ -245,7 +266,7 @@ async def test_orchestrator():
             print(f"   ⚠️  Database not available (expected in test): {e}")
             print(f"   ✅ Routing logic validated (DB access skipped)")
 
-        print(f"\n✅ Orchestrator routing working correctly")
+        print(f"\n✅ Orchestrator routing and generation working correctly")
         return True
 
     except Exception as e:
