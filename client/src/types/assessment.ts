@@ -79,10 +79,8 @@ export interface AssessmentMetrics {
   armAngleLeft: number;       // degrees from horizontal (0° = T-position)
   armAngleRight: number;      // degrees from horizontal (0° = T-position)
   armAsymmetryRatio: number;
-  // Scores
+  // LTAD Score (validated by Athletics Canada LTAD framework)
   durationScore: number;      // 1-5 LTAD scale
-  durationScoreLabel: string; // "Beginning", "Developing", etc.
-  ageExpectation?: string;    // "above", "meets", "below"
   // Temporal analysis
   temporal?: ClientTemporalMetrics;
 }

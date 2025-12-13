@@ -177,7 +177,7 @@ export default function AssessmentResults() {
                   {metrics.durationScore}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  LTAD Score ({metrics.durationScoreLabel})
+                  LTAD Score
                 </Typography>
               </CardContent>
             </Card>
@@ -254,36 +254,21 @@ export default function AssessmentResults() {
                   <TableCell align="right">{formatNum(metrics.armAsymmetryRatio, 2)}</TableCell>
                 </TableRow>
 
-                {/* Scores Header */}
+                {/* LTAD Score Header */}
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Scores</strong></TableCell>
+                  <TableCell><strong>LTAD Score</strong></TableCell>
                   <TableCell align="right"><strong>Value</strong></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ pl: 2 }}>LTAD Score</TableCell>
+                  <TableCell sx={{ pl: 2 }}>Duration Score</TableCell>
                   <TableCell align="right">
                     <Chip
-                      label={`${metrics.durationScore} - ${metrics.durationScoreLabel}`}
+                      label={metrics.durationScore}
                       color="primary"
                       size="small"
                     />
                   </TableCell>
                 </TableRow>
-                {metrics.ageExpectation && (
-                  <TableRow>
-                    <TableCell sx={{ pl: 2 }}>Age Expectation</TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        label={metrics.ageExpectation}
-                        color={
-                          metrics.ageExpectation === 'above' ? 'success' :
-                          metrics.ageExpectation === 'below' ? 'warning' : 'default'
-                        }
-                        size="small"
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </TableContainer>

@@ -18,7 +18,7 @@ from app.models.assessment import (
 )
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
-from app.services.metrics import get_duration_score, get_age_expectation
+from app.services.metrics import get_duration_score
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ async def analyze_video_endpoint(
 
     The client is now the source of truth for all metrics. This endpoint:
     1. Validates athlete ownership and consent
-    2. Calculates backend-only scores (duration_score, age_expectation)
+    2. Calculates LTAD duration score (1-5, validated by Athletics Canada)
     3. Stores the assessment as completed immediately
 
     Args:
@@ -73,10 +73,9 @@ async def analyze_video_endpoint(
             detail=f"Athlete consent is {athlete.consent_status}. Active consent required.",
         )
 
-    # Calculate backend-only scores from client metrics
+    # Calculate LTAD duration score (validated by Athletics Canada LTAD framework)
     client_metrics = data.client_metrics
-    duration_score, duration_score_label = get_duration_score(client_metrics.hold_time)
-    age_expectation = get_age_expectation(athlete.age, duration_score) if athlete.age else None
+    duration_score = get_duration_score(client_metrics.hold_time)
 
     # Build full metrics from client data + backend calculations
     # All metrics in real-world units (cm, degrees)
@@ -92,10 +91,8 @@ async def analyze_video_endpoint(
         "arm_angle_left": client_metrics.arm_angle_left,
         "arm_angle_right": client_metrics.arm_angle_right,
         "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
-        # Scores
+        # LTAD Score (validated by Athletics Canada)
         "duration_score": duration_score,
-        "duration_score_label": duration_score_label,
-        "age_expectation": age_expectation,
         # Temporal analysis
         "temporal": client_metrics.temporal.model_dump() if client_metrics.temporal else None,
     }

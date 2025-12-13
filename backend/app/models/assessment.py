@@ -113,10 +113,8 @@ class MetricsData(BaseModel):
     arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees, 0° = T-position)")
     arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
-    # Scores
+    # LTAD Score (validated by Athletics Canada LTAD framework)
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
-    duration_score_label: str = Field(..., description="LTAD score label (Beginning, Developing, etc.)")
-    age_expectation: Optional[str] = Field(None, description="Meets/Above/Below age expectation")
     # Temporal analysis
     temporal: Optional[TemporalMetrics] = Field(None, description="Temporal breakdown of metrics")
 
