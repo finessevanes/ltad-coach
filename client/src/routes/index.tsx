@@ -1,6 +1,7 @@
 import { RouteObject } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Home } from '../pages/Home';
+import { Dashboard } from '../pages/Dashboard';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
@@ -39,7 +40,7 @@ export const routes: RouteObject[] = [
         path: 'dashboard',
         element: (
           <ProtectedRoute>
-            <Home /> {/* Placeholder until FE-015 */}
+            <Dashboard />
           </ProtectedRoute>
         ),
       },
