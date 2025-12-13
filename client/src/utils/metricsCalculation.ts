@@ -40,8 +40,8 @@ export const STABILITY_WEIGHTS = {
   corrections: 0.20,
 } as const;
 
-/** Threshold for detecting balance corrections (2cm in meters) */
-export const CORRECTION_THRESHOLD = 0.02;
+/** Threshold for detecting balance corrections in meters (2cm) */
+export const CORRECTION_THRESHOLD_METERS = 0.02;
 
 // ============================================================================
 // Types
@@ -135,13 +135,22 @@ function countThresholdCrossings(
   return corrections;
 }
 
+/**
+ * Fixed scale factor: approximate conversion from normalized coords to meters.
+ * Assumes typical webcam setup where person fills ~50% of frame width,
+ * and frame represents ~1.5m of real space.
+ *
+ * This is approximate but sufficient for relative comparisons (MVP).
+ */
+const NORMALIZED_TO_METERS_SCALE = 1.5;
+
 // ============================================================================
-// Hip trajectory extraction (from world landmarks)
+// Hip trajectory extraction (HYBRID: normalized landmarks + scale factor)
 // ============================================================================
 
 /**
- * Extract hip trajectory from world landmarks (in meters).
- * Tracks displacement from initial position to capture actual body sway.
+ * Extract hip trajectory from NORMALIZED landmarks.
+ * Returns displacement from initial position in approximate METERS.
  */
 function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[] {
   const trajectory: Point2D[] = [];
@@ -149,15 +158,15 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
   let initialY: number | null = null;
 
   for (const frame of landmarkHistory) {
-    const worldLandmarks = frame.worldLandmarks;
-    if (!worldLandmarks || worldLandmarks.length === 0) continue;
+    const normalizedLandmarks = frame.landmarks;
+    if (!normalizedLandmarks || normalizedLandmarks.length === 0) continue;
 
-    const leftHip = worldLandmarks[FILTERED_INDEX.LEFT_HIP];
-    const rightHip = worldLandmarks[FILTERED_INDEX.RIGHT_HIP];
+    const leftHip = normalizedLandmarks[FILTERED_INDEX.LEFT_HIP];
+    const rightHip = normalizedLandmarks[FILTERED_INDEX.RIGHT_HIP];
 
     if (!leftHip || !rightHip) continue;
 
-    // Hip center = midpoint
+    // Hip center in normalized coordinates
     const centerX = (leftHip.x + rightHip.x) / 2;
     const centerY = (leftHip.y + rightHip.y) / 2;
 
@@ -167,10 +176,10 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
       initialY = centerY;
     }
 
-    // Track displacement from initial (in meters)
+    // Track displacement from initial, convert to approximate meters
     trajectory.push({
-      x: centerX - initialX,
-      y: centerY - initialY!,
+      x: (centerX - initialX) * NORMALIZED_TO_METERS_SCALE,
+      y: (centerY - initialY!) * NORMALIZED_TO_METERS_SCALE,
     });
   }
 
@@ -199,15 +208,21 @@ function calculateSwayStd(trajectory: Point2D[]): { stdX: number; stdY: number }
 }
 
 /**
- * Count balance corrections (threshold crossings in hip X position).
+ * Count balance corrections using 2D Euclidean distance from starting position.
+ * A correction = moving beyond threshold, then returning within threshold.
+ *
+ * @param trajectory - Hip trajectory (displacement from initial position in meters)
+ * @param thresholdMeters - Distance threshold in meters (default 0.02m = 2cm)
  */
-function countCorrections(trajectory: Point2D[]): number {
+function countCorrections(trajectory: Point2D[], thresholdMeters: number = 0.02): number {
   if (trajectory.length === 0) return 0;
 
-  const xValues = trajectory.map((p) => p.x);
-  const centerX = xValues.reduce((sum, val) => sum + val, 0) / xValues.length;
+  // Use 2D Euclidean distance from origin (initial position)
+  // Trajectory is already displacement-based, so center is (0, 0)
+  const distances = trajectory.map((p) => Math.sqrt(p.x * p.x + p.y * p.y));
 
-  return countThresholdCrossings(xValues, CORRECTION_THRESHOLD, centerX);
+  // Count threshold crossings using distance from origin (center = 0)
+  return countThresholdCrossings(distances, thresholdMeters, 0);
 }
 
 // ============================================================================
@@ -319,14 +334,14 @@ function calculateSegmentMetrics(
   const avgArmAngleLeft = armCount > 0 ? totalArmAngleLeft / armCount : 0;
   const avgArmAngleRight = armCount > 0 ? totalArmAngleRight / armCount : 0;
 
-  // Calculate sway for this segment
-  const worldTrajectory = extractHipTrajectory(segment);
-  const pathLengthMeters = calculatePathLength(worldTrajectory);
+  // Calculate sway for this segment using normalized landmarks
+  const trajectory = extractHipTrajectory(segment);
+  const pathLengthMeters = calculatePathLength(trajectory);
   const pathLengthCm = pathLengthMeters * 100;
   const swayVelocityCmS = segmentDuration > 0 ? pathLengthCm / segmentDuration : 0;
 
   // Count corrections in this segment
-  const correctionsCount = countCorrections(worldTrajectory);
+  const correctionsCount = countCorrections(trajectory, 0.02);
 
   return {
     armAngleLeft: Math.round(avgArmAngleLeft * 10) / 10,
@@ -399,25 +414,30 @@ export interface CalculatedMetrics {
  * Calculate all metrics from landmark history.
  * Returns metrics in real-world units (cm, degrees).
  *
- * @param landmarkHistory - Array of timestamped filtered landmarks (must include worldLandmarks)
+ * HYBRID APPROACH:
+ * - Sway metrics: Uses NORMALIZED landmarks (tracks position in frame)
+ *   converted to meters using scale factor from world landmarks
+ * - Arm angles: Uses WORLD landmarks (accurate for joint angles)
+ *
+ * @param landmarkHistory - Array of timestamped filtered landmarks
  * @param holdTime - Duration in seconds
- * @returns Calculated metrics or null if world landmarks unavailable
+ * @returns Calculated metrics or null if landmarks unavailable
  */
 export function calculateMetrics(
   landmarkHistory: TimestampedLandmarks[],
   holdTime: number
 ): CalculatedMetrics | null {
-  // Check if world landmarks are available
-  const hasWorldLandmarks = landmarkHistory.some(
-    (frame) => frame.worldLandmarks && frame.worldLandmarks.length > 0
+  // Check if we have landmarks
+  const hasLandmarks = landmarkHistory.some(
+    (frame) => frame.landmarks && frame.landmarks.length > 0
   );
 
-  if (!hasWorldLandmarks) {
-    console.warn('[Metrics] No world landmarks available');
+  if (!hasLandmarks) {
+    console.warn('[Metrics] No landmarks available');
     return null;
   }
 
-  // Extract world hip trajectory
+  // Extract hip trajectory using NORMALIZED landmarks
   const hipTrajectory = extractHipTrajectory(landmarkHistory);
 
   if (hipTrajectory.length === 0) {
@@ -425,7 +445,7 @@ export function calculateMetrics(
     return null;
   }
 
-  // Calculate sway metrics in meters, then convert to cm
+  // Calculate sway metrics (trajectory is in approximate meters)
   const { stdX, stdY } = calculateSwayStd(hipTrajectory);
   const swayStdXCm = stdX * 100;
   const swayStdYCm = stdY * 100;
@@ -436,8 +456,14 @@ export function calculateMetrics(
   const swayVelocityMetersSec = holdTime > 0 ? pathLengthMeters / holdTime : 0;
   const swayVelocityCmS = swayVelocityMetersSec * 100;
 
-  // Count corrections
-  const correctionsCount = countCorrections(hipTrajectory);
+  // Calculate temporal metrics (fatigue analysis) - do this first so we can sum corrections
+  const temporal = calculateTemporalMetrics(landmarkHistory, holdTime);
+
+  // Sum corrections from all segments for consistency with temporal breakdown
+  const correctionsCount =
+    temporal.firstThird.correctionsCount +
+    temporal.middleThird.correctionsCount +
+    temporal.lastThird.correctionsCount;
 
   // Calculate arm angles
   let totalArmAngleLeft = 0;
@@ -478,9 +504,6 @@ export function calculateMetrics(
     avgArmAngle,
     correctionsCount
   );
-
-  // Calculate temporal metrics (fatigue analysis)
-  const temporal = calculateTemporalMetrics(landmarkHistory, holdTime);
 
   return {
     swayStdX: Math.round(swayStdXCm * 100) / 100,
