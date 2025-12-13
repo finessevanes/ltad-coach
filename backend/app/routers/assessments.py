@@ -93,7 +93,6 @@ async def analyze_video_endpoint(
         "arm_angle_right": client_metrics.arm_angle_right,
         "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
         # Scores
-        "stability_score": client_metrics.stability_score,
         "duration_score": duration_score,
         "duration_score_label": duration_score_label,
         "age_expectation": age_expectation,

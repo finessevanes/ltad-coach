@@ -26,26 +26,6 @@ import { PoseLandmark } from '../types/mediapipe';
 // Constants
 // ============================================================================
 
-/** Reference values for stability score calculation (real-world units) */
-export const REFERENCE_VALUES = {
-  /** Max expected sway std in cm */
-  swayStdMax: 8.0,
-  /** Max expected sway velocity in cm/s */
-  swayVelocityMax: 5.0,
-  /** Max expected arm angle drop in degrees */
-  armAngleMax: 45.0,
-  /** Max expected corrections */
-  correctionsMax: 15,
-} as const;
-
-/** Stability score component weights */
-export const STABILITY_WEIGHTS = {
-  swayStd: 0.25,
-  swayVelocity: 0.30,
-  armExcursion: 0.25,
-  corrections: 0.20,
-} as const;
-
 /** Threshold for detecting balance corrections in cm */
 export const CORRECTION_THRESHOLD_CM = 2.0;
 
@@ -437,40 +417,6 @@ function calculateArmAngle(shoulder: PoseLandmark, wrist: PoseLandmark): number 
   const angleDeg = angleRad * (180 / Math.PI);
 
   return Math.round(angleDeg * 10) / 10; // Round to 1 decimal
-}
-
-// ============================================================================
-// Stability score calculation
-// ============================================================================
-
-/**
- * Calculate composite stability score (0-100, higher is better).
- *
- * Uses real-world reference values to normalize metrics before weighting.
- */
-function calculateStabilityScore(
-  swayStdCm: number,
-  swayVelocityCmS: number,
-  armAngleDeg: number,
-  corrections: number
-): number {
-  // Normalize each metric to [0, 1] using reference values
-  const normSway = Math.min(swayStdCm / REFERENCE_VALUES.swayStdMax, 1.0);
-  const normVelocity = Math.min(swayVelocityCmS / REFERENCE_VALUES.swayVelocityMax, 1.0);
-  const normArm = Math.min(Math.abs(armAngleDeg) / REFERENCE_VALUES.armAngleMax, 1.0);
-  const normCorrections = Math.min(corrections / REFERENCE_VALUES.correctionsMax, 1.0);
-
-  // Weighted average (lower is better for all metrics)
-  const weightedAvg =
-    STABILITY_WEIGHTS.swayStd * normSway +
-    STABILITY_WEIGHTS.swayVelocity * normVelocity +
-    STABILITY_WEIGHTS.armExcursion * normArm +
-    STABILITY_WEIGHTS.corrections * normCorrections;
-
-  // Convert to 0-100 scale (higher is better)
-  const stabilityScore = (1 - weightedAvg) * 100;
-
-  return Math.max(0, Math.min(100, Math.round(stabilityScore * 100) / 100));
 }
 
 // ============================================================================
@@ -916,7 +862,6 @@ export interface CalculatedMetrics {
   armAngleStdDevLeft: number;      // degrees
   armAngleStdDevRight: number;     // degrees
   timeArmsAboveHorizontal: number; // percentage (0-100)
-  stabilityScore: number;
   temporal: TemporalMetrics;
   // Enhanced temporal data for LLM
   fiveSecondSegments: FiveSecondSegment[];
@@ -1049,16 +994,6 @@ export function calculateMetrics(
       ? Math.abs(armAngleLeft) / Math.abs(armAngleRight)
       : 1.0;
 
-  // Calculate stability score
-  const combinedSwayStdCm = swayStdXCm + swayStdYCm;
-  const avgArmAngle = (Math.abs(armAngleLeft) + Math.abs(armAngleRight)) / 2;
-  const stabilityScore = calculateStabilityScore(
-    combinedSwayStdCm,
-    swayVelocityCmS,
-    avgArmAngle,
-    correctionsCount
-  );
-
   // DEBUG: Log final metrics summary
   console.log('\n========== METRICS SUMMARY ==========');
   console.log('[Metrics] Hold time:', holdTime.toFixed(1), 's');
@@ -1095,8 +1030,6 @@ export function calculateMetrics(
     timeArmsAboveHorizontal.toFixed(1),
     '%'
   );
-  console.log('--- FINAL SCORE ---');
-  console.log('[Metrics] Stability Score:', stabilityScore.toFixed(1), '/ 100');
   console.log('=====================================\n');
 
   // Calculate enhanced temporal data for LLM
@@ -1136,12 +1069,10 @@ export function calculateMetrics(
       armAngleStdDevLeft,
       armAngleStdDevRight,
       timeArmsAboveHorizontal,
-      stabilityScore,
     },
     temporal,
     fiveSecondSegments,
     events,
-    referenceValues: REFERENCE_VALUES,
   };
   const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1166,7 +1097,6 @@ export function calculateMetrics(
     armAngleStdDevLeft: Math.round(armAngleStdDevLeft * 10) / 10,
     armAngleStdDevRight: Math.round(armAngleStdDevRight * 10) / 10,
     timeArmsAboveHorizontal: Math.round(timeArmsAboveHorizontal * 10) / 10,
-    stabilityScore,
     temporal,
     fiveSecondSegments,
     events,

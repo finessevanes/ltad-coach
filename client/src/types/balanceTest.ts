@@ -96,8 +96,6 @@ export interface TestResult {
   armAngleRight: number;
   /** Left/Right arm angle ratio */
   armAsymmetryRatio: number;
-  /** Composite stability score (0-100, higher is better) */
-  stabilityScore: number;
   /** Temporal breakdown of metrics (fatigue analysis) */
   temporal: TemporalMetrics;
   /** 5-second segment breakdown for LLM temporal analysis */

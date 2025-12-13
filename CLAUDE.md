@@ -209,7 +209,7 @@ athletes/{athleteId}
 assessments/{assessmentId}
   - athleteId, coachId, testType, legTested
   - videoUrl, status: "processing" | "completed" | "failed"
-  - metrics: { durationSeconds, swayVelocity, stabilityScore, ... }
+  - metrics: { holdTime, swayVelocity, durationScore, ... }
   - aiFeedback, createdAt
 
 reports/{reportId}

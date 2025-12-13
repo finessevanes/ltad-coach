@@ -31,24 +31,5 @@ AGE_EXPECTED_SCORES: Dict[Tuple[int, int], int] = {
     (12, 13): 5,  # Ages 12-13: Advanced expected
 }
 
-# Stability Score Composite Weights
-# Weights for calculating overall stability score (0-100)
-STABILITY_WEIGHTS = {
-    "sway_std": 0.25,        # Weight for sway standard deviation
-    "sway_velocity": 0.30,    # Weight for sway velocity (most important)
-    "arm_excursion": 0.25,    # Weight for arm movement
-    "corrections": 0.20,      # Weight for number of corrections
-}
-
 # Correction Threshold (in meters - world coordinates)
 CORRECTION_THRESHOLD = 0.02  # 2cm threshold for detecting balance corrections
-
-# Reference Values for Stability Score Calculation
-# All metrics in real-world units (cm, degrees)
-# Used to normalize metrics to 0-1 range before applying weights
-REFERENCE_VALUES = {
-    "sway_std_max": 8.0,          # Max expected sway std in cm
-    "sway_velocity_max": 5.0,     # Max expected sway velocity in cm/s
-    "arm_angle_max": 45.0,        # Max expected arm angle drop in degrees
-    "corrections_max": 15,        # Max expected corrections
-}

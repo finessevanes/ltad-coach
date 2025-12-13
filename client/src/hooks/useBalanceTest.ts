@@ -176,7 +176,6 @@ export function useBalanceTest(
           armAngleLeft: 0,
           armAngleRight: 0,
           armAsymmetryRatio: 1,
-          stabilityScore: 0,
           temporal: {
             firstThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
             middleThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
@@ -201,7 +200,6 @@ export function useBalanceTest(
         armAngleLeft: metrics.armAngleLeft,
         armAngleRight: metrics.armAngleRight,
         armAsymmetryRatio: metrics.armAsymmetryRatio,
-        stabilityScore: metrics.stabilityScore,
         temporal: metrics.temporal,
         // Enhanced temporal data for LLM
         fiveSecondSegments: metrics.fiveSecondSegments,
@@ -215,7 +213,6 @@ export function useBalanceTest(
         swayVelocity: metrics.swayVelocity,
         armAngleLeft: metrics.armAngleLeft,
         armAngleRight: metrics.armAngleRight,
-        stabilityScore: metrics.stabilityScore,
       });
       setTestResult(result);
     },

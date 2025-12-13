@@ -63,8 +63,6 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               armAngleLeft: testResult.armAngleLeft,
               armAngleRight: testResult.armAngleRight,
               armAsymmetryRatio: testResult.armAsymmetryRatio,
-              // Scores
-              stabilityScore: testResult.stabilityScore,
               // Temporal analysis
               temporal: testResult.temporal,
               // Enhanced temporal data for LLM

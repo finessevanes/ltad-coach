@@ -84,8 +84,6 @@ class ClientMetricsData(BaseModel):
     arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees, 0° = T-position)")
     arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
-    # Scores
-    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
     # Temporal analysis
     temporal: TemporalMetrics = Field(..., description="Temporal breakdown of metrics")
     # Enhanced temporal data for LLM
@@ -116,7 +114,6 @@ class MetricsData(BaseModel):
     arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
     # Scores
-    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
     duration_score_label: str = Field(..., description="LTAD score label (Beginning, Developing, etc.)")
     age_expectation: Optional[str] = Field(None, description="Meets/Above/Below age expectation")

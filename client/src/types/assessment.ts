@@ -56,8 +56,6 @@ export interface ClientMetrics {
   armAngleLeft: number;       // degrees from horizontal (0° = T-position)
   armAngleRight: number;      // degrees from horizontal (0° = T-position)
   armAsymmetryRatio: number;
-  // Scores
-  stabilityScore: number;     // 0-100
   // Temporal analysis
   temporal: ClientTemporalMetrics;
   // Enhanced temporal data for LLM (optional for backward compat)
@@ -82,7 +80,6 @@ export interface AssessmentMetrics {
   armAngleRight: number;      // degrees from horizontal (0° = T-position)
   armAsymmetryRatio: number;
   // Scores
-  stabilityScore: number;     // 0-100
   durationScore: number;      // 1-5 LTAD scale
   durationScoreLabel: string; // "Beginning", "Developing", etc.
   ageExpectation?: string;    // "above", "meets", "below"

@@ -53,7 +53,6 @@ export default function AssessmentFlow() {
         swayVelocity: result.swayVelocity,
         armAngleLeft: result.armAngleLeft,
         armAngleRight: result.armAngleRight,
-        stabilityScore: result.stabilityScore,
         landmarkFrames: result.landmarkHistory.length,
       });
     }

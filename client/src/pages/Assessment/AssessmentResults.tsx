@@ -174,18 +174,6 @@ export default function AssessmentResults() {
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" color="primary">
-                  {formatNum(metrics.stabilityScore, 0)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Stability Score
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary">
                   {metrics.durationScore}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -270,10 +258,6 @@ export default function AssessmentResults() {
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell><strong>Scores</strong></TableCell>
                   <TableCell align="right"><strong>Value</strong></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ pl: 2 }}>Stability Score</TableCell>
-                  <TableCell align="right">{formatNum(metrics.stabilityScore, 1)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell sx={{ pl: 2 }}>LTAD Score</TableCell>
