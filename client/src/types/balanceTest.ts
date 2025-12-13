@@ -25,8 +25,10 @@ export interface TestResult {
   holdTime: number;
   failureReason?: string;
   landmarkHistory: TimestampedLandmarks[];
-  armExcursionLeft: number;
-  armExcursionRight: number;
+  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
+  armDeviationLeft: number;
+  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
+  armDeviationRight: number;
 }
 
 // Constants for position detection

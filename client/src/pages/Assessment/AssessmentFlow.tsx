@@ -22,11 +22,6 @@ export default function AssessmentFlow() {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  // Log testResult for debugging (will be used in upload step later)
-  if (testResult) {
-    console.log('[AssessmentFlow] Current testResult:', testResult.success ? 'PASSED' : 'FAILED');
-  }
-
   if (!athleteId) {
     navigate('/athletes');
     return null;
@@ -55,8 +50,8 @@ export default function AssessmentFlow() {
         success: result.success,
         holdTime: result.holdTime,
         failureReason: result.failureReason,
-        armExcursionLeft: result.armExcursionLeft,
-        armExcursionRight: result.armExcursionRight,
+        armDeviationLeft: result.armDeviationLeft,
+        armDeviationRight: result.armDeviationRight,
         landmarkFrames: result.landmarkHistory.length,
       });
     }
@@ -115,6 +110,7 @@ export default function AssessmentFlow() {
             videoDuration={videoDuration}
             testType={testType}
             legTested={legTested}
+            testResult={testResult}
             onComplete={handleUploadComplete}
           />
         );

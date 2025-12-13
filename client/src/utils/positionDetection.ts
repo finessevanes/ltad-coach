@@ -212,42 +212,48 @@ export function checkSupportFootMoved(
 }
 
 /**
- * Calculate arm excursion (cumulative movement) between frames.
- * Higher values indicate more "flappy" arms / balance corrections.
+ * Calculate arm deviation from T-position (horizontal shoulder height).
+ * Measures how far each wrist has dropped below shoulder level.
+ *
+ * Per balance-test-measurement-guide.md.pdf:
+ * "Measure how far each wrist drops below its corresponding shoulder height.
+ *  The ideal T-position has wrists at shoulder level (zero deviation)."
+ *
+ * @returns Deviation values where:
+ *   - 0 = perfect T-position (wrist at shoulder height)
+ *   - positive = wrist below shoulder (dropped)
+ *   - negative = wrist above shoulder (raised)
  */
-export function calculateArmExcursion(
-  prevLandmarks: PoseLandmark[],
-  currentLandmarks: PoseLandmark[]
+export function calculateArmDeviation(
+  landmarks: PoseLandmark[]
 ): { left: number; right: number } {
-  const prevLeftWrist = prevLandmarks[LANDMARK_INDEX.LEFT_WRIST];
-  const prevRightWrist = prevLandmarks[LANDMARK_INDEX.RIGHT_WRIST];
-  const currLeftWrist = currentLandmarks[LANDMARK_INDEX.LEFT_WRIST];
-  const currRightWrist = currentLandmarks[LANDMARK_INDEX.RIGHT_WRIST];
+  const leftShoulder = landmarks[LANDMARK_INDEX.LEFT_SHOULDER];
+  const leftWrist = landmarks[LANDMARK_INDEX.LEFT_WRIST];
+  const rightShoulder = landmarks[LANDMARK_INDEX.RIGHT_SHOULDER];
+  const rightWrist = landmarks[LANDMARK_INDEX.RIGHT_WRIST];
 
   // Skip calculation if visibility is too low
   const minVisibility = 0.5;
-  let leftExcursion = 0;
-  let rightExcursion = 0;
+  let leftDeviation = 0;
+  let rightDeviation = 0;
 
+  // In normalized coordinates, Y increases downward (0=top, 1=bottom)
+  // Positive deviation = wrist below shoulder (dropped from T-position)
   if (
-    (prevLeftWrist.visibility ?? 1) >= minVisibility &&
-    (currLeftWrist.visibility ?? 1) >= minVisibility
+    (leftShoulder.visibility ?? 1) >= minVisibility &&
+    (leftWrist.visibility ?? 1) >= minVisibility
   ) {
-    const dx = currLeftWrist.x - prevLeftWrist.x;
-    const dy = currLeftWrist.y - prevLeftWrist.y;
-    leftExcursion = Math.sqrt(dx * dx + dy * dy);
+    leftDeviation = leftWrist.y - leftShoulder.y;
   }
 
   if (
-    (prevRightWrist.visibility ?? 1) >= minVisibility &&
-    (currRightWrist.visibility ?? 1) >= minVisibility
+    (rightShoulder.visibility ?? 1) >= minVisibility &&
+    (rightWrist.visibility ?? 1) >= minVisibility
   ) {
-    const dx = currRightWrist.x - prevRightWrist.x;
-    const dy = currRightWrist.y - prevRightWrist.y;
-    rightExcursion = Math.sqrt(dx * dx + dy * dy);
+    rightDeviation = rightWrist.y - rightShoulder.y;
   }
 
-  return { left: leftExcursion, right: rightExcursion };
+  return { left: leftDeviation, right: rightDeviation };
 }
 
 /**

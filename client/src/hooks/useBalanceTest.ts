@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { PoseResult, PoseLandmark } from '../types/mediapipe';
+import { PoseResult } from '../types/mediapipe';
 import { LegTested } from '../types/assessment';
 import {
   TestState,
@@ -20,7 +20,7 @@ import {
   checkBalancePosition,
   checkFootTouchdown,
   checkSupportFootMoved,
-  calculateArmExcursion,
+  calculateArmDeviation,
   getInitialPositions,
   InitialPositions,
 } from '../utils/positionDetection';
@@ -97,8 +97,9 @@ export function useBalanceTest(
   const lastTrackingTimeRef = useRef<number>(Date.now());
   const initialPositionsRef = useRef<InitialPositions | null>(null);
   const landmarkHistoryRef = useRef<TimestampedLandmarks[]>([]);
-  const armExcursionRef = useRef<{ left: number; right: number }>({ left: 0, right: 0 });
-  const prevLandmarksRef = useRef<PoseLandmark[] | null>(null);
+  // Track arm deviation: sum of deviations and count for averaging
+  const armDeviationSumRef = useRef<{ left: number; right: number }>({ left: 0, right: 0 });
+  const armDeviationCountRef = useRef(0);
   const holdTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Consecutive failure frame tracking (prevents false positives from occlusion)
   const consecutiveTouchdownFramesRef = useRef(0);
@@ -114,8 +115,8 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armExcursionRef.current = { left: 0, right: 0 };
-    prevLandmarksRef.current = null;
+    armDeviationSumRef.current = { left: 0, right: 0 };
+    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
   }, []);
@@ -130,8 +131,8 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armExcursionRef.current = { left: 0, right: 0 };
-    prevLandmarksRef.current = null;
+    armDeviationSumRef.current = { left: 0, right: 0 };
+    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
     if (holdTimeIntervalRef.current) {
@@ -159,13 +160,18 @@ export function useBalanceTest(
       setFailureReason(reason || null);
       setHoldTime(finalHoldTime);
 
+      // Calculate average arm deviation (sum / count)
+      const count = armDeviationCountRef.current || 1; // Avoid division by zero
+      const avgArmDeviationLeft = armDeviationSumRef.current.left / count;
+      const avgArmDeviationRight = armDeviationSumRef.current.right / count;
+
       const result = {
         success,
         holdTime: finalHoldTime,
         failureReason: reason,
         landmarkHistory: [...landmarkHistoryRef.current],
-        armExcursionLeft: armExcursionRef.current.left,
-        armExcursionRight: armExcursionRef.current.right,
+        armDeviationLeft: avgArmDeviationLeft,
+        armDeviationRight: avgArmDeviationRight,
       };
       console.log('[BalanceTest] Setting test result:', result);
       setTestResult(result);
@@ -202,13 +208,13 @@ export function useBalanceTest(
       worldLandmarks: poseResult.worldLandmarks ? [...poseResult.worldLandmarks] : [],
     });
 
-    // Calculate arm excursion during HOLDING
-    if (testState === 'holding' && prevLandmarksRef.current) {
-      const excursion = calculateArmExcursion(prevLandmarksRef.current, landmarks);
-      armExcursionRef.current.left += excursion.left;
-      armExcursionRef.current.right += excursion.right;
+    // Calculate arm deviation during HOLDING (for averaging later)
+    if (testState === 'holding') {
+      const deviation = calculateArmDeviation(landmarks);
+      armDeviationSumRef.current.left += deviation.left;
+      armDeviationSumRef.current.right += deviation.right;
+      armDeviationCountRef.current++;
     }
-    prevLandmarksRef.current = [...landmarks];
 
     // READY state logic
     if (testState === 'ready') {
