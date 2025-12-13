@@ -23,7 +23,11 @@ class Settings(BaseSettings):
     firebase_storage_bucket: str
 
     # Anthropic API (Direct Claude access)
-    anthropic_api_key: str
+    anthropic_api_key: Optional[str] = None
+
+    # OpenRouter API (Alternative to direct Anthropic)
+    openrouter_api_key: Optional[str] = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # Claude Model IDs (Direct Anthropic API)
     haiku_model: str = "claude-3-haiku-20240307"
