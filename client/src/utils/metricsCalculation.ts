@@ -300,7 +300,6 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
 
   // Step 1: Calculate scale factor from shoulder width
   const scaleFactor = calculateScaleFactor(landmarkHistory);
-  console.log('[HipTrajectory] Scale factor (cm per normalized unit):', scaleFactor.toFixed(2));
 
   // Step 2: Extract raw hip positions and timestamps
   const rawPositions: Point2D[] = [];
@@ -328,13 +327,6 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
   // Step 3: Apply One-Euro filter to smooth jitter
   const smoothedPositions = smoothTrajectory(rawPositions, timestamps);
 
-  // DEBUG: Compare raw vs smoothed
-  const rawXRange = Math.max(...rawPositions.map(p => p.x)) - Math.min(...rawPositions.map(p => p.x));
-  const smoothedXRange = Math.max(...smoothedPositions.map(p => p.x)) - Math.min(...smoothedPositions.map(p => p.x));
-  console.log('[HipTrajectory] Raw X range (normalized):', rawXRange.toFixed(4));
-  console.log('[HipTrajectory] Smoothed X range (normalized):', smoothedXRange.toFixed(4));
-  console.log('[HipTrajectory] Smoothing reduced noise by:', ((1 - smoothedXRange/rawXRange) * 100).toFixed(1) + '%');
-
   // Step 4: Calculate displacement from initial position, convert to cm
   const initialX = smoothedPositions[0].x;
   const initialY = smoothedPositions[0].y;
@@ -343,12 +335,6 @@ function extractHipTrajectory(landmarkHistory: TimestampedLandmarks[]): Point2D[
     x: (pos.x - initialX) * scaleFactor,
     y: (pos.y - initialY) * scaleFactor,
   }));
-
-  // DEBUG: Log trajectory stats
-  const maxX = Math.max(...trajectory.map(p => Math.abs(p.x)));
-  const maxY = Math.max(...trajectory.map(p => Math.abs(p.y)));
-  console.log('[HipTrajectory] Max X displacement (cm):', maxX.toFixed(2));
-  console.log('[HipTrajectory] Max Y displacement (cm):', maxY.toFixed(2));
 
   return trajectory;
 }
@@ -994,94 +980,9 @@ export function calculateMetrics(
       ? Math.abs(armAngleLeft) / Math.abs(armAngleRight)
       : 1.0;
 
-  // DEBUG: Log final metrics summary
-  console.log('\n========== METRICS SUMMARY ==========');
-  console.log('[Metrics] Hold time:', holdTime.toFixed(1), 's');
-  console.log('[Metrics] Frames processed:', landmarkHistory.length);
-  console.log('--- SWAY (should be LOW if standing still, HIGHER if swaying) ---');
-  console.log('[Metrics] Sway Std X:', swayStdXCm.toFixed(2), 'cm');
-  console.log('[Metrics] Sway Std Y:', swayStdYCm.toFixed(2), 'cm');
-  console.log('[Metrics] Path Length:', swayPathLengthCm.toFixed(2), 'cm');
-  console.log('[Metrics] Velocity:', swayVelocityCmS.toFixed(2), 'cm/s');
-  console.log('--- CORRECTIONS (should match intentional balance adjustments) ---');
-  console.log('[Metrics] Total Corrections:', correctionsCount);
-  console.log('[Metrics] By segment: 1st=' + temporal.firstThird.correctionsCount +
-              ', 2nd=' + temporal.middleThird.correctionsCount +
-              ', 3rd=' + temporal.lastThird.correctionsCount);
-  console.log('--- ARM ANGLES (should change with arm flapping) ---');
-  console.log('[Metrics] Left Arm Angle:', armAngleLeft.toFixed(1), '°');
-  console.log('[Metrics] Right Arm Angle:', armAngleRight.toFixed(1), '°');
-  console.log(
-    '[Metrics] Left Range:',
-    armAngleRangeLeft.toFixed(1),
-    '° | StdDev:',
-    armAngleStdDevLeft.toFixed(1),
-    '°'
-  );
-  console.log(
-    '[Metrics] Right Range:',
-    armAngleRangeRight.toFixed(1),
-    '° | StdDev:',
-    armAngleStdDevRight.toFixed(1),
-    '°'
-  );
-  console.log(
-    '[Metrics] Time Arms Above Horizontal:',
-    timeArmsAboveHorizontal.toFixed(1),
-    '%'
-  );
-  console.log('=====================================\n');
-
   // Calculate enhanced temporal data for LLM
   const fiveSecondSegments = calculateFiveSecondSegments(landmarkHistory, holdTime);
   const events = detectAllEvents(landmarkHistory, holdTime);
-
-  console.log('--- ENHANCED TEMPORAL DATA (for LLM) ---');
-  console.log('[Metrics] 5-second segments:', fiveSecondSegments.length);
-  console.log('[Metrics] Events detected:', events.length);
-  if (events.length > 0) {
-    events.forEach(e => console.log(`  - ${e.time}s: ${e.type} (${e.severity || 'n/a'}) - ${e.detail}`));
-  }
-  console.log('=====================================\n');
-
-  // DEBUG: Download full trajectory data as JSON for analysis
-  const debugData = {
-    timestamp: new Date().toISOString(),
-    holdTime,
-    frameCount: landmarkHistory.length,
-    scaleFactor: calculateScaleFactor(landmarkHistory),
-    trajectory: hipTrajectory.map((p, i) => ({
-      frame: i,
-      x_cm: Math.round(p.x * 100) / 100,
-      y_cm: Math.round(p.y * 100) / 100,
-      distance_cm: Math.round(Math.sqrt(p.x * p.x + p.y * p.y) * 100) / 100,
-    })),
-    metrics: {
-      swayStdX: swayStdXCm,
-      swayStdY: swayStdYCm,
-      swayPathLength: swayPathLengthCm,
-      swayVelocity: swayVelocityCmS,
-      correctionsCount,
-      armAngleLeft,
-      armAngleRight,
-      armAngleRangeLeft,
-      armAngleRangeRight,
-      armAngleStdDevLeft,
-      armAngleStdDevRight,
-      timeArmsAboveHorizontal,
-    },
-    temporal,
-    fiveSecondSegments,
-    events,
-  };
-  const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `balance-test-debug-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  console.log('[Metrics] Debug data downloaded as JSON');
 
   return {
     swayStdX: Math.round(swayStdXCm * 100) / 100,

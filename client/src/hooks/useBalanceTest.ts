@@ -104,7 +104,6 @@ export function useBalanceTest(
   const consecutiveMovementFramesRef = useRef(0);
 
   const startTest = useCallback(() => {
-    console.log('[BalanceTest] Starting test, transitioning to READY state');
     setTestState('ready');
     setHoldTime(0);
     setFailureReason(null);
@@ -137,8 +136,6 @@ export function useBalanceTest(
 
   const endTest = useCallback(
     (success: boolean, reason?: string) => {
-      console.log('[BalanceTest] Ending test:', { success, reason });
-
       if (holdTimeIntervalRef.current) {
         clearInterval(holdTimeIntervalRef.current);
         holdTimeIntervalRef.current = null;
@@ -147,8 +144,6 @@ export function useBalanceTest(
       const finalHoldTime = holdingStartTimeRef.current
         ? (Date.now() - holdingStartTimeRef.current) / 1000
         : 0;
-
-      console.log('[BalanceTest] Final hold time:', finalHoldTime);
 
       setTestState(success ? 'completed' : 'failed');
       setFailureReason(reason || null);
@@ -206,14 +201,6 @@ export function useBalanceTest(
         events: metrics.events,
       };
 
-      console.log('[BalanceTest] Setting test result with metrics:', result);
-      console.log('[BalanceTest] Metrics (cm, degrees):', {
-        swayStdX: metrics.swayStdX,
-        swayStdY: metrics.swayStdY,
-        swayVelocity: metrics.swayVelocity,
-        armAngleLeft: metrics.armAngleLeft,
-        armAngleRight: metrics.armAngleRight,
-      });
       setTestResult(result);
     },
     []
@@ -261,13 +248,10 @@ export function useBalanceTest(
 
       if (status.isInPosition) {
         if (positionHoldStartRef.current === null) {
-          console.log('[BalanceTest] Position detected, starting 1s buffer...');
           positionHoldStartRef.current = now;
         } else if (now - positionHoldStartRef.current >= POSITION_HOLD_BUFFER_MS) {
           // Position held for required buffer time - transition to HOLDING
-          console.log('[BalanceTest] Position held for 1s, transitioning to HOLDING');
           const positions = getInitialPositions(landmarks, legTested);
-          console.log('[BalanceTest] Initial positions:', positions);
           initialPositionsRef.current = positions;
           holdingStartTimeRef.current = now;
           setTestState('holding');
@@ -368,23 +352,12 @@ export function useBalanceTest(
 
       // Check for foot touchdown (requires consecutive frames to prevent false positives)
       if (consecutiveTouchdownFramesRef.current >= CONSECUTIVE_FAIL_FRAMES_REQUIRED) {
-        console.log('[BalanceTest] Foot touchdown detected!', {
-          yDifference: touchdownResult.yDifference,
-          descent: touchdownResult.descent,
-          consecutiveFrames: consecutiveTouchdownFramesRef.current,
-        });
         endTest(false, 'Foot touched down');
         return;
       }
 
       // Check for support foot movement (requires consecutive frames to prevent false positives)
       if (consecutiveMovementFramesRef.current >= CONSECUTIVE_FAIL_FRAMES_REQUIRED) {
-        console.log('[BalanceTest] Support foot moved!', {
-          xShift: movementResult.xShift,
-          yShift: movementResult.yShift,
-          displacement: movementResult.displacement,
-          consecutiveFrames: consecutiveMovementFramesRef.current,
-        });
         endTest(false, 'Support foot moved');
         return;
       }
