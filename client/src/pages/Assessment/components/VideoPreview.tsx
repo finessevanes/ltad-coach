@@ -28,7 +28,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
+          objectFit: 'contain',
           transform: mirrored ? 'scaleX(-1)' : 'none',
         }}
       />

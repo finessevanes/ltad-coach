@@ -8,6 +8,7 @@ import Register from '../pages/Register';
 import { AthletesList, AddAthlete } from '../pages/Athletes';
 import ConsentForm from '../pages/Consent';
 import AssessmentFlow from '../pages/Assessment/AssessmentFlow';
+import AssessmentResults from '../pages/Assessment/AssessmentResults';
 import BackupUpload from '../pages/Assessment/BackupUpload';
 
 // Route definitions for the application
@@ -88,7 +89,7 @@ export const routes: RouteObject[] = [
         path: 'assessments/:assessmentId',
         element: (
           <ProtectedRoute>
-            <Home /> {/* Placeholder - will be FE-011 */}
+            <AssessmentResults />
           </ProtectedRoute>
         ),
       },
