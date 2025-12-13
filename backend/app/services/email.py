@@ -17,7 +17,7 @@ def send_email(
     to: str,
     subject: str,
     html: str,
-    from_email: str = "AI Coach <noreply@coachlens.laschicas.ai>",
+    from_email: str = "CoachLens <noreply@coachlens.laschicas.ai>",
 ) -> bool:
     """Send an email via Resend API.
 
@@ -69,7 +69,7 @@ def send_consent_request(
     settings = get_settings()
     consent_url = f"{settings.frontend_url}/consent/{consent_token}"
 
-    subject = f"Consent Request for {athlete_name} - AI Coach"
+    subject = f"Consent Request for {athlete_name} - CoachLens"
 
     html = f"""
     <!DOCTYPE html>
@@ -81,7 +81,7 @@ def send_consent_request(
             body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
             .container {{ background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
             h1 {{ color: #1976d2; margin-bottom: 20px; }}
-            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff; text-decoration: none; border-radius: 4px; margin: 20px 0; }}
+            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff !important; text-decoration: none; border-radius: 4px; margin: 20px 0; font-weight: 500; }}
             .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666; }}
         </style>
     </head>
@@ -91,7 +91,7 @@ def send_consent_request(
 
             <p>Hello,</p>
 
-            <p>Coach <strong>{coach_name}</strong> has added <strong>{athlete_name}</strong> to their athletic assessment program using AI Coach.</p>
+            <p>Coach <strong>{coach_name}</strong> has added <strong>{athlete_name}</strong> to their athletic assessment program using CoachLens.</p>
 
             <p>To proceed with video-based athletic assessments, we need your consent as a parent or legal guardian. The assessment includes:</p>
 
@@ -109,7 +109,7 @@ def send_consent_request(
             <p>This consent link will expire in 30 days. If you have questions, please contact Coach {coach_name} directly.</p>
 
             <div class="footer">
-                <p>AI Coach - Athletic Assessment Platform<br>
+                <p>CoachLens - Athletic Assessment Platform<br>
                 If you did not expect this email, please disregard it.</p>
             </div>
         </div>
@@ -148,7 +148,7 @@ def send_consent_confirmed(
             body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
             .container {{ background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
             h1 {{ color: #4caf50; margin-bottom: 20px; }}
-            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff; text-decoration: none; border-radius: 4px; margin: 20px 0; }}
+            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff !important; text-decoration: none; border-radius: 4px; margin: 20px 0; font-weight: 500; }}
             .success-badge {{ background-color: #e8f5e9; color: #2e7d32; padding: 8px 16px; border-radius: 4px; display: inline-block; margin: 10px 0; }}
             .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666; }}
         </style>
@@ -168,7 +168,7 @@ def send_consent_confirmed(
             <a href="{athletes_url}" class="button">View Athletes</a>
 
             <div class="footer">
-                <p>AI Coach - Athletic Assessment Platform</p>
+                <p>CoachLens - Athletic Assessment Platform</p>
             </div>
         </div>
     </body>
@@ -206,7 +206,7 @@ def send_consent_declined(
             body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
             .container {{ background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
             h1 {{ color: #f44336; margin-bottom: 20px; }}
-            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff; text-decoration: none; border-radius: 4px; margin: 20px 0; }}
+            .button {{ display: inline-block; padding: 12px 24px; background-color: #1976d2; color: #ffffff !important; text-decoration: none; border-radius: 4px; margin: 20px 0; font-weight: 500; }}
             .declined-badge {{ background-color: #ffebee; color: #c62828; padding: 8px 16px; border-radius: 4px; display: inline-block; margin: 10px 0; }}
             .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666; }}
         </style>
@@ -228,7 +228,7 @@ def send_consent_declined(
             <a href="{athletes_url}" class="button">View Athletes</a>
 
             <div class="footer">
-                <p>AI Coach - Athletic Assessment Platform</p>
+                <p>CoachLens - Athletic Assessment Platform</p>
             </div>
         </div>
     </body>
