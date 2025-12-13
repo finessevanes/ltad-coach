@@ -5,6 +5,7 @@ import assessmentsService from '../../../services/assessments';
 import { useSnackbar } from '../../../contexts/SnackbarContext';
 import { TestType, LegTested, ClientMetrics } from '../../../types/assessment';
 import { TestResult } from '../../../types/balanceTest';
+import { printMetricsComparison } from '../../../utils/metricsComparison';
 
 interface UploadStepProps {
   athleteId: string;
@@ -34,6 +35,12 @@ export const UploadStep: React.FC<UploadStepProps> = ({
     if (!videoBlob) {
       setError('No video to upload');
       return;
+    }
+
+    // Log metrics comparison (normalized vs world landmarks) to console
+    if (testResult?.landmarkHistory && testResult.landmarkHistory.length > 0) {
+      console.log('\n🔬 METRICS COMPARISON - Check console for normalized vs world landmark analysis');
+      printMetricsComparison(testResult.landmarkHistory, testResult.holdTime);
     }
 
     async function uploadAndSave() {
