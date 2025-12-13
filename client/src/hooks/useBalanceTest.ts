@@ -203,6 +203,9 @@ export function useBalanceTest(
         armAsymmetryRatio: metrics.armAsymmetryRatio,
         stabilityScore: metrics.stabilityScore,
         temporal: metrics.temporal,
+        // Enhanced temporal data for LLM
+        fiveSecondSegments: metrics.fiveSecondSegments,
+        events: metrics.events,
       };
 
       console.log('[BalanceTest] Setting test result with metrics:', result);

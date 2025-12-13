@@ -100,6 +100,10 @@ export interface TestResult {
   stabilityScore: number;
   /** Temporal breakdown of metrics (fatigue analysis) */
   temporal: TemporalMetrics;
+  /** 5-second segment breakdown for LLM temporal analysis */
+  fiveSecondSegments?: FiveSecondSegment[];
+  /** Significant balance events detected during test */
+  events?: BalanceEvent[];
 }
 
 // Constants for position detection

@@ -63,6 +63,9 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               stabilityScore: testResult.stabilityScore,
               // Temporal analysis
               temporal: testResult.temporal,
+              // Enhanced temporal data for LLM
+              fiveSecondSegments: testResult.fiveSecondSegments,
+              events: testResult.events,
             }
           : undefined;
 

@@ -46,6 +46,26 @@ class TemporalMetrics(BaseModel):
     last_third: SegmentMetrics = Field(..., description="Metrics for last third of test (66-100%)")
 
 
+class FiveSecondSegment(BaseModel):
+    """Metrics for a 5-second segment (for LLM temporal analysis)."""
+    start_time: float = Field(..., description="Start time in seconds")
+    end_time: float = Field(..., description="End time in seconds")
+    avg_velocity: float = Field(..., description="Average sway velocity (cm/s)")
+    corrections: int = Field(..., description="Number of corrections")
+    arm_angle_left: float = Field(..., description="Average left arm angle (degrees)")
+    arm_angle_right: float = Field(..., description="Average right arm angle (degrees)")
+    sway_std_x: float = Field(..., description="Sway standard deviation X (cm)")
+    sway_std_y: float = Field(..., description="Sway standard deviation Y (cm)")
+
+
+class BalanceEvent(BaseModel):
+    """Significant events detected during balance test."""
+    time: float = Field(..., description="Time in seconds into test")
+    type: str = Field(..., description="Event type: 'flapping', 'correction_burst', 'stabilized', 'arm_drop'")
+    severity: Optional[str] = Field(None, description="Severity: 'low', 'medium', 'high'")
+    detail: str = Field(..., description="Human-readable event description")
+
+
 class ClientMetricsData(BaseModel):
     """
     Client-side metrics from browser-based balance test (source of truth).
@@ -68,6 +88,15 @@ class ClientMetricsData(BaseModel):
     stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
     # Temporal analysis
     temporal: TemporalMetrics = Field(..., description="Temporal breakdown of metrics")
+    # Enhanced temporal data for LLM
+    five_second_segments: Optional[list[FiveSecondSegment]] = Field(
+        None,
+        description="5-second segment breakdown for LLM temporal analysis"
+    )
+    events: Optional[list[BalanceEvent]] = Field(
+        None,
+        description="Significant balance events detected during test"
+    )
 
 
 class MetricsData(BaseModel):
