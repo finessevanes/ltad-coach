@@ -77,10 +77,13 @@ async def analyze_video_endpoint(
     client_metrics = data.client_metrics
     duration_score = get_duration_score(client_metrics.hold_time)
 
-    # Build full metrics from client data + backend calculations
+    # Build consolidated metrics from client data + backend calculations
     # All metrics in real-world units (cm, degrees)
     metrics = {
+        # Test result
+        "success": client_metrics.success,
         "hold_time": client_metrics.hold_time,
+        "failure_reason": client_metrics.failure_reason,
         # Sway metrics (cm)
         "sway_std_x": client_metrics.sway_std_x,
         "sway_std_y": client_metrics.sway_std_y,
@@ -95,6 +98,9 @@ async def analyze_video_endpoint(
         "duration_score": duration_score,
         # Temporal analysis
         "temporal": client_metrics.temporal.model_dump() if client_metrics.temporal else None,
+        # Enhanced temporal data for LLM
+        "five_second_segments": [seg.model_dump() for seg in client_metrics.five_second_segments] if client_metrics.five_second_segments else None,
+        "events": [event.model_dump() for event in client_metrics.events] if client_metrics.events else None,
     }
 
     # Create assessment as completed (no background processing needed)
@@ -107,8 +113,6 @@ async def analyze_video_endpoint(
         video_url=data.video_url,
         video_path=data.video_path,
         metrics=metrics,
-        client_metrics=client_metrics.model_dump(),
-        failure_reason=client_metrics.failure_reason,
     )
 
     logger.info(f"Assessment {assessment.id} created and completed immediately")
@@ -166,9 +170,7 @@ async def get_assessments_for_athlete(
             status=a.status,
             created_at=a.created_at,
             metrics=a.metrics,
-            client_metrics=a.client_metrics,
             ai_feedback=a.ai_feedback,
-            failure_reason=a.failure_reason,
             error_message=a.error_message,
         )
         for a in assessments
@@ -224,8 +226,6 @@ async def get_assessment(
         status=assessment.status,
         created_at=assessment.created_at,
         metrics=assessment.metrics,
-        client_metrics=assessment.client_metrics,
         ai_feedback=assessment.ai_feedback,
-        failure_reason=assessment.failure_reason,
         error_message=assessment.error_message,
     )

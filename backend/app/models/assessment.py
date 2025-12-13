@@ -100,9 +100,13 @@ class ClientMetricsData(BaseModel):
 class MetricsData(BaseModel):
     """
     Balance test metrics (stored in assessment).
+    Consolidated single source of truth for all metrics.
     All metrics in real-world units (cm, degrees).
     """
-    hold_time: float = Field(..., description="Test hold time in seconds")
+    # Test result
+    success: bool = Field(..., description="Whether the test was passed")
+    hold_time: float = Field(..., ge=0, description="Test hold time in seconds")
+    failure_reason: Optional[str] = Field(None, description="Reason for test failure")
     # Sway metrics (cm)
     sway_std_x: float = Field(..., description="Sway standard deviation in X (cm)")
     sway_std_y: float = Field(..., description="Sway standard deviation in Y (cm)")
@@ -117,6 +121,15 @@ class MetricsData(BaseModel):
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
     # Temporal analysis
     temporal: Optional[TemporalMetrics] = Field(None, description="Temporal breakdown of metrics")
+    # Enhanced temporal data for LLM
+    five_second_segments: Optional[list[FiveSecondSegment]] = Field(
+        None,
+        description="5-second segment breakdown for LLM temporal analysis"
+    )
+    events: Optional[list[BalanceEvent]] = Field(
+        None,
+        description="Significant balance events detected during test"
+    )
 
 
 class Assessment(BaseModel):
@@ -132,9 +145,7 @@ class Assessment(BaseModel):
     created_at: datetime
     raw_keypoints_url: Optional[str] = None
     metrics: Optional[MetricsData] = None
-    client_metrics: Optional[ClientMetricsData] = None
     ai_feedback: Optional[str] = None  # Populated in Phase 7
-    failure_reason: Optional[str] = None
     error_message: Optional[str] = None
 
 
@@ -158,9 +169,7 @@ class AssessmentResponse(BaseModel):
     status: AssessmentStatus
     created_at: datetime
     metrics: Optional[MetricsData] = None
-    client_metrics: Optional[ClientMetricsData] = None
     ai_feedback: Optional[str] = None
-    failure_reason: Optional[str] = None
     error_message: Optional[str] = None
 
 

@@ -67,13 +67,11 @@ class AssessmentRepository(BaseRepository[Assessment]):
         video_url: str,
         video_path: str,
         metrics: Dict,
-        client_metrics: Dict,
-        failure_reason: Optional[str] = None,
     ) -> Assessment:
-        """Create assessment in completed state with client-calculated metrics.
+        """Create assessment in completed state with consolidated metrics.
 
-        This is the new primary method - the client calculates all metrics,
-        and the backend just validates and stores them.
+        This is the primary method - the client calculates all metrics,
+        backend adds LTAD scoring, and everything is stored in a single metrics object.
 
         Args:
             coach_id: Coach user ID
@@ -82,9 +80,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             leg_tested: Which leg was tested
             video_url: Firebase Storage download URL
             video_path: Firebase Storage path
-            metrics: Full metrics dict (client metrics + backend scores)
-            client_metrics: Original client metrics for reference
-            failure_reason: Optional failure reason from client
+            metrics: Consolidated metrics dict (client metrics + backend scores)
 
         Returns:
             Created assessment in completed state
@@ -100,9 +96,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "created_at": datetime.utcnow(),
             "raw_keypoints_url": None,
             "metrics": metrics,
-            "client_metrics": client_metrics,
             "ai_feedback": None,  # Populated in Phase 7
-            "failure_reason": failure_reason,
             "error_message": None,
         }
 

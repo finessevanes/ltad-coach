@@ -104,7 +104,7 @@ export default function AssessmentResults() {
 
   // Determine test result
   const testPassed = metrics && metrics.holdTime >= 30;
-  const failureReason = assessment.failureReason;
+  const failureReason = metrics?.failureReason;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

@@ -65,10 +65,14 @@ export interface ClientMetrics {
 
 /**
  * Assessment metrics returned from backend.
+ * Consolidated single source of truth for all metrics.
  * All metrics in real-world units (cm, degrees).
  */
 export interface AssessmentMetrics {
+  // Test result
+  success: boolean;
   holdTime: number;
+  failureReason?: string;
   // Sway metrics (cm)
   swayStdX: number;           // cm
   swayStdY: number;           // cm
@@ -83,6 +87,9 @@ export interface AssessmentMetrics {
   durationScore: number;      // 1-5 LTAD scale
   // Temporal analysis
   temporal?: ClientTemporalMetrics;
+  // Enhanced temporal data for LLM
+  fiveSecondSegments?: FiveSecondSegment[];
+  events?: BalanceEvent[];
 }
 
 export interface Assessment {
@@ -96,9 +103,7 @@ export interface Assessment {
   status: AssessmentStatus;
   createdAt: string;
   metrics?: AssessmentMetrics;
-  clientMetrics?: ClientMetrics;
   aiFeedback?: string;
-  failureReason?: string;
   errorMessage?: string;
 }
 
