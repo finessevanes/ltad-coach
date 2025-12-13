@@ -1,6 +1,8 @@
 import { RouteObject } from 'react-router-dom';
 import { Layout } from '../components/Layout';
+import { Landing } from '../pages/Landing';
 import { Home } from '../pages/Home';
+import { Dashboard } from '../pages/Dashboard';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
@@ -12,6 +14,11 @@ import BackupUpload from '../pages/Assessment/BackupUpload';
 
 // Route definitions for the application
 export const routes: RouteObject[] = [
+  // Public landing page (no layout)
+  {
+    path: '/',
+    element: <Landing />,
+  },
   // Auth routes (outside Layout - no sidebar/appbar)
   {
     path: '/login',
@@ -28,78 +35,83 @@ export const routes: RouteObject[] = [
   },
   // App routes (inside Layout)
   {
-    path: '/',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <Home />,
-      },
-      // Protected routes
-      {
-        path: 'dashboard',
-        element: (
-          <ProtectedRoute>
-            <Home /> {/* Placeholder until FE-015 */}
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'athletes',
-        element: (
-          <ProtectedRoute>
-            <AthletesList />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'athletes/new',
-        element: (
-          <ProtectedRoute>
-            <AddAthlete />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'athletes/:athleteId',
-        element: (
-          <ProtectedRoute>
-            <Home /> {/* Placeholder - will be athlete detail page */}
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'assess/:athleteId',
-        element: (
-          <ProtectedRoute>
-            <AssessmentFlow />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'assess/:athleteId/upload',
-        element: (
-          <ProtectedRoute>
-            <BackupUpload />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'assessments/:assessmentId',
-        element: (
-          <ProtectedRoute>
-            <AssessmentResults />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'assessments',
-        element: (
-          <ProtectedRoute>
-            <Home /> {/* Placeholder until FE-011 */}
-          </ProtectedRoute>
-        ),
-      },
-    ],
+    path: '/dashboard',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/athletes',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <AthletesList />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/athletes/new',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <AddAthlete />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/athletes/:athleteId',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Home /> {/* Placeholder - will be athlete detail page */}
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/assess/:athleteId',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <AssessmentFlow />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/assess/:athleteId/upload',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <BackupUpload />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/assessments/:assessmentId',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <AssessmentResults />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/assessments',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <Home /> {/* Placeholder until FE-011 */}
+        </ProtectedRoute>
+      </Layout>
+    ),
   },
 ];

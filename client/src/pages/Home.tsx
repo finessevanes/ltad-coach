@@ -7,7 +7,7 @@ export function Home() {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        Welcome to AI Coach
+        Welcome to CoachLens
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
         Computer vision athletic assessment platform for youth sports coaches

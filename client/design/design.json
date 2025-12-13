@@ -1,0 +1,1418 @@
+{
+    "metadata": {
+      "version": "2.0.0",
+      "lastUpdated": "2025-12-12",
+      "author": "CoachLens Design Team",
+      "description": "Modern Athletic Minimalism design system for CoachLens - AI-powered coaching platform for middle school athletes",
+      "targetPlatform": "Desktop Web Application (Mobile-responsive)",
+      "componentLibrary": "Material-UI (MUI) v5+ with custom theme",
+      "designStyle": "Modern Athletic Minimalism",
+      "targetAudience": [
+        "Youth sports coaches (primary)",
+        "Middle school athletes (ages 10-14)",
+        "Parents (secondary, view-only)"
+      ]
+    },
+  
+    "brand": {
+      "name": "CoachLens",
+      "tagline": "See Progress, Build Champions",
+      "personality": [
+        "Clean & Professional",
+        "Energetic & Athletic",
+        "Trustworthy & Data-Driven",
+        "Approachable & Encouraging"
+      ],
+      "voiceTone": {
+        "description": "Professional but not clinical, encouraging but not patronizing, data-driven but not overwhelming. Modern and energetic while maintaining coach credibility.",
+        "examples": {
+          "good": [
+            "Great progress this week!",
+            "Let's work on improving balance",
+            "Your athletes are showing consistent improvement",
+            "Ready to start the next assessment?"
+          ],
+          "avoid": [
+            "Patient has improved",
+            "Subject demonstrates",
+            "Clinical assessment indicates",
+            "ERROR: Test failed"
+          ]
+        }
+      },
+      "competitorDifferentiation": {
+        "kemtai": "Bright green (clinical/medical) - we avoid this, using athletic blue instead",
+        "onform": "Black logo (very sporty but stark) - we're warmer and more approachable with generous white space"
+      },
+      "logo": {
+        "type": "Wordmark with optional icon",
+        "style": "Clean, modern sans-serif (Jost)",
+        "variations": {
+          "primary": "Full color on light backgrounds",
+          "reversed": "White on dark backgrounds",
+          "monochrome": "Single color for small sizes or limited-color applications"
+        },
+        "minSize": "120px width for digital",
+        "clearSpace": "Minimum 24px on all sides"
+      },
+      "designPhilosophy": "Professional coaching tool that energizes athletes. Trust through data, excitement through movement. Every interaction should feel confident and capable.",
+      "targetFeeling": "Like a great assistant coach - helpful, energetic, trustworthy, organized"
+    },
+  
+    "tokens": {
+      "colors": {
+        "reasoning": "Athletic Blue for trust/professionalism, Energy Orange for energy/action. Clean minimalist palette avoids medical green (Kemtai) and stark black (Onform).",
+        
+        "brand": {
+          "primary": {
+            "value": "#2563EB",
+            "name": "Athletic Blue",
+            "light": "#60A5FA",
+            "dark": "#1E40AF",
+            "contrastText": "#FFFFFF",
+            "usage": ["Primary CTAs", "Key data highlights", "Active states", "Progress indicators", "Navigation"],
+            "accessibility": "4.5:1 contrast on white, AAA compliant",
+            "muiMapping": "primary.main"
+          },
+          "secondary": {
+            "value": "#F97316",
+            "name": "Energy Orange",
+            "light": "#FB923C",
+            "dark": "#EA580C",
+            "contrastText": "#FFFFFF",
+            "usage": ["Improvement metrics", "Alerts", "Highlights", "Achievement accents", "CTAs"],
+            "accessibility": "4.5:1 contrast on white",
+            "important": "Use sparingly - this is an accent, not a primary color",
+            "muiMapping": "secondary.main"
+          }
+        },
+  
+        "neutral": {
+          "charcoal": {
+            "value": "#2D2D2D",
+            "usage": ["Primary text", "Headings"],
+            "muiMapping": "text.primary: rgba(45, 45, 45, 0.87)"
+          },
+          "gray": {
+            "value": "#6B6B6B",
+            "usage": ["Secondary text", "Captions", "Inactive states"],
+            "muiMapping": "text.secondary: rgba(107, 107, 107, 0.87)"
+          },
+          "lightGray": {
+            "value": "#F5F5F5",
+            "usage": ["Background alternates", "Card backgrounds", "Disabled states"],
+            "muiMapping": "grey.100"
+          },
+          "white": {
+            "value": "#FFFFFF",
+            "usage": ["Base background", "Card surfaces"],
+            "muiMapping": "background.paper"
+          },
+          "border": {
+            "value": "#E5E5E5",
+            "usage": ["Borders", "Dividers", "Input outlines"],
+            "muiMapping": "divider"
+          }
+        },
+  
+        "semantic": {
+          "success": {
+            "main": "#10B981",
+            "light": "#34D399",
+            "dark": "#059669",
+            "background": "#ECFDF5",
+            "usage": ["Completed states", "Positive feedback", "Good performance"],
+            "muiMapping": "success.main"
+          },
+          "warning": {
+            "main": "#F59E0B",
+            "light": "#FBBF24",
+            "dark": "#D97706",
+            "background": "#FEF3C7",
+            "usage": ["Warnings", "Attention needed", "Pending items"],
+            "muiMapping": "warning.main"
+          },
+          "error": {
+            "main": "#EF4444",
+            "light": "#F87171",
+            "dark": "#DC2626",
+            "background": "#FEE2E2",
+            "usage": ["Errors", "Critical alerts", "Failed tests"],
+            "muiMapping": "error.main"
+          },
+          "info": {
+            "main": "#3B82F6",
+            "light": "#60A5FA",
+            "dark": "#2563EB",
+            "background": "#DBEAFE",
+            "usage": ["Information", "Tips", "Helpful guidance"],
+            "muiMapping": "info.main"
+          }
+        },
+  
+        "backgrounds": {
+          "default": "#FFFFFF",
+          "paper": "#FFFFFF",
+          "elevated": "#FFFFFF",
+          "alternate": "#F5F5F5",
+          "reasoning": "White base with light gray alternates reduces eye strain while maintaining clean aesthetic",
+          "muiMapping": {
+            "default": "background.default",
+            "paper": "background.paper"
+          }
+        },
+  
+        "muiGreyScale": {
+          "50": "#FAFAFA",
+          "100": "#F5F5F5",
+          "200": "#EEEEEE",
+          "300": "#E0E0E0",
+          "400": "#BDBDBD",
+          "500": "#9E9E9E",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121"
+        },
+  
+        "skeletonOverlay": {
+          "reasoning": "Traffic light system is universally understood by coaches and athletes for real-time movement feedback",
+          "states": {
+            "good": {
+              "color": "#10B981",
+              "name": "Success Green",
+              "usage": "Proper form, good positioning, test going well",
+              "muiChipColor": "success"
+            },
+            "warning": {
+              "color": "#F59E0B",
+              "name": "Warning Orange",
+              "usage": "Form deviation, approaching failure, needs correction",
+              "muiChipColor": "warning"
+            },
+            "fail": {
+              "color": "#EF4444",
+              "name": "Error Red",
+              "usage": "Failure detected, hands off hips, foot touchdown, test ended",
+              "muiChipColor": "error"
+            },
+            "neutral": {
+              "color": "#60A5FA",
+              "name": "Neutral Blue",
+              "usage": "Setup phase, no assessment yet, waiting to start",
+              "muiChipColor": "info"
+            }
+          },
+          "style": {
+            "lineWidth": "3px",
+            "jointMarkerSize": "8px",
+            "jointMarkerStyle": "circle with dot center",
+            "opacity": "0.85",
+            "opacityExplanation": "Semi-transparent so coaches can see athlete's actual body beneath the skeleton. 1.0 = fully opaque (blocks view), 0.0 = invisible. 0.85 is optimal - visible but not obstructive."
+          }
+        },
+  
+        "scoreColorSystem": {
+          "reasoning": "5-point scale familiar to coaches (like grades). Color progression from red to green is intuitive.",
+          "scale": {
+            "1": {
+              "color": "#EF4444",
+              "label": "Beginning",
+              "sentiment": "needs work",
+              "muiColor": "error"
+            },
+            "2": {
+              "color": "#F59E0B",
+              "label": "Developing",
+              "sentiment": "improving",
+              "muiColor": "warning"
+            },
+            "3": {
+              "color": "#FB923C",
+              "label": "Competent",
+              "sentiment": "solid",
+              "muiColor": "warning",
+              "variant": "light"
+            },
+            "4": {
+              "color": "#34D399",
+              "label": "Proficient",
+              "sentiment": "excellent",
+              "muiColor": "success",
+              "variant": "light"
+            },
+            "5": {
+              "color": "#10B981",
+              "label": "Advanced",
+              "sentiment": "outstanding",
+              "muiColor": "success"
+            }
+          }
+        },
+  
+        "dataVisualization": {
+          "charts": {
+            "primary": "#2563EB",
+            "secondary": "#F97316",
+            "tertiary": "#10B981",
+            "grid": "#E5E5E5",
+            "text": "#6B6B6B"
+          }
+        }
+      },
+  
+      "typography": {
+        "fontFamily": {
+          "primary": "'Jost', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+          "monospace": "'Roboto Mono', 'Courier New', monospace",
+          "reasoning": "Jost for modern athletic feel with Roboto fallback for MUI compatibility"
+        },
+        "fontWeights": {
+          "regular": 400,
+          "semibold": 600,
+          "bold": 700
+        },
+        "sizes": {
+          "display": {
+            "fontSize": "72px",
+            "fontWeight": 700,
+            "lineHeight": "1.1",
+            "letterSpacing": "-0.02em",
+            "usage": "Hero headlines, landing page headers",
+            "muiVariant": "h1"
+          },
+          "h1": {
+            "fontSize": "48px",
+            "fontWeight": 600,
+            "lineHeight": "1.2",
+            "letterSpacing": "-0.01em",
+            "usage": "Page titles, main headings",
+            "muiVariant": "h1"
+          },
+          "h2": {
+            "fontSize": "32px",
+            "fontWeight": 600,
+            "lineHeight": "1.3",
+            "letterSpacing": "-0.01em",
+            "usage": "Section headers, card titles",
+            "muiVariant": "h2"
+          },
+          "h3": {
+            "fontSize": "24px",
+            "fontWeight": 600,
+            "lineHeight": "1.4",
+            "letterSpacing": "0",
+            "usage": "Subsection headers, component titles",
+            "muiVariant": "h3"
+          },
+          "h4": {
+            "fontSize": "18px",
+            "fontWeight": 600,
+            "lineHeight": "1.4",
+            "letterSpacing": "0",
+            "usage": "Small headers, list titles",
+            "muiVariant": "h4"
+          },
+          "h5": {
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "lineHeight": "1.5",
+            "letterSpacing": "0",
+            "usage": "Emphasized labels, card subtitles",
+            "muiVariant": "h5"
+          },
+          "h6": {
+            "fontSize": "14px",
+            "fontWeight": 600,
+            "lineHeight": "1.6",
+            "letterSpacing": "0",
+            "usage": "Small emphasized text",
+            "muiVariant": "h6"
+          },
+          "body": {
+            "fontSize": "18px",
+            "fontWeight": 400,
+            "lineHeight": "1.6",
+            "letterSpacing": "0",
+            "usage": "Main body text, descriptions",
+            "muiVariant": "body1"
+          },
+          "bodySmall": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "lineHeight": "1.5",
+            "letterSpacing": "0",
+            "usage": "Secondary body text, form labels",
+            "muiVariant": "body2"
+          },
+          "caption": {
+            "fontSize": "14px",
+            "fontWeight": 400,
+            "lineHeight": "1.5",
+            "letterSpacing": "0",
+            "usage": "Captions, timestamps, metadata",
+            "muiVariant": "caption"
+          },
+          "small": {
+            "fontSize": "12px",
+            "fontWeight": 400,
+            "lineHeight": "1.5",
+            "letterSpacing": "0",
+            "usage": "Fine print, helper text",
+            "muiVariant": "caption"
+          },
+          "button": {
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "lineHeight": "1.5",
+            "letterSpacing": "0",
+            "textTransform": "none",
+            "reasoning": "Sentence case for friendly, approachable feel (not ALL CAPS)",
+            "muiVariant": "button"
+          }
+        }
+      },
+  
+      "spacing": {
+        "unit": 8,
+        "reasoning": "8px base unit aligns with MUI's spacing system while supporting modern athletic minimalism",
+        "scale": {
+          "xs": "8px",
+          "sm": "12px",
+          "md": "16px",
+          "lg": "24px",
+          "xl": "32px",
+          "2xl": "48px",
+          "3xl": "64px",
+          "4xl": "80px"
+        },
+        "usage": {
+          "componentGap": "24px",
+          "sectionGap": "64px",
+          "cardPadding": "32px",
+          "buttonPadding": "12px 24px",
+          "inputPadding": "12px 16px"
+        },
+        "muiMapping": {
+          "0": "0px",
+          "0.5": "4px",
+          "1": "8px",
+          "2": "16px",
+          "3": "24px",
+          "4": "32px",
+          "5": "40px",
+          "6": "48px",
+          "8": "64px",
+          "10": "80px"
+        }
+      },
+  
+      "borderRadius": {
+        "sm": "8px",
+        "md": "12px",
+        "lg": "16px",
+        "xl": "24px",
+        "full": "999px",
+        "usage": {
+          "button": "12px",
+          "card": "24px",
+          "input": "12px",
+          "badge": "999px",
+          "chip": "16px",
+          "image": "16px",
+          "iconContainer": "12px"
+        },
+        "muiMapping": {
+          "default": "8px",
+          "button": "12px",
+          "card": "24px",
+          "chip": "16px"
+        }
+      },
+  
+      "shadows": {
+        "none": "none",
+        "sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
+        "md": "0 2px 8px rgba(0, 0, 0, 0.08)",
+        "lg": "0 4px 16px rgba(0, 0, 0, 0.12)",
+        "xl": "0 8px 24px rgba(0, 0, 0, 0.15)",
+        "usage": {
+          "card": "0 2px 8px rgba(0, 0, 0, 0.08)",
+          "cardHover": "0 4px 16px rgba(0, 0, 0, 0.12)",
+          "modal": "0 8px 24px rgba(0, 0, 0, 0.15)",
+          "input": "none"
+        },
+        "muiMapping": {
+          "1": "0 2px 8px rgba(0, 0, 0, 0.08)",
+          "2": "0 4px 16px rgba(0, 0, 0, 0.12)",
+          "3": "0 8px 24px rgba(0, 0, 0, 0.15)"
+        }
+      },
+  
+      "transitions": {
+        "duration": {
+          "fast": "150ms",
+          "base": "200ms",
+          "slow": "300ms",
+          "slower": "500ms"
+        },
+        "easing": {
+          "easeInOut": "cubic-bezier(0.4, 0, 0.2, 1)",
+          "easeOut": "cubic-bezier(0.0, 0, 0.2, 1)",
+          "easeIn": "cubic-bezier(0.4, 0, 1, 1)",
+          "sharp": "cubic-bezier(0.4, 0, 0.6, 1)"
+        },
+        "usage": {
+          "button": "all 0.2s ease",
+          "card": "all 0.2s ease",
+          "input": "border-color 0.2s ease",
+          "modal": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+        },
+        "muiMapping": {
+          "shortest": 150,
+          "shorter": 200,
+          "short": 250,
+          "standard": 300,
+          "complex": 375,
+          "enteringScreen": 225,
+          "leavingScreen": 195
+        }
+      }
+    },
+  
+    "components": {
+      "button": {
+        "variants": {
+          "contained": {
+            "primary": {
+              "backgroundColor": "#2563EB",
+              "color": "#FFFFFF",
+              "border": "none",
+              "padding": "12px 24px",
+              "fontSize": "16px",
+              "fontWeight": 600,
+              "borderRadius": "12px",
+              "textTransform": "none",
+              "hover": {
+                "backgroundColor": "#1E40AF"
+              },
+              "muiProps": {
+                "variant": "contained",
+                "color": "primary"
+              }
+            },
+            "secondary": {
+              "backgroundColor": "#F97316",
+              "color": "#FFFFFF",
+              "border": "none",
+              "padding": "12px 24px",
+              "fontSize": "16px",
+              "fontWeight": 600,
+              "borderRadius": "12px",
+              "textTransform": "none",
+              "hover": {
+                "backgroundColor": "#EA580C"
+              },
+              "muiProps": {
+                "variant": "contained",
+                "color": "secondary"
+              }
+            }
+          },
+          "outlined": {
+            "backgroundColor": "transparent",
+            "color": "#2D2D2D",
+            "border": "2px solid #E5E5E5",
+            "padding": "12px 24px",
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "borderRadius": "12px",
+            "textTransform": "none",
+            "hover": {
+              "borderColor": "#2563EB",
+              "color": "#2563EB",
+              "backgroundColor": "rgba(37, 99, 235, 0.04)"
+            },
+            "muiProps": {
+              "variant": "outlined"
+            }
+          },
+          "text": {
+            "backgroundColor": "transparent",
+            "color": "#6B6B6B",
+            "border": "none",
+            "padding": "12px 16px",
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "borderRadius": "12px",
+            "textTransform": "none",
+            "hover": {
+              "color": "#2D2D2D",
+              "backgroundColor": "rgba(0, 0, 0, 0.04)"
+            },
+            "muiProps": {
+              "variant": "text"
+            }
+          },
+          "icon": {
+            "size": "40px",
+            "iconSize": "20px",
+            "borderRadius": "12px",
+            "muiComponent": "IconButton"
+          },
+          "fab": {
+            "size": "56px",
+            "iconSize": "24px",
+            "borderRadius": "999px",
+            "backgroundColor": "#2563EB",
+            "color": "#FFFFFF",
+            "muiComponent": "Fab"
+          }
+        },
+        "sizes": {
+          "small": {
+            "padding": "8px 16px",
+            "fontSize": "14px"
+          },
+          "medium": {
+            "padding": "12px 24px",
+            "fontSize": "16px"
+          },
+          "large": {
+            "padding": "16px 32px",
+            "fontSize": "18px"
+          }
+        },
+        "iconGap": "8px"
+      },
+  
+      "card": {
+        "default": {
+          "backgroundColor": "#FFFFFF",
+          "borderRadius": "24px",
+          "padding": "32px",
+          "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.08)",
+          "border": "1px solid #F5F5F5",
+          "muiComponent": "Card"
+        },
+        "variants": {
+          "elevated": {
+            "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.12)"
+          },
+          "flat": {
+            "boxShadow": "none",
+            "border": "1px solid #E5E5E5"
+          },
+          "outlined": {
+            "backgroundColor": "transparent",
+            "boxShadow": "none",
+            "border": "2px solid #E5E5E5",
+            "muiProps": {
+              "variant": "outlined"
+            }
+          },
+          "glass": {
+            "backgroundColor": "rgba(255, 255, 255, 0.9)",
+            "backdropFilter": "blur(10px)",
+            "border": "1px solid rgba(255, 255, 255, 0.2)"
+          },
+          "interactive": {
+            "cursor": "pointer",
+            "transition": "all 0.2s ease",
+            "hover": {
+              "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.12)",
+              "transform": "translateY(-2px)"
+            }
+          }
+        }
+      },
+  
+      "input": {
+        "default": {
+          "padding": "12px 16px",
+          "fontSize": "16px",
+          "border": "2px solid #E5E5E5",
+          "borderRadius": "12px",
+          "backgroundColor": "#FFFFFF",
+          "color": "#2D2D2D",
+          "fontFamily": "'Jost', sans-serif",
+          "focus": {
+            "borderColor": "#2563EB",
+            "outline": "none"
+          },
+          "muiComponent": "TextField",
+          "muiProps": {
+            "variant": "outlined"
+          }
+        },
+        "label": {
+          "fontSize": "14px",
+          "fontWeight": 600,
+          "color": "#2D2D2D",
+          "marginBottom": "8px"
+        },
+        "helperText": {
+          "fontSize": "12px",
+          "color": "#6B6B6B",
+          "marginTop": "4px"
+        },
+        "error": {
+          "borderColor": "#EF4444",
+          "color": "#EF4444"
+        },
+        "disabled": {
+          "backgroundColor": "#F5F5F5",
+          "color": "#6B6B6B",
+          "cursor": "not-allowed"
+        }
+      },
+  
+      "badge": {
+        "default": {
+          "padding": "6px 16px",
+          "borderRadius": "999px",
+          "fontSize": "14px",
+          "fontWeight": 600,
+          "display": "inline-block",
+          "muiComponent": "Chip"
+        },
+        "variants": {
+          "primary": {
+            "color": "#2563EB",
+            "backgroundColor": "#EFF6FF",
+            "muiProps": {
+              "color": "primary",
+              "variant": "outlined"
+            }
+          },
+          "secondary": {
+            "color": "#F97316",
+            "backgroundColor": "#FFF7ED",
+            "muiProps": {
+              "color": "secondary",
+              "variant": "outlined"
+            }
+          },
+          "success": {
+            "color": "#10B981",
+            "backgroundColor": "#ECFDF5",
+            "muiProps": {
+              "color": "success"
+            }
+          },
+          "warning": {
+            "color": "#F59E0B",
+            "backgroundColor": "#FEF3C7",
+            "muiProps": {
+              "color": "warning"
+            }
+          },
+          "error": {
+            "color": "#EF4444",
+            "backgroundColor": "#FEE2E2",
+            "muiProps": {
+              "color": "error"
+            }
+          },
+          "neutral": {
+            "color": "#6B6B6B",
+            "backgroundColor": "#F5F5F5",
+            "muiProps": {
+              "color": "default"
+            }
+          }
+        }
+      },
+  
+      "iconContainer": {
+        "default": {
+          "padding": "12px",
+          "borderRadius": "12px",
+          "display": "flex",
+          "alignItems": "center",
+          "justifyContent": "center"
+        },
+        "variants": {
+          "primary": {
+            "backgroundColor": "#EFF6FF"
+          },
+          "secondary": {
+            "backgroundColor": "#FFF7ED"
+          },
+          "success": {
+            "backgroundColor": "#ECFDF5"
+          },
+          "warning": {
+            "backgroundColor": "#FEF3C7"
+          },
+          "error": {
+            "backgroundColor": "#FEE2E2"
+          }
+        },
+        "iconSizes": {
+          "small": "20px",
+          "medium": "24px",
+          "large": "32px"
+        }
+      },
+  
+      "progressBar": {
+        "default": {
+          "height": "8px",
+          "backgroundColor": "#F5F5F5",
+          "borderRadius": "999px",
+          "overflow": "hidden",
+          "muiComponent": "LinearProgress"
+        },
+        "fill": {
+          "backgroundColor": "#2563EB",
+          "borderRadius": "999px",
+          "transition": "width 0.3s ease"
+        },
+        "label": {
+          "fontSize": "14px",
+          "color": "#6B6B6B",
+          "marginBottom": "8px",
+          "display": "flex",
+          "justifyContent": "space-between"
+        }
+      },
+  
+      "navigation": {
+        "appBar": {
+          "height": "64px",
+          "backgroundColor": "#FFFFFF",
+          "boxShadow": "0 1px 2px rgba(0, 0, 0, 0.05)",
+          "muiComponent": "AppBar"
+        },
+        "drawer": {
+          "width": "280px",
+          "backgroundColor": "#FFFFFF",
+          "borderRight": "1px solid #E5E5E5",
+          "muiComponent": "Drawer"
+        },
+        "navItem": {
+          "padding": "12px 20px",
+          "borderRadius": "12px",
+          "fontSize": "16px",
+          "display": "flex",
+          "alignItems": "center",
+          "gap": "8px",
+          "transition": "all 0.2s ease",
+          "cursor": "pointer",
+          "default": {
+            "backgroundColor": "transparent",
+            "color": "#6B6B6B",
+            "fontWeight": 400
+          },
+          "active": {
+            "backgroundColor": "#EFF6FF",
+            "color": "#2563EB",
+            "fontWeight": 600
+          },
+          "hover": {
+            "backgroundColor": "#F5F5F5"
+          },
+          "muiComponent": "ListItemButton"
+        }
+      },
+  
+      "modal": {
+        "overlay": {
+          "backgroundColor": "rgba(0, 0, 0, 0.5)",
+          "backdropFilter": "blur(2px)"
+        },
+        "container": {
+          "backgroundColor": "#FFFFFF",
+          "borderRadius": "24px",
+          "padding": "32px",
+          "maxWidth": "600px",
+          "boxShadow": "0 8px 24px rgba(0, 0, 0, 0.15)"
+        },
+        "muiComponent": "Dialog"
+      },
+  
+      "alert": {
+        "padding": "16px 24px",
+        "borderRadius": "12px",
+        "fontSize": "16px",
+        "display": "flex",
+        "alignItems": "center",
+        "gap": "12px",
+        "variants": {
+          "success": {
+            "backgroundColor": "#ECFDF5",
+            "color": "#10B981",
+            "borderLeft": "4px solid #10B981"
+          },
+          "warning": {
+            "backgroundColor": "#FEF3C7",
+            "color": "#F59E0B",
+            "borderLeft": "4px solid #F59E0B"
+          },
+          "error": {
+            "backgroundColor": "#FEE2E2",
+            "color": "#EF4444",
+            "borderLeft": "4px solid #EF4444"
+          },
+          "info": {
+            "backgroundColor": "#DBEAFE",
+            "color": "#3B82F6",
+            "borderLeft": "4px solid #3B82F6"
+          }
+        },
+        "muiComponent": "Alert"
+      },
+  
+      "snackbar": {
+        "position": "bottom-center",
+        "maxWidth": "500px",
+        "backgroundColor": "#2D2D2D",
+        "color": "#FFFFFF",
+        "borderRadius": "12px",
+        "padding": "12px 24px",
+        "fontSize": "16px",
+        "muiComponent": "Snackbar"
+      },
+  
+      "tooltip": {
+        "backgroundColor": "#2D2D2D",
+        "color": "#FFFFFF",
+        "fontSize": "14px",
+        "padding": "8px 12px",
+        "borderRadius": "8px",
+        "maxWidth": "300px",
+        "muiComponent": "Tooltip"
+      },
+  
+      "skeleton": {
+        "backgroundColor": "#F5F5F5",
+        "borderRadius": "8px",
+        "animation": "pulse 1.5s ease-in-out infinite",
+        "muiComponent": "Skeleton"
+      }
+    },
+  
+    "patterns": {
+      "statCard": {
+        "layout": "flex column",
+        "gap": "16px",
+        "padding": "32px",
+        "elements": ["icon", "label", "value", "trend"],
+        "muiComponents": ["Card", "CardContent", "Typography"]
+      },
+      "achievementCard": {
+        "layout": "flex row",
+        "gap": "16px",
+        "padding": "32px",
+        "elements": ["icon", "title", "description"],
+        "muiComponents": ["Card", "CardContent", "Avatar", "Typography"]
+      },
+      "progressCard": {
+        "layout": "flex column",
+        "gap": "16px",
+        "padding": "32px",
+        "elements": ["title", "progressBars"],
+        "muiComponents": ["Card", "CardContent", "LinearProgress", "Typography"]
+      },
+      "heroSection": {
+        "layout": "flex column center",
+        "gap": "24px",
+        "padding": "64px 24px",
+        "elements": ["headline", "description", "cta"],
+        "muiComponents": ["Container", "Typography", "Button"]
+      },
+      "formSection": {
+        "layout": "flex column",
+        "gap": "24px",
+        "padding": "32px",
+        "elements": ["label", "input", "helper", "error"],
+        "muiComponents": ["Card", "TextField", "FormHelperText"]
+      }
+    },
+  
+    "specificDecisions": {
+      "athleteAvatars": {
+        "uploadSupport": false,
+        "reasoning": "MVP simplicity - just initials, photos post-MVP. Reduces complexity and privacy concerns.",
+        "initialsOnly": true,
+        "shape": "circle",
+        "size": "40px",
+        "backgroundColors": [
+          "#2563EB",
+          "#F97316",
+          "#10B981",
+          "#8B5CF6",
+          "#EC4899",
+          "#06B6D4"
+        ],
+        "backgroundSelection": "Deterministic based on athlete name hash (same athlete = same color)",
+        "fontSize": "16px",
+        "fontWeight": 600,
+        "textColor": "#FFFFFF",
+        "muiComponent": "Avatar"
+      },
+  
+      "emptyStates": {
+        "style": "Clean icons + helpful text + clear CTA",
+        "reasoning": "Illustrations can feel childish for coaches. Clean icons with clear actions are more professional.",
+        "iconSize": "64px",
+        "iconColor": "#BDBDBD",
+        "textSize": "16px",
+        "headingSize": "24px",
+        "actionButton": "contained primary",
+        "spacing": "24px gap between elements",
+        "examples": {
+          "noAthletes": {
+            "icon": "PeopleOutline",
+            "iconLibrary": "@mui/icons-material",
+            "heading": "No athletes yet",
+            "body": "Add your first athlete to get started with assessments and progress tracking.",
+            "action": "Add Athlete",
+            "actionIcon": "AddCircleOutline"
+          },
+          "noTests": {
+            "icon": "AssessmentOutlined",
+            "iconLibrary": "@mui/icons-material",
+            "heading": "No assessments recorded",
+            "body": "Start your first assessment to track athlete progress and generate reports.",
+            "action": "New Assessment",
+            "actionIcon": "PlayCircleOutline"
+          },
+          "noReports": {
+            "icon": "DescriptionOutlined",
+            "iconLibrary": "@mui/icons-material",
+            "heading": "No reports generated",
+            "body": "Complete assessments to automatically generate progress reports.",
+            "action": "View Assessments",
+            "actionIcon": "ArrowForward"
+          },
+          "noResults": {
+            "icon": "SearchOff",
+            "iconLibrary": "@mui/icons-material",
+            "heading": "No results found",
+            "body": "Try adjusting your filters or search terms.",
+            "action": "Clear Filters",
+            "actionIcon": "FilterListOff"
+          }
+        },
+        "muiComponents": ["Box", "Typography", "Button", "Icon"]
+      },
+  
+      "errorHandling": {
+        "strategy": "Severity-based display strategy",
+        "reasoning": "Different errors need different levels of interruption. Critical errors block workflow, minor errors don't.",
+        "critical": {
+          "display": "Modal dialog (blocks interaction)",
+          "examples": [
+            "Camera access denied",
+            "Video upload failed",
+            "Server connection lost",
+            "Authentication expired"
+          ],
+          "muiComponent": "Dialog",
+          "actions": ["Retry", "Cancel"],
+          "persistent": true
+        },
+        "important": {
+          "display": "Alert banner at top of content area",
+          "examples": [
+            "Consent expired",
+            "Athlete limit reached",
+            "Storage quota exceeded",
+            "Feature unavailable"
+          ],
+          "muiComponent": "Alert",
+          "dismissible": true,
+          "position": "top"
+        },
+        "minor": {
+          "display": "Snackbar notification (bottom-center)",
+          "examples": [
+            "Settings saved",
+            "Report sent",
+            "Video processing started",
+            "Data synced"
+          ],
+          "muiComponent": "Snackbar",
+          "autoHideDuration": 4000,
+          "position": "bottom-center"
+        },
+        "inline": {
+          "display": "Helper text below field",
+          "examples": [
+            "Form validation errors",
+            "Input format errors",
+            "Field requirements"
+          ],
+          "muiComponent": "FormHelperText",
+          "color": "error"
+        }
+      },
+  
+      "videoPlayer": {
+        "controls": {
+          "seekBarHeight": "4px",
+          "seekBarColor": "#2563EB",
+          "controlsHeight": "48px",
+          "controlsBackground": "rgba(0, 0, 0, 0.8)",
+          "iconColor": "#FFFFFF",
+          "iconSize": "24px"
+        },
+        "playback": {
+          "defaultSpeed": 1.0,
+          "speedOptions": [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
+          "showFrameByFrame": true,
+          "frameStep": "1/30s (30fps)"
+        },
+        "overlay": {
+          "skeletonToggle": true,
+          "metricsDisplay": true,
+          "timestampDisplay": true
+        }
+      },
+  
+      "dashboard": {
+        "statsCards": {
+          "updateFrequency": "Real-time via WebSocket or 30s polling",
+          "reasoning": "Coaches want live data during assessment days",
+          "showTrends": true,
+          "trendIndicators": {
+            "up": {
+              "icon": "TrendingUp",
+              "color": "#10B981"
+            },
+            "down": {
+              "icon": "TrendingDown",
+              "color": "#EF4444"
+            },
+            "stable": {
+              "icon": "TrendingFlat",
+              "color": "#6B6B6B"
+            }
+          },
+          "colorCoding": "Neutral card, colored trends only"
+        }
+      }
+    },
+  
+    "dataVisualization": {
+      "library": "Recharts",
+      "reasoning": "Lightweight, composable, works well with React, good documentation, matches modern aesthetic",
+      "charts": {
+        "lineChart": {
+          "usage": "Progress over time, duration trends, score progression",
+          "strokeWidth": 3,
+          "strokeColor": "#2563EB",
+          "dot": true,
+          "dotRadius": 6,
+          "dotFill": "#2563EB",
+          "grid": true,
+          "gridColor": "#F5F5F5",
+          "tooltipEnabled": true,
+          "tooltipStyle": "clean minimal"
+        },
+        "barChart": {
+          "usage": "Team comparisons, score distribution, test completion rates",
+          "barSize": 40,
+          "barColor": "#2563EB",
+          "grid": true,
+          "gridColor": "#F5F5F5",
+          "tooltipEnabled": true
+        },
+        "radarChart": {
+          "usage": "Multi-metric athlete comparison (future feature)",
+          "strokeWidth": 2,
+          "strokeColor": "#2563EB",
+          "fill": true,
+          "fillColor": "#2563EB",
+          "fillOpacity": 0.3
+        }
+      },
+      "scoreDisplay": {
+        "style": "Large number in colored badge",
+        "reasoning": "Coaches are used to grades (A-F, 1-5). Large number is immediately clear and familiar.",
+        "size": "64px",
+        "fontWeight": 700,
+        "shape": "rounded rectangle (24px radius)",
+        "padding": "32px",
+        "labelSize": "16px",
+        "labelPosition": "below number",
+        "colorCoded": true,
+        "useScoreColorSystem": true,
+        "showLabel": true
+      }
+    },
+  
+    "accessibility": {
+      "standard": "WCAG 2.1 Level AA",
+      "reasoning": "AA is standard for professional applications, achievable without major overhead. AAA would require significant design constraints.",
+      "contrast": {
+        "textOnBackground": "4.5:1 minimum",
+        "largeText": "3:1 minimum (18pt+ or 14pt+ bold)",
+        "graphicalObjects": "3:1 minimum",
+        "activeUIComponents": "3:1 minimum"
+      },
+      "keyboard": {
+        "allInteractiveElementsAccessible": true,
+        "visibleFocusIndicators": true,
+        "focusIndicatorColor": "#2563EB",
+        "focusIndicatorWidth": "2px",
+        "focusIndicatorStyle": "outline",
+        "tabOrder": "logical (top to bottom, left to right)",
+        "skipLinks": true,
+        "shortcuts": {
+          "enabled": true,
+          "examples": {
+            "newAssessment": "Ctrl+N",
+            "search": "Ctrl+K",
+            "help": "?"
+          }
+        }
+      },
+      "screenReader": {
+        "ariaLabels": "All icons, image buttons, and complex interactions",
+        "ariaLive": "Dynamic content (loading states, errors, success messages)",
+        "altText": "All meaningful images",
+        "semanticHTML": "Use proper heading hierarchy, landmarks, lists"
+      },
+      "motion": {
+        "respectPrefersReducedMotion": true,
+        "reducedMotionFallback": "Instant transitions, no animations",
+        "defaultDuration": "300ms"
+      },
+      "colorBlindness": {
+        "dontRelyOnColorAlone": true,
+        "useIconsAndText": true,
+        "example": "Status indicators use icon + text + color, not just color",
+        "testedWith": ["Protanopia", "Deuteranopia", "Tritanopia"]
+      }
+    },
+  
+    "layouts": {
+      "maxWidth": "1200px",
+      "containerPadding": {
+        "mobile": "24px",
+        "tablet": "48px",
+        "desktop": "64px"
+      },
+      "gridGap": {
+        "tight": "16px",
+        "base": "24px",
+        "loose": "32px"
+      },
+      "breakpoints": {
+        "mobile": "0px",
+        "tablet": "768px",
+        "desktop": "1024px",
+        "wide": "1280px"
+      },
+      "muiBreakpoints": {
+        "xs": 0,
+        "sm": 600,
+        "md": 900,
+        "lg": 1200,
+        "xl": 1536
+      }
+    },
+  
+    "principles": {
+      "visual": [
+        "Generous white space creates breathing room and reduces cognitive load",
+        "Rounded corners (12-24px) soften the athletic aesthetic while maintaining professionalism",
+        "Card-based layouts organize information into digestible, scannable chunks",
+        "High contrast ensures readability and accessibility for all users"
+      ],
+      "color": [
+        "Athletic Blue is primary - use for CTAs, key data, and active states",
+        "Energy Orange is accent - use sparingly for highlights and improvements only",
+        "Neutral base (white/light gray) allows color to guide attention functionally",
+        "Color serves purpose, not decoration - every color choice should have meaning"
+      ],
+      "typography": [
+        "Large, bold headlines create impact and clear hierarchy",
+        "Clear size differentiation between heading levels guides scanning",
+        "Readable body text (18px) with generous line-height (1.6) reduces eye strain",
+        "Jost throughout maintains visual consistency and modern athletic feel"
+      ],
+      "interaction": [
+        "Smooth transitions (200ms) create polish without feeling sluggish",
+        "Hover states provide clear feedback on interactive elements",
+        "Active states are clearly differentiated from default states",
+        "Loading states maintain context and prevent confusion"
+      ],
+      "data": [
+        "Show data clearly without overwhelming users",
+        "Use visualizations to make trends obvious at a glance",
+        "Provide details on demand through interactions",
+        "Trust through transparency - show methodology and confidence"
+      ]
+    },
+  
+    "usage": {
+      "dos": [
+        "Use 24px spacing between major components",
+        "Keep cards at 24px border radius for consistency",
+        "Use Athletic Blue for primary actions and key data",
+        "Use Energy Orange only for highlights and improvements",
+        "Maintain generous white space throughout layouts",
+        "Use Material-UI icons at 20-24px for consistency",
+        "Keep data visualizations minimal and clean",
+        "Use sentence case for buttons (not ALL CAPS)",
+        "Provide loading states for all async operations",
+        "Show meaningful empty states with clear CTAs"
+      ],
+      "donts": [
+        "Don't use gradients",
+        "Don't use multiple font families",
+        "Don't overcrowd layouts with too many elements",
+        "Don't use decorative elements without purpose",
+        "Don't use excessive borders or dividing lines",
+        "Don't create complex chart axes or unnecessary data",
+        "Don't use emojis in production UI",
+        "Don't mix border radius values inconsistently",
+        "Don't use Energy Orange as a primary color",
+        "Don't rely on color alone for important information"
+      ]
+    },
+  
+    "muiThemeConfig": {
+      "summary": "MUI theme configuration for CoachLens Modern Athletic Minimalism",
+      "palette": {
+        "primary": {
+          "main": "#2563EB",
+          "light": "#60A5FA",
+          "dark": "#1E40AF",
+          "contrastText": "#FFFFFF"
+        },
+        "secondary": {
+          "main": "#F97316",
+          "light": "#FB923C",
+          "dark": "#EA580C",
+          "contrastText": "#FFFFFF"
+        },
+        "success": {
+          "main": "#10B981",
+          "light": "#34D399",
+          "dark": "#059669"
+        },
+        "warning": {
+          "main": "#F59E0B",
+          "light": "#FBBF24",
+          "dark": "#D97706"
+        },
+        "error": {
+          "main": "#EF4444",
+          "light": "#F87171",
+          "dark": "#DC2626"
+        },
+        "info": {
+          "main": "#3B82F6",
+          "light": "#60A5FA",
+          "dark": "#2563EB"
+        },
+        "background": {
+          "default": "#FFFFFF",
+          "paper": "#FFFFFF"
+        },
+        "text": {
+          "primary": "rgba(45, 45, 45, 0.87)",
+          "secondary": "rgba(107, 107, 107, 0.87)",
+          "disabled": "rgba(0, 0, 0, 0.38)"
+        }
+      },
+      "typography": {
+        "fontFamily": "'Jost', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+        "h1": {
+          "fontSize": "3rem",
+          "fontWeight": 600,
+          "lineHeight": 1.2
+        },
+        "h2": {
+          "fontSize": "2rem",
+          "fontWeight": 600,
+          "lineHeight": 1.3
+        },
+        "h3": {
+          "fontSize": "1.5rem",
+          "fontWeight": 600,
+          "lineHeight": 1.4
+        },
+        "body1": {
+          "fontSize": "1.125rem",
+          "lineHeight": 1.6
+        },
+        "button": {
+          "textTransform": "none",
+          "fontWeight": 600
+        }
+      },
+      "spacing": 8,
+      "shape": {
+        "borderRadius": 12
+      },
+      "components": {
+        "MuiButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "12px",
+              "padding": "12px 24px",
+              "fontSize": "16px",
+              "fontWeight": 600,
+              "textTransform": "none"
+            }
+          }
+        },
+        "MuiCard": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "24px",
+              "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.08)"
+            }
+          }
+        },
+        "MuiChip": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "999px",
+              "fontWeight": 600
+            }
+          }
+        },
+        "MuiTextField": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "12px"
+            }
+          }
+        }
+      }
+    },
+  
+    "notes": {
+      "keyDecisions": [
+        "Athletic Blue + Energy Orange palette for professional yet energetic feel",
+        "Avoided Kemtai's medical green and Onform's stark black",
+        "Jost font family for modern athletic aesthetic with Roboto fallback",
+        "24px card radius for contemporary, friendly feel",
+        "Skeleton overlay uses traffic light colors (universally understood)",
+        "5-point score system with color progression (familiar to coaches)",
+        "Desktop-first with keyboard shortcuts for coach efficiency",
+        "Moderate animations (300ms) - noticeable but not distracting",
+        "Simple icons for empty states (professional, not childish)",
+        "WCAG AA compliance for accessibility without excessive constraints",
+        "Initials-only avatars for MVP simplicity",
+        "Severity-based error handling (modal, banner, snackbar, inline)"
+      ],
+      "designPhilosophy": "Professional coaching tool that energizes athletes. Trust through data, excitement through movement. Every interaction should feel confident and capable - like working with a great assistant coach.",
+      "targetFeeling": "Organized, energetic, trustworthy, modern",
+      "nextSteps": [
+        "Implement MUI theme configuration",
+        "Create component library in Figma",
+        "Build reusable React components",
+        "Test accessibility with screen readers",
+        "Validate color contrast ratios",
+        "Create empty state illustrations/icons"
+      ]
+    }
+  }

@@ -18,7 +18,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', height: '100vh' }}>
       <AppBar drawerWidth={DRAWER_WIDTH} onMenuClick={handleDrawerToggle} />
       <Sidebar
         width={DRAWER_WIDTH}
@@ -31,6 +31,8 @@ export function Layout({ children }: LayoutProps) {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+          overflow: 'auto',
+          minHeight: 0,
         }}
       >
         <Toolbar /> {/* Spacer for fixed AppBar */}
