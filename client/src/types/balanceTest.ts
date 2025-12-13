@@ -29,6 +29,20 @@ export interface TestResult {
   armDeviationLeft: number;
   /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
   armDeviationRight: number;
+  /** Left/Right arm deviation ratio */
+  armAsymmetryRatio: number;
+  /** Sway standard deviation in X (normalized) */
+  swayStdX: number;
+  /** Sway standard deviation in Y (normalized) */
+  swayStdY: number;
+  /** Total sway path length (normalized) */
+  swayPathLength: number;
+  /** Average sway velocity (normalized) */
+  swayVelocity: number;
+  /** Number of balance corrections detected */
+  correctionsCount: number;
+  /** Composite stability score (0-100, higher is better) */
+  stabilityScore: number;
 }
 
 // Constants for position detection
@@ -57,6 +71,21 @@ export const LANDMARK_INDEX = {
   RIGHT_SHOULDER: 12,
   LEFT_WRIST: 15,
   RIGHT_WRIST: 16,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
   LEFT_ANKLE: 27,
   RIGHT_ANKLE: 28,
 } as const;
+
+// Required landmark indices for metrics calculation (8 total)
+// These are the only landmarks we need to store for sway/stability analysis
+export const REQUIRED_LANDMARK_INDICES = [
+  LANDMARK_INDEX.LEFT_SHOULDER,  // 11 - Arm deviation baseline
+  LANDMARK_INDEX.RIGHT_SHOULDER, // 12 - Arm deviation baseline
+  LANDMARK_INDEX.LEFT_WRIST,     // 15 - Arm deviation
+  LANDMARK_INDEX.RIGHT_WRIST,    // 16 - Arm deviation
+  LANDMARK_INDEX.LEFT_HIP,       // 23 - Sway (CoM proxy)
+  LANDMARK_INDEX.RIGHT_HIP,      // 24 - Sway (CoM proxy)
+  LANDMARK_INDEX.LEFT_ANKLE,     // 27 - Failure detection
+  LANDMARK_INDEX.RIGHT_ANKLE,    // 28 - Failure detection
+] as const;

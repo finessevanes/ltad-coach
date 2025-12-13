@@ -12,10 +12,11 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Chip,
-  Divider,
+  Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -83,7 +84,8 @@ export default function AssessmentResults() {
     );
   }
 
-  const { metrics, clientMetrics } = assessment;
+  // Use metrics (from backend) which now use client-calculated values
+  const { metrics } = assessment;
 
   // Format date
   const formattedDate = new Date(assessment.createdAt).toLocaleDateString('en-US', {
@@ -100,49 +102,9 @@ export default function AssessmentResults() {
     return val.toFixed(decimals);
   };
 
-  // Helper to calculate difference
-  const calcDiff = (client: number | undefined, backend: number | undefined): string => {
-    if (client === undefined || backend === undefined) return '-';
-    const diff = Math.abs(client - backend);
-    return diff.toFixed(3);
-  };
-
-  // Comparison rows for metrics that exist on both sides
-  const comparisonRows = [
-    {
-      metric: 'Hold Time (s)',
-      client: clientMetrics?.holdTime,
-      backend: metrics?.holdTime,
-      formatDecimals: 2,
-    },
-    {
-      metric: 'Result',
-      client: clientMetrics?.success !== undefined ? (clientMetrics.success ? 'PASS' : 'FAIL') : undefined,
-      backend: assessment.failureReason ? 'FAIL' : metrics ? 'PASS' : undefined,
-      isText: true,
-    },
-    {
-      metric: 'Failure Reason',
-      client: clientMetrics?.failureReason || '-',
-      backend: assessment.failureReason || '-',
-      isText: true,
-    },
-  ];
-
-  const armDeviationRows = [
-    {
-      metric: 'Arm Deviation Left',
-      client: clientMetrics?.armDeviationLeft,
-      backend: metrics?.armDeviationLeft,
-      formatDecimals: 4,
-    },
-    {
-      metric: 'Arm Deviation Right',
-      client: clientMetrics?.armDeviationRight,
-      backend: metrics?.armDeviationRight,
-      formatDecimals: 4,
-    },
-  ];
+  // Determine test result
+  const testPassed = metrics && metrics.holdTime >= 30;
+  const failureReason = assessment.failureReason;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -178,156 +140,133 @@ export default function AssessmentResults() {
             </Typography>
           </Box>
           <Box>
-            <Typography variant="body2" color="text.secondary">Status</Typography>
-            <Chip
-              label={assessment.status}
-              color={assessment.status === 'completed' ? 'success' : assessment.status === 'failed' ? 'error' : 'warning'}
-              size="small"
-            />
+            <Typography variant="body2" color="text.secondary">Result</Typography>
+            {testPassed ? (
+              <Chip icon={<CheckCircleIcon />} label="PASS" color="success" size="small" />
+            ) : (
+              <Chip icon={<CancelIcon />} label="FAIL" color="error" size="small" />
+            )}
           </Box>
         </Box>
-      </Paper>
-
-      {/* Metrics Comparison */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Metrics Comparison
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Client metrics are calculated in real-time during recording. Backend metrics are calculated from the uploaded video.
-        </Typography>
-
-        {!clientMetrics && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            No client-side metrics available for this assessment.
-          </Alert>
+        {failureReason && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Failure Reason: {failureReason}
+          </Typography>
         )}
-
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>Metric</strong></TableCell>
-                <TableCell align="right"><strong>Client</strong></TableCell>
-                <TableCell align="right"><strong>Backend</strong></TableCell>
-                <TableCell align="right"><strong>Difference</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {comparisonRows.map((row) => (
-                <TableRow key={row.metric}>
-                  <TableCell>{row.metric}</TableCell>
-                  <TableCell align="right">
-                    {row.isText ? (
-                      row.client === 'PASS' ? (
-                        <Chip icon={<CheckCircleIcon />} label="PASS" color="success" size="small" />
-                      ) : row.client === 'FAIL' ? (
-                        <Chip icon={<CancelIcon />} label="FAIL" color="error" size="small" />
-                      ) : (
-                        row.client || '-'
-                      )
-                    ) : (
-                      formatNum(row.client as number, row.formatDecimals)
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    {row.isText ? (
-                      row.backend === 'PASS' ? (
-                        <Chip icon={<CheckCircleIcon />} label="PASS" color="success" size="small" />
-                      ) : row.backend === 'FAIL' ? (
-                        <Chip icon={<CancelIcon />} label="FAIL" color="error" size="small" />
-                      ) : (
-                        row.backend || '-'
-                      )
-                    ) : (
-                      formatNum(row.backend as number, row.formatDecimals)
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    {row.isText ? '-' : calcDiff(row.client as number, row.backend as number)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="subtitle1" gutterBottom>
-          Arm Deviation (same algorithm - should match closely)
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Values = wrist.y - shoulder.y (normalized coords). Positive = wrist below shoulder.
-        </Typography>
-
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>Metric</strong></TableCell>
-                <TableCell align="right"><strong>Client</strong></TableCell>
-                <TableCell align="right"><strong>Backend</strong></TableCell>
-                <TableCell align="right"><strong>Difference</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {armDeviationRows.map((row) => (
-                <TableRow key={row.metric}>
-                  <TableCell>{row.metric}</TableCell>
-                  <TableCell align="right">{formatNum(row.client, row.formatDecimals)}</TableCell>
-                  <TableCell align="right">{formatNum(row.backend, row.formatDecimals)}</TableCell>
-                  <TableCell align="right">{calcDiff(row.client, row.backend)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
       </Paper>
 
-      {/* Backend-Only Metrics */}
+      {/* Key Metrics Cards */}
+      {metrics && (
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant="h3" color="primary">
+                  {formatNum(metrics.holdTime, 1)}s
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Hold Time
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant="h3" color="primary">
+                  {formatNum(metrics.stabilityScore, 0)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Stability Score
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant="h3" color="primary">
+                  {metrics.durationScore}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  LTAD Score ({metrics.durationScoreLabel})
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant="h3" color="primary">
+                  {metrics.correctionsCount}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Balance Corrections
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Detailed Metrics */}
       {metrics && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Backend-Only Metrics
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            These metrics are only calculated server-side from video analysis.
+            Detailed Metrics
           </Typography>
 
           <TableContainer>
             <Table size="small">
               <TableBody>
                 <TableRow>
-                  <TableCell>Stability Score</TableCell>
-                  <TableCell align="right">{formatNum(metrics.stabilityScore, 1)} / 100</TableCell>
+                  <TableCell><strong>Sway Metrics</strong></TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>Sway Std X</TableCell>
+                  <TableCell sx={{ pl: 4 }}>Sway Std X</TableCell>
                   <TableCell align="right">{formatNum(metrics.swayStdX, 6)}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>Sway Std Y</TableCell>
+                  <TableCell sx={{ pl: 4 }}>Sway Std Y</TableCell>
                   <TableCell align="right">{formatNum(metrics.swayStdY, 6)}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>Sway Path Length</TableCell>
+                  <TableCell sx={{ pl: 4 }}>Sway Path Length</TableCell>
                   <TableCell align="right">{formatNum(metrics.swayPathLength, 6)}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>Sway Velocity</TableCell>
+                  <TableCell sx={{ pl: 4 }}>Sway Velocity</TableCell>
                   <TableCell align="right">{formatNum(metrics.swayVelocity, 6)}</TableCell>
                 </TableRow>
+
                 <TableRow>
-                  <TableCell>Arm Asymmetry Ratio</TableCell>
+                  <TableCell><strong>Arm Metrics</strong></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ pl: 4 }}>Arm Deviation Left</TableCell>
+                  <TableCell align="right">{formatNum(metrics.armDeviationLeft, 4)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ pl: 4 }}>Arm Deviation Right</TableCell>
+                  <TableCell align="right">{formatNum(metrics.armDeviationRight, 4)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ pl: 4 }}>Arm Asymmetry Ratio</TableCell>
                   <TableCell align="right">{formatNum(metrics.armAsymmetryRatio, 2)}</TableCell>
                 </TableRow>
+
                 <TableRow>
-                  <TableCell>Corrections Count</TableCell>
-                  <TableCell align="right">{metrics.correctionsCount}</TableCell>
+                  <TableCell><strong>Scores</strong></TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>LTAD Duration Score</TableCell>
+                  <TableCell sx={{ pl: 4 }}>Stability Score</TableCell>
+                  <TableCell align="right">{formatNum(metrics.stabilityScore, 1)} / 100</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ pl: 4 }}>LTAD Duration Score</TableCell>
                   <TableCell align="right">
                     <Chip
                       label={`${metrics.durationScore} - ${metrics.durationScoreLabel}`}
@@ -338,7 +277,7 @@ export default function AssessmentResults() {
                 </TableRow>
                 {metrics.ageExpectation && (
                   <TableRow>
-                    <TableCell>Age Expectation</TableCell>
+                    <TableCell sx={{ pl: 4 }}>Age Expectation</TableCell>
                     <TableCell align="right">
                       <Chip
                         label={metrics.ageExpectation}
@@ -355,6 +294,13 @@ export default function AssessmentResults() {
             </Table>
           </TableContainer>
         </Paper>
+      )}
+
+      {/* No metrics fallback */}
+      {!metrics && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          No metrics available for this assessment.
+        </Alert>
       )}
 
       {/* Actions */}

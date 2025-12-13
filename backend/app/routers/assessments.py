@@ -1,8 +1,11 @@
-"""Assessment API endpoints."""
+"""Assessment API endpoints.
 
-import asyncio
+This module now acts as a validated write proxy - the client calculates all metrics,
+and the backend validates ownership/consent and stores the results.
+"""
+
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limit import analysis_rate_limiter
 from app.models.user import User
@@ -10,12 +13,11 @@ from app.models.assessment import (
     AssessmentCreate,
     AssessmentResponse,
     AnalyzeResponse,
+    AssessmentStatus,
 )
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
-from app.services.video import download_video_from_storage, validate_video, cleanup_temp_file
-from app.services.analysis import analyze_video
-from app.services.metrics import MetricsCalculator
+from app.services.metrics import get_duration_score, get_age_expectation
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 logger = logging.getLogger(__name__)
@@ -24,28 +26,35 @@ logger = logging.getLogger(__name__)
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_video_endpoint(
     data: AssessmentCreate,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
 ):
-    """Trigger video analysis (non-blocking).
+    """Store assessment with client-calculated metrics.
 
-    Creates assessment in processing state and queues background task.
+    The client is now the source of truth for all metrics. This endpoint:
+    1. Validates athlete ownership and consent
+    2. Calculates backend-only scores (duration_score, age_expectation)
+    3. Stores the assessment as completed immediately
 
     Args:
-        data: Assessment creation data
-        background_tasks: FastAPI background tasks
-        current_user: Authenticated user
+        data: Assessment creation data with required client_metrics
 
     Returns:
-        Assessment ID and status
+        Assessment ID and completed status
 
     Raises:
-        400: Athlete not found or invalid consent
+        400: Client metrics not provided or athlete consent invalid
         404: Athlete not found or not owned by coach
         429: Rate limit exceeded
     """
     # Check rate limit
     analysis_rate_limiter.check_or_raise(current_user.id)
+
+    # Client metrics are now required
+    if not data.client_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Client metrics are required",
+        )
 
     # Validate athlete ownership and consent
     athlete_repo = AthleteRepository()
@@ -63,32 +72,48 @@ async def analyze_video_endpoint(
             detail=f"Athlete consent is {athlete.consent_status}. Active consent required.",
         )
 
-    # Create assessment in processing state
+    # Calculate backend-only scores from client metrics
+    client_metrics = data.client_metrics
+    duration_score, duration_score_label = get_duration_score(client_metrics.hold_time)
+    age_expectation = get_age_expectation(athlete.age, duration_score) if athlete.age else None
+
+    # Build full metrics from client data + backend calculations
+    metrics = {
+        "hold_time": client_metrics.hold_time,
+        "stability_score": client_metrics.stability_score,
+        "sway_std_x": client_metrics.sway_std_x,
+        "sway_std_y": client_metrics.sway_std_y,
+        "sway_path_length": client_metrics.sway_path_length,
+        "sway_velocity": client_metrics.sway_velocity,
+        "arm_deviation_left": client_metrics.arm_deviation_left,
+        "arm_deviation_right": client_metrics.arm_deviation_right,
+        "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
+        "corrections_count": client_metrics.corrections_count,
+        "duration_score": duration_score,
+        "duration_score_label": duration_score_label,
+        "age_expectation": age_expectation,
+    }
+
+    # Create assessment as completed (no background processing needed)
     assessment_repo = AssessmentRepository()
-    assessment = await assessment_repo.create_for_analysis(
+    assessment = await assessment_repo.create_completed(
         coach_id=current_user.id,
         athlete_id=data.athlete_id,
         test_type=data.test_type.value,
         leg_tested=data.leg_tested.value,
         video_url=data.video_url,
         video_path=data.video_path,
-        client_metrics=data.client_metrics.model_dump() if data.client_metrics else None,
+        metrics=metrics,
+        client_metrics=client_metrics.model_dump(),
+        failure_reason=client_metrics.failure_reason,
     )
 
-    # Queue background task
-    background_tasks.add_task(
-        process_assessment,
-        assessment.id,
-        data.video_path,
-        data.leg_tested.value,
-        data.duration,
-    )
-
-    logger.info(f"Assessment {assessment.id} created and queued for processing")
+    logger.info(f"Assessment {assessment.id} created and completed immediately")
 
     return AnalyzeResponse(
         id=assessment.id,
         status=assessment.status,
+        message="Assessment completed",
     )
 
 
@@ -97,14 +122,14 @@ async def get_assessment(
     assessment_id: str,
     current_user: User = Depends(get_current_user),
 ):
-    """Get assessment by ID (for polling).
+    """Get assessment by ID.
 
     Args:
         assessment_id: Assessment ID
         current_user: Authenticated user
 
     Returns:
-        Assessment with current status
+        Assessment with metrics
 
     Raises:
         404: Assessment not found or not owned by coach
@@ -141,72 +166,3 @@ async def get_assessment(
         failure_reason=assessment.failure_reason,
         error_message=assessment.error_message,
     )
-
-
-async def process_assessment(
-    assessment_id: str,
-    video_path: str,
-    leg_tested: str,
-    client_duration: float,
-):
-    """Background task to process assessment.
-
-    Args:
-        assessment_id: Assessment ID
-        video_path: Firebase Storage path to video
-        leg_tested: Which leg was tested
-        client_duration: Client-measured video duration in seconds
-    """
-    assessment_repo = AssessmentRepository()
-    temp_file = None
-
-    try:
-        logger.info(f"Processing assessment {assessment_id}")
-
-        # Download video from Firebase Storage
-        temp_file = await download_video_from_storage(video_path)
-
-        # Validate video
-        is_valid, error = await validate_video(temp_file)
-        if not is_valid:
-            await assessment_repo.mark_failed(assessment_id, error)
-            logger.error(f"Assessment {assessment_id} validation failed: {error}")
-            return
-
-        # Analyze video with MediaPipe
-        results = await analyze_video(assessment_id, temp_file, leg_tested, client_duration)
-
-        # Calculate metrics
-        calculator = MetricsCalculator(
-            filtered_landmarks=results["filtered_landmarks"],
-            timestamps=results["timestamps"],
-            duration=results["duration"],
-            failure_reason=results["failure_reason"],
-            leg_tested=leg_tested,
-        )
-        metrics = calculator.calculate_all()
-
-        # Update assessment with results
-        await assessment_repo.update_with_results(
-            assessment_id,
-            metrics=metrics,
-            raw_keypoints_url=results["raw_keypoints_url"],
-            ai_feedback="",  # Populated in Phase 7
-        )
-
-        logger.info(f"Assessment {assessment_id} completed successfully")
-
-    except ValueError as e:
-        # Known errors (validation, no pose detected, etc.)
-        await assessment_repo.mark_failed(assessment_id, str(e))
-        logger.error(f"Assessment {assessment_id} failed: {e}")
-
-    except Exception as e:
-        # Unexpected errors
-        await assessment_repo.mark_failed(assessment_id, "Processing failed")
-        logger.error(f"Assessment {assessment_id} failed unexpectedly: {e}", exc_info=True)
-
-    finally:
-        # Cleanup temp file
-        if temp_file:
-            cleanup_temp_file(temp_file)

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, LinearProgress, Alert, CircularProgress } from '@mui/material';
 import { useFirebaseUpload } from '../../../hooks/useFirebaseUpload';
-import { useAssessmentPolling } from '../../../hooks/useAssessmentPolling';
 import assessmentsService from '../../../services/assessments';
 import { useSnackbar } from '../../../contexts/SnackbarContext';
 import { TestType, LegTested, ClientMetrics } from '../../../types/assessment';
@@ -28,24 +27,8 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 }) => {
   const { showSnackbar } = useSnackbar();
   const { upload, progress, uploading } = useFirebaseUpload();
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const { assessment } = useAssessmentPolling({
-    assessmentId,
-    enabled: !!assessmentId,
-    onComplete: (result) => {
-      showSnackbar('Analysis complete!', 'success');
-      onComplete(result.id);
-    },
-    onFailed: (result) => {
-      setError(result.failureReason || 'Analysis failed');
-      showSnackbar('Analysis failed', 'error');
-    },
-    onTimeout: () => {
-      setError('Analysis is taking longer than expected. Please check back shortly.');
-    },
-  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!videoBlob) {
@@ -53,12 +36,14 @@ export const UploadStep: React.FC<UploadStepProps> = ({
       return;
     }
 
-    async function uploadAndAnalyze() {
+    async function uploadAndSave() {
       try {
         // Upload to Firebase Storage
         const { url, path } = await upload(videoBlob!, athleteId);
 
-        // Build client metrics from test result if available
+        setSaving(true);
+
+        // Build client metrics from test result (now includes all sway/stability metrics)
         const clientMetrics: ClientMetrics | undefined = testResult
           ? {
               success: testResult.success,
@@ -66,10 +51,17 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               failureReason: testResult.failureReason,
               armDeviationLeft: testResult.armDeviationLeft,
               armDeviationRight: testResult.armDeviationRight,
+              armAsymmetryRatio: testResult.armAsymmetryRatio,
+              swayStdX: testResult.swayStdX,
+              swayStdY: testResult.swayStdY,
+              swayPathLength: testResult.swayPathLength,
+              swayVelocity: testResult.swayVelocity,
+              correctionsCount: testResult.correctionsCount,
+              stabilityScore: testResult.stabilityScore,
             }
           : undefined;
 
-        // Trigger backend analysis
+        // Submit to backend - now completes immediately (no polling needed)
         const result = await assessmentsService.analyzeVideo({
           athleteId,
           testType,
@@ -80,14 +72,17 @@ export const UploadStep: React.FC<UploadStepProps> = ({
           clientMetrics,
         });
 
-        setAssessmentId(result.id);
+        showSnackbar('Assessment saved!', 'success');
+        onComplete(result.id);
       } catch (err: any) {
         setError(err.message || 'Upload failed');
         showSnackbar('Upload failed', 'error');
+      } finally {
+        setSaving(false);
       }
     }
 
-    uploadAndAnalyze();
+    uploadAndSave();
   }, []);
 
   if (error) {
@@ -116,20 +111,15 @@ export const UploadStep: React.FC<UploadStepProps> = ({
         </>
       )}
 
-      {!uploading && assessmentId && (
+      {!uploading && saving && (
         <>
           <CircularProgress sx={{ mb: 2 }} />
           <Typography variant="h6" gutterBottom>
-            Analyzing Video...
+            Saving Assessment...
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            This may take up to 30 seconds
+            This should only take a moment
           </Typography>
-          {assessment && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Status: {assessment.status}
-            </Typography>
-          )}
         </>
       )}
     </Box>

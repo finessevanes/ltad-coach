@@ -23,7 +23,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
         video_path: str,
         client_metrics: Optional[Dict] = None,
     ) -> Assessment:
-        """Create assessment in processing state.
+        """Create assessment in processing state (legacy method).
 
         Args:
             coach_id: Coach user ID
@@ -51,6 +51,58 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "client_metrics": client_metrics,
             "ai_feedback": None,
             "failure_reason": None,
+            "error_message": None,
+        }
+
+        assessment_id = await self.create(data)
+        assessment = await self.get(assessment_id)
+        return assessment
+
+    async def create_completed(
+        self,
+        coach_id: str,
+        athlete_id: str,
+        test_type: str,
+        leg_tested: str,
+        video_url: str,
+        video_path: str,
+        metrics: Dict,
+        client_metrics: Dict,
+        failure_reason: Optional[str] = None,
+    ) -> Assessment:
+        """Create assessment in completed state with client-calculated metrics.
+
+        This is the new primary method - the client calculates all metrics,
+        and the backend just validates and stores them.
+
+        Args:
+            coach_id: Coach user ID
+            athlete_id: Athlete ID
+            test_type: Type of test
+            leg_tested: Which leg was tested
+            video_url: Firebase Storage download URL
+            video_path: Firebase Storage path
+            metrics: Full metrics dict (client metrics + backend scores)
+            client_metrics: Original client metrics for reference
+            failure_reason: Optional failure reason from client
+
+        Returns:
+            Created assessment in completed state
+        """
+        data = {
+            "coach_id": coach_id,
+            "athlete_id": athlete_id,
+            "test_type": test_type,
+            "leg_tested": leg_tested,
+            "video_url": video_url,
+            "video_path": video_path,
+            "status": AssessmentStatus.COMPLETED.value,
+            "created_at": datetime.utcnow(),
+            "raw_keypoints_url": None,
+            "metrics": metrics,
+            "client_metrics": client_metrics,
+            "ai_feedback": None,  # Populated in Phase 7
+            "failure_reason": failure_reason,
             "error_message": None,
         }
 

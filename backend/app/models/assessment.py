@@ -49,12 +49,19 @@ class MetricsData(BaseModel):
 
 
 class ClientMetricsData(BaseModel):
-    """Client-side metrics from browser-based balance test (for comparison)."""
+    """Client-side metrics from browser-based balance test (now source of truth)."""
     success: bool = Field(..., description="Whether the test was passed")
     hold_time: float = Field(..., ge=0, description="Duration held in seconds")
     failure_reason: Optional[str] = Field(None, description="Reason for test failure")
     arm_deviation_left: float = Field(..., description="Left arm deviation from T-position (wrist Y - shoulder Y)")
     arm_deviation_right: float = Field(..., description="Right arm deviation from T-position (wrist Y - shoulder Y)")
+    arm_asymmetry_ratio: float = Field(..., description="Left/Right arm deviation ratio")
+    sway_std_x: float = Field(..., description="Sway standard deviation in X (normalized)")
+    sway_std_y: float = Field(..., description="Sway standard deviation in Y (normalized)")
+    sway_path_length: float = Field(..., description="Total sway path length (normalized)")
+    sway_velocity: float = Field(..., description="Average sway velocity (normalized)")
+    corrections_count: int = Field(..., description="Number of balance corrections detected")
+    stability_score: float = Field(..., ge=0, le=100, description="Overall stability score (0-100)")
 
 
 class Assessment(BaseModel):
@@ -106,4 +113,4 @@ class AnalyzeResponse(BaseModel):
     """Response for analyze endpoint."""
     id: str
     status: AssessmentStatus
-    message: str = "Assessment created and processing started"
+    message: str = "Assessment completed"

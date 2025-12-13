@@ -15,6 +15,7 @@ import {
   SUPPORT_FOOT_MOVEMENT_THRESHOLD,
   CONSECUTIVE_FAIL_FRAMES_REQUIRED,
   LANDMARK_INDEX,
+  REQUIRED_LANDMARK_INDICES,
 } from '../types/balanceTest';
 import {
   checkBalancePosition,
@@ -24,6 +25,7 @@ import {
   getInitialPositions,
   InitialPositions,
 } from '../utils/positionDetection';
+import { calculateAllMetrics } from '../utils/metricsCalculation';
 
 interface UseBalanceTestOptions {
   targetDuration?: number;
@@ -165,15 +167,32 @@ export function useBalanceTest(
       const avgArmDeviationLeft = armDeviationSumRef.current.left / count;
       const avgArmDeviationRight = armDeviationSumRef.current.right / count;
 
+      // Calculate all metrics from landmark history
+      const metrics = calculateAllMetrics(
+        landmarkHistoryRef.current,
+        finalHoldTime,
+        success,
+        reason,
+        avgArmDeviationLeft,
+        avgArmDeviationRight
+      );
+
       const result = {
         success,
-        holdTime: finalHoldTime,
+        holdTime: metrics.holdTime,
         failureReason: reason,
         landmarkHistory: [...landmarkHistoryRef.current],
-        armDeviationLeft: avgArmDeviationLeft,
-        armDeviationRight: avgArmDeviationRight,
+        armDeviationLeft: metrics.armDeviationLeft,
+        armDeviationRight: metrics.armDeviationRight,
+        armAsymmetryRatio: metrics.armAsymmetryRatio,
+        swayStdX: metrics.swayStdX,
+        swayStdY: metrics.swayStdY,
+        swayPathLength: metrics.swayPathLength,
+        swayVelocity: metrics.swayVelocity,
+        correctionsCount: metrics.correctionsCount,
+        stabilityScore: metrics.stabilityScore,
       };
-      console.log('[BalanceTest] Setting test result:', result);
+      console.log('[BalanceTest] Setting test result with metrics:', result);
       setTestResult(result);
     },
     []
@@ -201,11 +220,17 @@ export function useBalanceTest(
     lastTrackingTimeRef.current = now;
     const landmarks = poseResult.landmarks;
 
-    // Record landmarks during test (READY and HOLDING states)
+    // Record only the 8 required landmarks during test (READY and HOLDING states)
+    // This reduces storage/memory while keeping all data needed for metrics calculation
+    const filteredLandmarks = REQUIRED_LANDMARK_INDICES.map((idx) => landmarks[idx]);
+    const filteredWorldLandmarks = poseResult.worldLandmarks
+      ? REQUIRED_LANDMARK_INDICES.map((idx) => poseResult.worldLandmarks![idx])
+      : [];
+
     landmarkHistoryRef.current.push({
       timestamp: now,
-      landmarks: [...landmarks],
-      worldLandmarks: poseResult.worldLandmarks ? [...poseResult.worldLandmarks] : [],
+      landmarks: filteredLandmarks,
+      worldLandmarks: filteredWorldLandmarks,
     });
 
     // Calculate arm deviation during HOLDING (for averaging later)

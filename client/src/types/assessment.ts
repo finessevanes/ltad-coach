@@ -21,6 +21,13 @@ export interface ClientMetrics {
   failureReason?: string;
   armDeviationLeft: number;
   armDeviationRight: number;
+  armAsymmetryRatio: number;
+  swayStdX: number;
+  swayStdY: number;
+  swayPathLength: number;
+  swayVelocity: number;
+  correctionsCount: number;
+  stabilityScore: number;
 }
 
 export interface AssessmentMetrics {
