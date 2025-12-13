@@ -483,7 +483,11 @@ interface BalanceEvent {
 
 ```python
 class ClientMetricsData(BaseModel):
-    """Client-side metrics (source of truth)"""
+    """
+    Client-side metrics payload (sent to backend).
+    This is the data structure sent from the client, but NOT stored directly.
+    All fields are merged into MetricsData for storage.
+    """
     success: bool
     hold_time: float
     failure_reason: Optional[str]
@@ -501,23 +505,39 @@ class ClientMetricsData(BaseModel):
     arm_asymmetry_ratio: float
 
     # Temporal analysis
-    temporal: TemporalMetrics
+    temporal: Optional[TemporalMetrics]
     five_second_segments: Optional[list[FiveSecondSegment]]
     events: Optional[list[BalanceEvent]]
 
 class MetricsData(BaseModel):
-    """Stored metrics (includes backend additions)"""
-    # All client metrics (inherited)
+    """
+    Consolidated single source of truth for all metrics (stored in assessment).
+    Combines client-calculated metrics + backend-calculated scores.
+    All metrics in real-world units (cm, degrees).
+    """
+    # Test result
+    success: bool
     hold_time: float
+    failure_reason: Optional[str]
+
+    # Sway metrics (cm)
     sway_std_x: float
     sway_std_y: float
     sway_path_length: float
     sway_velocity: float
     corrections_count: int
+
+    # Arm metrics (degrees)
     arm_angle_left: float
     arm_angle_right: float
     arm_asymmetry_ratio: float
+
+    # Temporal analysis
     temporal: Optional[TemporalMetrics]
+
+    # Enhanced temporal data for LLM
+    five_second_segments: Optional[list[FiveSecondSegment]]
+    events: Optional[list[BalanceEvent]]
 
     # Backend-calculated
     duration_score: int  # 1-5 (LTAD)
@@ -527,6 +547,28 @@ class MetricsData(BaseModel):
 - Frontend uses `camelCase`
 - Backend uses `snake_case`
 - Automatic conversion via `camelcase-keys` and `snakecase-keys` packages
+
+### Storage Architecture (Post-Refactor)
+
+**Before (deprecated)**:
+- Assessment had two separate metric fields: `metrics` and `client_metrics`
+- `failure_reason` stored at Assessment root level
+- Duplication and confusion about source of truth
+
+**After (current)**:
+- **Single source of truth**: `Assessment.metrics` (MetricsData)
+- All client-calculated metrics merged with backend scores
+- `success` and `failure_reason` moved into MetricsData
+- `ClientMetricsData` only used as API input validation schema
+
+**Data Flow**:
+1. Client sends `ClientMetricsData` to `/assessments/analyze` endpoint
+2. Backend validates input using `ClientMetricsData` schema
+3. Backend builds consolidated `MetricsData` object:
+   - Copies all client metrics (sway, arms, temporal, events)
+   - Adds `duration_score` based on `hold_time`
+4. Backend stores `Assessment` with single `metrics: MetricsData` field
+5. Frontend receives `AssessmentMetrics` (camelCase version of MetricsData)
 
 ---
 

@@ -105,8 +105,12 @@
 
 | Metric | Unit | What It Measures | Calculation | Range |
 |--------|------|------------------|-------------|-------|
+| `success` | boolean | Whether test was passed | Client determination | true/false |
+| `failure_reason` | string | Why test failed (if applicable) | Client detection | "foot_down"/"time_limit"/etc |
 | `duration_score` | 1-5 | LTAD duration score | Based on hold_time | 1-5 |
 | `age_expectation` | label | Performance vs age norm | Compares score to age | "below"/"meets"/"above" |
+
+**Note**: All metrics (including `success` and `failure_reason`) are now stored in the consolidated `metrics` object. The backend adds `duration_score` to the client-calculated metrics.
 
 **LTAD Score Thresholds**:
 - Score 1 (Beginning): 1-9 seconds
