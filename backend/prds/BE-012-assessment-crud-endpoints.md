@@ -95,8 +95,6 @@ class AssessmentDetailResponse(BaseModel):
     metrics: Optional[MetricsData] = None
     ai_feedback: Optional[str] = None
     coach_notes: Optional[str] = None
-    team_rank: Optional[int] = None
-    team_total: Optional[int] = None
 
 class UpdateNotesRequest(BaseModel):
     notes: str = ""
@@ -119,7 +117,6 @@ from app.models.assessment import (
 )
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
-from app.services.metrics import calculate_team_ranking
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
@@ -258,18 +255,6 @@ async def get_assessment(
             detail="Athlete not found"
         )
 
-    # Calculate team ranking if assessment is complete
-    team_rank = None
-    team_total = None
-    if assessment.metrics and assessment.metrics.stability_score:
-        rank, total = await calculate_team_ranking(
-            user.id,
-            assessment.athlete_id,
-            assessment.metrics.stability_score
-        )
-        team_rank = rank
-        team_total = total
-
     # Regenerate video signed URL if video exists (URLs expire after 1 hour)
     # This ensures returning to an old assessment shows playable video
     # See BE-006 generate_signed_url() for implementation
@@ -291,8 +276,6 @@ async def get_assessment(
         metrics=assessment.metrics,
         ai_feedback=assessment.ai_feedback,
         coach_notes=assessment.coach_notes,
-        team_rank=team_rank,
-        team_total=team_total,
     )
 
 @router.put("/{assessment_id}/notes")
@@ -433,9 +416,7 @@ async def delete_assessment(
     "failure_reason": "time_complete"
   },
   "ai_feedback": "**Score Summary**\nJohn achieved...",
-  "coach_notes": "Good focus today",
-  "team_rank": 3,
-  "team_total": 12
+  "coach_notes": "Good focus today"
 }
 ```
 

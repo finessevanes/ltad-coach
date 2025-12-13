@@ -6,6 +6,11 @@ blocks: [FE-013]
 
 # FE-012: Athlete Profile & Assessment History
 
+> ## ⚠️ Phase 9 Dependency
+>
+> The ReportHistory component described below depends on the reports API (BE-013, BE-014)
+> which is not yet implemented. Skip report-related features until Phase 9 is complete.
+
 ## Title
 Implement athlete profile page with assessment history and progress visualization
 
@@ -18,7 +23,7 @@ Implement athlete profile page with assessment history and progress visualizatio
 - Simple progress chart (duration over time)
 - "New Assessment" and "Edit" actions
 - Delete athlete functionality
-- Report history section (sent reports with resend option)
+- Report history section (sent reports with resend option) **(Phase 9 - not yet implemented)**
 
 ### Out of Scope
 - Parent report generation (FE-013)
@@ -36,10 +41,10 @@ Implement athlete profile page with assessment history and progress visualizatio
 ## Acceptance Criteria
 
 - [ ] Profile page shows athlete name, age, gender
-- [ ] Report history section shows previously sent reports
-- [ ] Each report row shows date sent, PIN (masked), resend button
-- [ ] "Resend Report" generates new PIN and sends email
-- [ ] Success/error toast after resend
+- [ ] ~~Report history section shows previously sent reports~~ (Phase 9)
+- [ ] ~~Each report row shows date sent, PIN (masked), resend button~~ (Phase 9)
+- [ ] ~~"Resend Report" generates new PIN and sends email~~ (Phase 9)
+- [ ] ~~Success/error toast after resend~~ (Phase 9)
 - [ ] Consent status shown with appropriate badge
 - [ ] Assessment history displayed in chronological order
 - [ ] Each assessment row shows date, score, duration

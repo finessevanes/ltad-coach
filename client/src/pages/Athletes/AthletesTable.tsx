@@ -14,7 +14,7 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import { Visibility, Videocam as VideocamIcon, CloudUpload, Assessment } from '@mui/icons-material';
+import { PersonOutline, Videocam as VideocamIcon, CloudUpload, Assessment } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Athlete } from '../../types/athlete';
@@ -206,7 +206,7 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
                   }}
                   aria-label={`View ${athlete.name}`}
                 >
-                  <Visibility />
+                  <PersonOutline />
                 </IconButton>
               </TableCell>
             </TableRow>

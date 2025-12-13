@@ -1,1 +1,1 @@
-# AI Coach Backend Application
+# CoachLens Backend Application

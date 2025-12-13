@@ -2,9 +2,11 @@
 
 > Computer vision athletic assessment platform for youth sports coaches
 
-**Version**: 0.1.0
+**Version**: 0.3.0
 **Target Demo**: December 18, 2025
-**Status**: Documentation complete, implementation pending
+**Status**: Phases 0-7 implemented, Phase 8+ pending
+
+> **Architecture Evolution**: The implementation has diverged from the original PRD. Key change: MediaPipe analysis now runs client-side (not server-side). The client is the source of truth for all CV metrics. See details below.
 
 ---
 
@@ -31,11 +33,12 @@ The LTAD Coach MVP is a full-stack web application that enables youth sports coa
 - Track athlete progress over time
 - Share reports with parents
 
-**Key Architectural Principles:**
-- **Client-side preview, server-side truth**: MediaPipe.js provides real-time skeleton overlay for coaches, but server-side MediaPipe Python is the source of truth for all metrics
-- **Async processing**: Video analysis happens in background tasks to avoid blocking user experience
-- **Context optimization**: Four-agent AI system with offloading, compression, isolation, and caching patterns
-- **Firebase-centric**: Firestore for data, Storage for files, Auth for authentication
+**Key Architectural Principles (Current Implementation):**
+- **Client-side metrics**: MediaPipe.js calculates all CV metrics client-side; backend validates and stores
+- **Synchronous processing**: Assessments complete immediately (no background tasks needed)
+- **Backend as proxy**: Backend validates auth/consent, calculates LTAD scores, and generates AI feedback
+- **Firebase-centric**: Firestore for data, Storage for videos, Auth for authentication
+- **AI agents operational**: Phase 7 AI feedback fully implemented via orchestrator
 
 ---
 
@@ -53,44 +56,41 @@ graph TB
 
     subgraph "Frontend (Vercel)"
         React[React SPA<br/>Vite + TypeScript + MUI<br/>Port 5173 dev]
-        MediaPipeJS[MediaPipe.js<br/>Client-side Preview<br/>≥15 FPS skeleton overlay]
+        MediaPipeJS[MediaPipe.js<br/>Client-side Analysis<br/>SOURCE OF TRUTH for metrics]
+        MetricsCalc[Metrics Calculator<br/>utils/metricsCalculation.ts]
     end
 
     subgraph "Backend (Render)"
         FastAPI[FastAPI<br/>Python 3.11<br/>Port 8000]
-        MediaPipePy[MediaPipe Python<br/>Server-side Analysis<br/>Source of Truth]
-        AgentOrch[AI Agent Orchestrator]
+        DurationScore[Duration Scoring<br/>LTAD benchmarks only]
     end
 
     subgraph "Firebase (Google Cloud)"
         FireAuth[Firebase Auth<br/>Google OAuth + Email/Password]
         Firestore[Cloud Firestore<br/>NoSQL Document Store]
-        FireStorage[Firebase Storage<br/>Video & Keypoint Files]
+        FireStorage[Firebase Storage<br/>Videos only]
     end
 
     subgraph "External Services"
-        OpenRouter[OpenRouter API<br/>Claude Sonnet 4.5 + Haiku]
+        Anthropic[Anthropic API<br/>Claude Haiku for AI Agents]
         Resend[Resend API<br/>Transactional Email]
     end
 
     Coach -->|Records Video| React
-    Coach -->|Views Dashboard| React
-    Parent -->|Accesses Report| React
+    Coach -->|Views Results| React
+    Parent -->|Accesses Consent| React
 
-    React -->|Live Preview| MediaPipeJS
+    React -->|Pose Detection| MediaPipeJS
+    MediaPipeJS -->|Landmarks| MetricsCalc
     React -->|Upload Video| FireStorage
     React -->|Auth| FireAuth
-    React -->|API Calls| FastAPI
+    React -->|Send Metrics| FastAPI
     React -->|Read Data| Firestore
 
     FastAPI -->|Validate Token| FireAuth
-    FastAPI -->|Read/Write Data| Firestore
-    FastAPI -->|Fetch Video| FireStorage
-    FastAPI -->|Store Keypoints| FireStorage
-    FastAPI -->|Extract Pose| MediaPipePy
-    FastAPI -->|Generate Feedback| AgentOrch
-
-    AgentOrch -->|API Requests| OpenRouter
+    FastAPI -->|Store Assessment| Firestore
+    FastAPI -->|Calculate Score| DurationScore
+    FastAPI -->|Generate Feedback| Anthropic
     FastAPI -->|Send Emails| Resend
 
     classDef userClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
@@ -98,98 +98,93 @@ graph TB
     classDef backendClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef firebaseClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
     classDef externalClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef notImplemented fill:#ffcdd2,stroke:#c62828,stroke-width:2px
 
     class Coach,Parent,Athlete userClass
-    class React,MediaPipeJS frontendClass
-    class FastAPI,MediaPipePy,AgentOrch backendClass
+    class React,MediaPipeJS,MetricsCalc frontendClass
+    class FastAPI,DurationScore backendClass
     class FireAuth,Firestore,FireStorage firebaseClass
-    class OpenRouter,Resend externalClass
+    class Anthropic,Resend externalClass
 ```
 
-**Key Points:**
+**Key Points (Current Implementation):**
 - **Deployment**: Frontend on Vercel (static), Backend on Render (Python)
 - **Authentication**: Firebase handles all auth; backend validates tokens
-- **Storage Strategy**: Videos and raw keypoints in Firebase Storage, metadata in Firestore
-- **AI Processing**: Orchestrator routes requests to appropriate Claude model (Haiku or Sonnet)
+- **Metrics Calculation**: Client-side MediaPipe.js is source of truth (not server-side)
+- **Storage Strategy**: Videos in Firebase Storage, metrics in Firestore
+- **AI Processing**: Fully operational via orchestrator (Phase 7 complete)
 
 ---
 
 ## 2. Data Flow
 
-End-to-end pipeline from video capture to AI feedback display.
+End-to-end pipeline from video capture to results display.
+
+> **Note**: This diagram reflects the CURRENT implementation, which differs from the original PRD. Client-side MediaPipe is the source of truth.
 
 ```mermaid
 sequenceDiagram
     actor Coach
     participant React as React Frontend
-    participant MediaPipeJS as MediaPipe.js<br/>(Preview Only)
+    participant MediaPipeJS as MediaPipe.js<br/>(Source of Truth)
+    participant MetricsCalc as Client Metrics<br/>(metricsCalculation.ts)
     participant FireStorage as Firebase Storage
     participant FastAPI as FastAPI Backend
     participant Firestore as Cloud Firestore
-    participant MediaPipePy as MediaPipe Python<br/>(Source of Truth)
-    participant MetricsCalc as Metrics Calculator
-    participant AgentOrch as Agent Orchestrator
-    participant Claude as Claude (OpenRouter)
 
     Coach->>React: 1. Start recording
     React->>MediaPipeJS: 2. Initialize camera stream
-    MediaPipeJS-->>React: 3. Display skeleton overlay (≥15 FPS)
-    Coach->>React: 4. Stop recording (30s max)
 
-    React->>FireStorage: 5. Upload raw video blob
-    FireStorage-->>React: 6. Return video URL
-
-    React->>FastAPI: 7. POST /assessments/analyze<br/>(video_url, athlete_id, leg_tested)
-    FastAPI->>Firestore: 8. Create assessment<br/>status: "processing"
-    FastAPI-->>React: 9. Return assessment_id (immediate)
-
-    Note over FastAPI: Async background task starts
-
-    FastAPI->>FireStorage: 10. Download video
-    FastAPI->>MediaPipePy: 11. Extract keypoints<br/>(33 landmarks per frame)
-    MediaPipePy-->>FastAPI: 12. Return landmark array
-
-    FastAPI->>MetricsCalc: 13. Calculate metrics<br/>(stability, sway, arm excursion)
-    MetricsCalc-->>FastAPI: 14. Return 11 derived metrics
-
-    FastAPI->>FireStorage: 15. Store raw keypoints JSON<br/>(context offloading)
-
-    FastAPI->>AgentOrch: 16. Request feedback<br/>(metrics, athlete history)
-    AgentOrch->>Claude: 17. Haiku: Compress history<br/>(6000 tokens → 150 tokens)
-    Claude-->>AgentOrch: 18. Return summary
-    AgentOrch->>Claude: 19. Sonnet: Generate assessment<br/>(cached LTAD benchmarks)
-    Claude-->>AgentOrch: 20. Return AI feedback
-
-    AgentOrch-->>FastAPI: 21. Return feedback
-    FastAPI->>Firestore: 22. Update assessment<br/>status: "completed"<br/>metrics + aiFeedback
-
-    loop Polling (every 2 seconds)
-        React->>FastAPI: 23. GET /assessments/:id
-        FastAPI->>Firestore: 24. Fetch assessment
-        Firestore-->>FastAPI: 25. Return data
-        FastAPI-->>React: 26. Return status
+    loop During Recording (30s max)
+        MediaPipeJS-->>React: 3. Stream landmarks (≥15 FPS)
+        React->>MetricsCalc: 4. Track positions in real-time
     end
 
-    React->>Coach: 27. Display results<br/>(metrics + AI feedback)
+    Coach->>React: 5. Stop recording (or auto-stop on failure)
+    React->>MetricsCalc: 6. Calculate final metrics
+    MetricsCalc-->>React: 7. Return all 11 metrics
+
+    React->>FireStorage: 8. Upload video blob
+    FireStorage-->>React: 9. Return video URL
+
+    React->>FastAPI: 10. POST /assessments/analyze<br/>(video_url, athlete_id, client_metrics)
+
+    Note over FastAPI: Validate ownership & consent
+
+    FastAPI->>FastAPI: 11. Calculate duration_score<br/>+ age_expectation (LTAD)
+    FastAPI->>Firestore: 12. Create assessment<br/>status: "completed"
+
+    Note over FastAPI: Generate AI feedback via orchestrator
+
+    FastAPI->>Anthropic: 13. Generate coach feedback<br/>(assessment agent)
+    Anthropic-->>FastAPI: 14. Return AI feedback
+    FastAPI->>Firestore: 15. Update with ai_coach_assessment
+    FastAPI-->>React: 16. Return assessment_id + status
+
+    React->>Coach: 17. Display results<br/>(metrics + AI feedback)
 ```
 
 **Performance Targets (NFRs):**
-- **NFR-1**: Live skeleton overlay ≥15 FPS (client-side)
-- **NFR-2**: Server video analysis <30 seconds
-- **NFR-3**: AI feedback generation <10 seconds (with prompt caching)
-- **NFR-4**: Page load time <3 seconds
+- **NFR-1**: Live skeleton overlay ≥15 FPS (client-side) ✅ Achieved
+- **NFR-2**: Assessment storage <2 seconds (no server-side video processing)
+- **NFR-3**: AI feedback generation <10 seconds ✅ Achieved (3-6 seconds typical)
+- **NFR-4**: Page load time <3 seconds ✅ Achieved
 
-**Critical Design Decisions:**
-- **Non-blocking upload**: Backend returns assessment ID immediately, processes in background
-- **Polling strategy**: Frontend polls every 2 seconds until status changes to "completed"
-- **Context offloading**: Raw keypoints stored in Firebase Storage (not sent to LLM)
-- **Two MediaPipe instances**: Client for preview UX, server for metric accuracy
+**Current Design Decisions:**
+- **Client as source of truth**: All CV metrics calculated in browser via MediaPipe.js
+- **Synchronous flow**: No background processing, assessments complete immediately
+- **Backend validation only**: Backend validates auth, consent, calculates LTAD scores
+- **No polling needed**: Assessment returns as "completed" immediately
 
 ---
 
 ## 3. AI Agent Architecture
 
-Four-agent system using Claude models via OpenRouter with context optimization patterns.
+> **✅ STATUS: IMPLEMENTED (Phase 7 Complete)**
+>
+> The AI agent system is fully operational. All four agents are implemented in `backend/app/agents/` with static LTAD context in `backend/app/prompts/static_context.py`. Currently using Claude Haiku for all agents via Anthropic API (direct, not OpenRouter).
+
+Four-agent system using Claude models via Anthropic API with context optimization patterns.
 
 ```mermaid
 graph TD
@@ -252,26 +247,28 @@ graph TD
     style ContextPatterns fill:#fff9c4,stroke:#f57f17,stroke-width:2px
 ```
 
-**Agent Specifications:**
+**Implemented Agent Specifications:**
 
 | Agent | Model | Input Size | Output Size | Cost/Call | Purpose |
 |-------|-------|------------|-------------|-----------|---------|
-| **Orchestrator** | Python logic (no LLM) | - | - | $0 | Route requests to appropriate agent |
-| **Compression** | Claude Haiku | ~6000 tokens (12 assessments) | ~150 tokens (summary) | ~$0.002 | Summarize athlete history for context efficiency |
-| **Assessment** | Claude Sonnet 4.5 | ~2500 tokens (metrics + cached benchmarks) | ~400 tokens | ~$0.05 | Generate single-test coaching feedback |
-| **Progress** | Claude Sonnet 4.5 | ~1100 tokens (summary + team context) | ~600 tokens | ~$0.08 | Generate trend analysis and parent reports |
+| **Orchestrator** | Python logic (no LLM) | - | - | $0 | Route requests and execute appropriate workflow |
+| **Compression** | Claude Haiku | ~6000 tokens (12 assessments) | ~150 words (summary) | ~$0.002 | Summarize athlete history for context efficiency |
+| **Assessment** | Claude Haiku | ~2500 tokens (metrics + LTAD context) | ~200 words | ~$0.005 | Generate single-test coaching feedback |
+| **Progress** | Claude Haiku | ~1100 tokens (summary + team context) | ~350 words | ~$0.008 | Generate trend analysis and parent reports |
 
-**Context Optimization Strategies:**
+**Implemented Context Optimization Strategies:**
 
-1. **Offloading**: Store raw keypoints (33 landmarks × 900 frames = ~30KB JSON) in Firebase Storage instead of LLM context
-2. **Compression**: Use fast/cheap Haiku model to summarize 12 assessments (6000 tokens → 150 tokens) before passing to expensive Sonnet
-3. **Isolation**: Each agent receives only data relevant to its task (no unnecessary context)
-4. **Caching**: Cache static LTAD age-based benchmarks in system prompt (~90% cache hit rate = ~90% cost savings)
+1. **Offloading**: Raw keypoints (33 landmarks × 900 frames = ~30KB JSON) stored in Firebase Storage, not sent to LLM
+2. **Compression**: Haiku model summarizes 12 assessments (~6000 tokens → ~150 words) before passing to Progress agent
+3. **Isolation**: Each agent receives only relevant data via orchestrator routing
+4. **Unified Entry Point**: All AI operations go through `orchestrator.generate_feedback()` for consistency
+5. **Fallback Mechanisms**: Template-based responses provided when API calls fail
 
-**Cost Projections:**
-- Assessment feedback: $0.05 per test
-- Parent report: $0.08 per report (includes compression)
-- 1000 assessments/month: ~$50-80/month in AI costs
+**Actual Costs:**
+- Assessment feedback: ~$0.005 per test (Haiku)
+- Progress report: ~$0.010 per report (includes compression)
+- 1000 assessments/month: ~$5-10/month in AI costs (using Haiku)
+- System designed to support Sonnet upgrade when access is granted
 
 ---
 
@@ -335,20 +332,36 @@ erDiagram
     }
 ```
 
-**Assessment Metrics Object** (11 fields):
+**Assessment Metrics Object** (all metrics in real-world units):
 ```typescript
 {
-  durationSeconds: number;        // 0-30 seconds
-  stabilityScore: number;         // 0-100 composite score
+  // Time
+  holdTime: number;              // 0-30 seconds
+
+  // Sway metrics (cm)
   swayStdX: number;              // Hip horizontal variance (cm)
   swayStdY: number;              // Hip vertical variance (cm)
   swayPathLength: number;        // Total hip trajectory (cm)
   swayVelocity: number;          // Average hip speed (cm/s)
-  armExcursionLeft: number;      // Left arm movement from hips (cm)
-  armExcursionRight: number;     // Right arm movement from hips (cm)
-  armAsymmetryRatio: number;     // Left/right compensation ratio
   correctionsCount: number;      // Balance adjustment events
-  failureReason: string | null;  // "foot_touchdown"|"hands_off_hips"|"support_foot_moved"|null
+
+  // Arm metrics (degrees)
+  armAngleLeft: number;          // Left arm angle from horizontal (degrees, 0° = T-position)
+  armAngleRight: number;         // Right arm angle from horizontal (degrees)
+  armAsymmetryRatio: number;     // Left/right angle ratio
+
+  // Scores
+  stabilityScore: number;        // 0-100 composite score
+  durationScore: number;         // 1-5 LTAD score
+  durationScoreLabel: string;    // "Beginning"|"Developing"|"Competent"|"Proficient"|"Advanced"
+  ageExpectation?: string;       // "above"|"meets"|"below"
+
+  // Temporal analysis (fatigue pattern)
+  temporal?: {
+    firstThird: SegmentMetrics;  // Metrics for first 33% of test
+    middleThird: SegmentMetrics; // Metrics for 33-66% of test
+    lastThird: SegmentMetrics;   // Metrics for final 33% of test
+  }
 }
 ```
 
@@ -367,113 +380,137 @@ erDiagram
 
 ## 5. Backend Services
 
+> **Note**: This section reflects the CURRENT implementation, which differs from the original PRD. The backend serves as a validated write proxy - receiving pre-calculated metrics from the client.
+
 Service layer architecture and API route mapping.
 
 ```mermaid
 graph TB
-    subgraph "API Routes (app/routes/)"
-        AuthRoutes[auth.py<br/>POST /auth/token<br/>POST /auth/logout]
+    subgraph "API Routers (app/routers/)"
+        AuthRoutes[auth.py<br/>POST /auth/me<br/>Firebase token validation]
         AthleteRoutes[athletes.py<br/>CRUD + List<br/>POST/GET/PUT/DELETE]
         ConsentRoutes[consent.py<br/>Public consent workflow<br/>GET/POST /consent/:token]
-        AssessRoutes[assessments.py<br/>Upload + CRUD<br/>POST /analyze, GET/PUT/DELETE]
-        ReportRoutes[reports.py<br/>Generate + Send<br/>POST /generate, POST /send]
-        DashRoutes[dashboard.py<br/>Aggregate data<br/>GET /dashboard]
+        AssessRoutes[assessments.py<br/>Store client metrics<br/>POST /analyze, GET /:id]
+    end
+
+    subgraph "Repository Layer (app/repositories/)"
+        BaseRepo[base.py<br/>Firestore base operations]
+        UserRepo[user.py<br/>User document access]
+        AthleteRepo[athlete.py<br/>Athlete CRUD + ownership]
+        AssessmentRepo[assessment.py<br/>Assessment storage]
     end
 
     subgraph "Service Layer (app/services/)"
-        AuthSvc[auth.py<br/>Firebase JWT validation<br/>User creation]
-        MediaPipeSvc[mediapipe_service.py<br/>Pose detection<br/>Keypoint extraction<br/>Failure detection]
-        MetricsSvc[metrics_calculator.py<br/>11 derived metrics<br/>Butterworth filtering<br/>Stability scoring]
-        EmailSvc[email_service.py<br/>Resend API client<br/>Consent emails<br/>Parent reports]
-        StorageSvc[storage_service.py<br/>Firebase Storage ops<br/>Upload/download<br/>Signed URLs]
-        AnalysisSvc[analysis.py<br/>Pipeline orchestrator<br/>MediaPipe → Metrics → AI]
+        MetricsSvc[metrics.py<br/>Duration scoring only<br/>LTAD age expectations]
+        EmailSvc[email.py<br/>Resend API client<br/>Consent emails]
+        VideoSvc[video.py<br/>Video URL handling]
     end
 
-    subgraph "AI Agents (app/agents/)"
-        Orchestrator[orchestrator.py<br/>Request routing<br/>Pure Python logic]
-        CompressionAgent[compression.py<br/>Haiku summarization<br/>6000→150 tokens]
-        AssessmentAgent[assessment.py<br/>Sonnet feedback<br/>Single test analysis]
-        ProgressAgent[progress.py<br/>Sonnet reports<br/>Trend analysis]
-        AgentClient[client.py<br/>OpenRouter API<br/>Prompt caching]
+    subgraph "Middleware (app/middleware/)"
+        AuthMiddleware[auth.py<br/>Firebase JWT validation<br/>get_current_user dependency]
+        RateLimitMiddleware[rate_limit.py<br/>In-memory rate limiting]
+    end
+
+    subgraph "Models (app/models/)"
+        AssessmentModel[assessment.py<br/>AssessmentCreate, ClientMetrics]
+        AthleteModel[athlete.py<br/>Athlete schemas]
+        ConsentModel[consent.py<br/>Consent schemas]
+        UserModel[user.py<br/>User schema]
+        ErrorModel[errors.py<br/>Error response schemas]
+    end
+
+    subgraph "Constants (app/constants/)"
+        ScoringConst[scoring.py<br/>LTAD duration thresholds<br/>Age expectations]
     end
 
     subgraph "External Dependencies"
         Firebase[Firebase Admin SDK<br/>Auth, Firestore, Storage]
-        OpenRouter[OpenRouter API<br/>Claude models]
         ResendAPI[Resend API<br/>Email delivery]
-        MediaPipe[MediaPipe v0.10.9<br/>BlazePose 33 landmarks]
     end
 
-    AuthRoutes --> AuthSvc
-    AthleteRoutes --> AuthSvc
+    subgraph "NOT IMPLEMENTED (Phase 7)"
+        Agents[agents/<br/>EMPTY]
+        Prompts[prompts/<br/>EMPTY]
+    end
+
+    AuthRoutes --> AuthMiddleware
+    AthleteRoutes --> AuthMiddleware
+    AthleteRoutes --> AthleteRepo
     ConsentRoutes --> EmailSvc
-    ConsentRoutes --> Firebase
+    ConsentRoutes --> AthleteRepo
 
-    AssessRoutes --> AnalysisSvc
-    AnalysisSvc --> MediaPipeSvc
-    AnalysisSvc --> MetricsSvc
-    AnalysisSvc --> Orchestrator
-    AnalysisSvc --> StorageSvc
+    AssessRoutes --> AuthMiddleware
+    AssessRoutes --> RateLimitMiddleware
+    AssessRoutes --> AthleteRepo
+    AssessRoutes --> AssessmentRepo
+    AssessRoutes --> MetricsSvc
 
-    MediaPipeSvc --> MediaPipe
+    AthleteRepo --> BaseRepo
+    AssessmentRepo --> BaseRepo
+    UserRepo --> BaseRepo
+    BaseRepo --> Firebase
 
-    ReportRoutes --> Orchestrator
-    ReportRoutes --> EmailSvc
-    DashRoutes --> Firebase
-
-    Orchestrator --> CompressionAgent
-    Orchestrator --> AssessmentAgent
-    Orchestrator --> ProgressAgent
-
-    CompressionAgent --> AgentClient
-    AssessmentAgent --> AgentClient
-    ProgressAgent --> AgentClient
-    AgentClient --> OpenRouter
-
-    AuthSvc --> Firebase
+    MetricsSvc --> ScoringConst
     EmailSvc --> ResendAPI
-    StorageSvc --> Firebase
+    AuthMiddleware --> Firebase
 
     classDef routeClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef repoClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     classDef serviceClass fill:#e3f2fd,stroke:#01579b,stroke-width:2px
-    classDef agentClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef externalClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef middlewareClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef modelClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef externalClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef notImplemented fill:#ffcdd2,stroke:#c62828,stroke-width:2px
 
-    class AuthRoutes,AthleteRoutes,ConsentRoutes,AssessRoutes,ReportRoutes,DashRoutes routeClass
-    class AuthSvc,MediaPipeSvc,MetricsSvc,EmailSvc,StorageSvc,AnalysisSvc serviceClass
-    class Orchestrator,CompressionAgent,AssessmentAgent,ProgressAgent,AgentClient agentClass
-    class Firebase,OpenRouter,ResendAPI,MediaPipe externalClass
+    class AuthRoutes,AthleteRoutes,ConsentRoutes,AssessRoutes routeClass
+    class BaseRepo,UserRepo,AthleteRepo,AssessmentRepo repoClass
+    class MetricsSvc,EmailSvc,VideoSvc serviceClass
+    class AuthMiddleware,RateLimitMiddleware middlewareClass
+    class AssessmentModel,AthleteModel,ConsentModel,UserModel,ErrorModel,ScoringConst modelClass
+    class Firebase,ResendAPI externalClass
+    class Agents,Prompts notImplemented
 ```
 
-**Key API Endpoints:**
+**Implemented API Endpoints:**
 
 | Method | Endpoint | Purpose | Auth Required |
 |--------|----------|---------|---------------|
-| POST | `/auth/token` | Validate Firebase JWT | No (public) |
+| GET | `/auth/me` | Validate Firebase JWT, return user | Yes |
 | POST | `/athletes` | Create athlete | Yes (coach) |
 | GET | `/athletes` | List coach's athletes | Yes (coach) |
+| GET | `/athletes/:id` | Get single athlete | Yes (coach) |
+| PUT | `/athletes/:id` | Update athlete | Yes (coach) |
+| DELETE | `/athletes/:id` | Delete athlete | Yes (coach) |
 | POST | `/athletes/:id/resend-consent` | Resend consent email | Yes (coach) |
 | GET | `/consent/:token` | Display consent form | No (public) |
-| POST | `/consent/:token/sign` | Submit signed consent | No (public) |
-| POST | `/assessments/analyze` | Upload video for analysis | Yes (coach) |
-| GET | `/assessments/:id` | Get assessment (polling) | Yes (coach) |
-| POST | `/reports/generate/:athleteId` | Preview parent report | Yes (coach) |
-| POST | `/reports/:athleteId/send` | Send report to parent | Yes (coach) |
-| GET | `/reports/view/:id` | View report (PIN required) | No (public) |
-| GET | `/dashboard` | Coach dashboard data | Yes (coach) |
+| POST | `/consent/:token/respond` | Submit consent response | No (public) |
+| POST | `/assessments/analyze` | Store client-calculated metrics | Yes (coach) |
+| GET | `/assessments/:id` | Get assessment | Yes (coach) |
 
-**Service Responsibilities:**
+**Not Yet Implemented (Phase 7+):**
 
-- **auth.py**: Firebase token validation, create middleware dependency `get_current_user()`
-- **mediapipe_service.py**: Frame extraction, pose detection, Butterworth filtering (2Hz cutoff), failure detection
-- **metrics_calculator.py**: Derive 11 metrics from raw landmarks using biomechanical formulas
-- **email_service.py**: Send consent requests and parent reports via Resend with HTML templates
-- **storage_service.py**: Upload videos/keypoints, generate signed URLs, manage file lifecycle
-- **analysis.py**: Orchestrate the full pipeline: MediaPipe → metrics → AI agents → Firestore update
+| Method | Endpoint | Purpose | Status |
+|--------|----------|---------|--------|
+| POST | `/reports/generate/:athleteId` | AI parent report | Phase 7 |
+| POST | `/reports/:athleteId/send` | Send report to parent | Phase 7 |
+| GET | `/reports/view/:id` | View report (PIN) | Phase 7 |
+| GET | `/dashboard` | Coach dashboard data | Phase 8 |
+
+**Current Service Responsibilities:**
+
+- **middleware/auth.py**: Firebase token validation, `get_current_user()` dependency
+- **middleware/rate_limit.py**: In-memory rate limiting (10 assessments/hour)
+- **services/metrics.py**: Duration scoring (1-5 scale), age expectations lookup
+- **services/email.py**: Send consent requests via Resend
+- **repositories/base.py**: Common Firestore CRUD operations
+- **repositories/assessment.py**: `create_completed()` for storing client metrics
+- **constants/scoring.py**: LTAD duration thresholds and age-based expectations
 
 ---
 
 ## 6. Frontend Architecture
+
+> **Note**: The frontend is the SOURCE OF TRUTH for all CV metrics. MediaPipe.js runs client-side and calculates all 11 metrics before sending to the backend.
 
 React SPA structure with components, services, contexts, and hooks.
 
@@ -493,39 +530,44 @@ graph TB
         Login[Login.tsx<br/>Firebase email + Google OAuth]
         Dashboard[Dashboard.tsx<br/>Coach home with stats]
         Athletes[Athletes.tsx<br/>Athlete roster list]
-        AthleteProfile[AthleteProfile.tsx<br/>Individual athlete view]
+        AthleteDetail[AthleteDetail.tsx<br/>Individual athlete view]
+        NewAssessment[NewAssessment.tsx<br/>Balance test recording]
         AssessmentResults[AssessmentResults.tsx<br/>Test results display]
-        ConsentForm[ConsentForm.tsx<br/>Public parent consent]
-        ReportView[ReportView.tsx<br/>Public parent report]
+        ConsentPage[ConsentPage.tsx<br/>Public parent consent]
     end
 
-    subgraph "Reusable Components (src/components/)"
-        VideoRecorder[VideoRecorder.tsx<br/>Camera + MediaPipe.js preview]
-        VideoUpload[VideoUpload.tsx<br/>Drag-and-drop file upload]
-        AssessmentCard[AssessmentCard.tsx<br/>Metrics display]
-        ScoreBadge[ScoreBadge.tsx<br/>Visual score indicator]
-        ConsentBadge[ConsentBadge.tsx<br/>Status badge]
-        AthleteForm[AthleteForm.tsx<br/>Add/edit athlete]
-        AthleteList[AthleteList.tsx<br/>Roster table]
+    subgraph "Balance Test Components (src/components/)"
+        BalanceTest[BalanceTest.tsx<br/>Main test orchestrator]
+        CameraView[CameraView.tsx<br/>Camera + skeleton overlay]
+        TestControls[TestControls.tsx<br/>Start/stop controls]
+        CountdownOverlay[CountdownOverlay.tsx<br/>3-second countdown]
+        TestResults[TestResults.tsx<br/>Metrics display]
+    end
+
+    subgraph "Utils - Metrics (src/utils/) - SOURCE OF TRUTH"
+        MetricsCalc[metricsCalculation.ts<br/>17+ CV metrics<br/>sway, arm angles, temporal, events]
+        PositionDetect[positionDetection.ts<br/>Pose state machine<br/>Failure detection]
+        MetricsCompare[metricsComparison.ts<br/>Compare test results]
+        Validation[validation.ts<br/>Form validation]
     end
 
     subgraph "Custom Hooks (src/hooks/)"
         useAuth[useAuth.tsx<br/>Auth context consumer]
-        useEditLock[useEditLock.tsx<br/>Prevent concurrent edits]
+        useBalanceTest[useBalanceTest.tsx<br/>Full test state machine<br/>Metrics accumulation]
+        useMediaPipe[useMediaPipe.tsx<br/>Pose detection loop<br/>Landmark streaming]
         useCamera[useCamera.tsx<br/>Camera access management]
-        useVideoRecorder[useVideoRecorder.tsx<br/>Recording state]
     end
 
     subgraph "Services (src/services/)"
         ApiClient[api.ts<br/>Backend HTTP client<br/>snake_case ↔ camelCase]
         FirebaseInit[firebase.ts<br/>Firebase SDK initialization]
-        FirestoreService[firestore.ts<br/>Firestore queries]
-        StorageService[storage.ts<br/>Firebase Storage uploads]
+        AssessmentService[assessments.ts<br/>POST metrics to backend]
+        AthleteService[athletes.ts<br/>Athlete CRUD]
     end
 
     subgraph "External SDKs"
         FirebaseSDK[Firebase JS SDK<br/>Auth + Firestore + Storage]
-        MediaPipeJS[MediaPipe.js<br/>Pose Landmarker API]
+        MediaPipeJS[MediaPipe.js<br/>Pose Landmarker API<br/>SOURCE OF TRUTH]
         MUI[Material-UI v5<br/>Component library]
     end
 
@@ -536,29 +578,28 @@ graph TB
     App --> Dashboard
 
     Dashboard --> Athletes
-    Athletes --> AthleteList
-    Athletes --> AthleteForm
-    AthleteList --> AthleteProfile
+    Athletes --> AthleteDetail
+    AthleteDetail --> NewAssessment
+    AthleteDetail --> AssessmentResults
 
-    AthleteProfile --> VideoRecorder
-    AthleteProfile --> VideoUpload
-    AthleteProfile --> AssessmentCard
+    NewAssessment --> BalanceTest
+    BalanceTest --> CameraView
+    BalanceTest --> TestControls
+    BalanceTest --> CountdownOverlay
+    BalanceTest --> TestResults
 
-    VideoRecorder --> useCamera
-    VideoRecorder --> useVideoRecorder
-    VideoRecorder --> MediaPipeJS
-    VideoRecorder --> StorageService
+    BalanceTest --> useBalanceTest
+    useBalanceTest --> useMediaPipe
+    useBalanceTest --> MetricsCalc
+    useBalanceTest --> PositionDetect
+    useMediaPipe --> MediaPipeJS
+    CameraView --> useCamera
 
-    AssessmentCard --> ScoreBadge
-    AthleteList --> ConsentBadge
+    TestResults --> AssessmentService
+    AssessmentService --> ApiClient
+    ApiClient --> |POST client_metrics| Backend[Backend API<br/>FastAPI]
 
-    Login --> useAuth
-    Dashboard --> useAuth
-    AthleteForm --> useEditLock
-
-    ApiClient --> |HTTP requests| Backend[Backend API<br/>FastAPI]
-    FirestoreService --> FirebaseSDK
-    StorageService --> FirebaseSDK
+    AthleteService --> FirebaseSDK
     AuthContext --> FirebaseSDK
 
     useAuth --> AuthContext
@@ -567,118 +608,155 @@ graph TB
     classDef contextClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
     classDef pageClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
     classDef componentClass fill:#e3f2fd,stroke:#01579b,stroke-width:2px
+    classDef utilsClass fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px
     classDef hookClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef serviceClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef sdkClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
 
     class Main,App entryClass
     class AuthContext contextClass
-    class Landing,Login,Dashboard,Athletes,AthleteProfile,AssessmentResults,ConsentForm,ReportView pageClass
-    class VideoRecorder,VideoUpload,AssessmentCard,ScoreBadge,ConsentBadge,AthleteForm,AthleteList componentClass
-    class useAuth,useEditLock,useCamera,useVideoRecorder hookClass
-    class ApiClient,FirebaseInit,FirestoreService,StorageService,FirebaseSDK,MediaPipeJS,MUI serviceClass
+    class Landing,Login,Dashboard,Athletes,AthleteDetail,NewAssessment,AssessmentResults,ConsentPage pageClass
+    class BalanceTest,CameraView,TestControls,CountdownOverlay,TestResults componentClass
+    class MetricsCalc,PositionDetect,MetricsCompare,Validation utilsClass
+    class useAuth,useBalanceTest,useMediaPipe,useCamera hookClass
+    class ApiClient,FirebaseInit,AssessmentService,AthleteService serviceClass
+    class FirebaseSDK,MediaPipeJS,MUI sdkClass
 ```
 
 **Key Frontend Patterns:**
 
-1. **Route Protection**:
+1. **Client-Side Metrics Calculation (SOURCE OF TRUTH)**:
+   ```typescript
+   // utils/metricsCalculation.ts
+   export function calculateMetrics(landmarks: NormalizedLandmark[][]): ClientMetrics {
+     return {
+       holdTime,           // Seconds in valid position
+       stabilityScore,     // 0-100 composite score
+       swayStdX,          // Hip horizontal variance
+       swayStdY,          // Hip vertical variance
+       swayPathLength,    // Total hip trajectory
+       swayVelocity,      // Average hip speed
+       armDeviationLeft,  // Left arm movement
+       armDeviationRight, // Right arm movement
+       armAsymmetryRatio, // L/R compensation ratio
+       correctionsCount,  // Balance adjustments
+       failureReason,     // null or failure type
+     };
+   }
+   ```
+
+2. **Balance Test State Machine (useBalanceTest)**:
+   ```
+   idle → countdown → recording → calculating → completed
+                  ↓                    ↓
+               failed ←──────────── failed
+   ```
+
+3. **Route Protection**:
    - `useAuth()` hook checks Firebase auth state
    - Protected routes redirect to `/login` if not authenticated
 
-2. **Case Conversion**:
+4. **Case Conversion**:
    - Backend uses `snake_case`, frontend uses `camelCase`
    - Automatic conversion via `snakecase-keys` and `camelcase-keys` in API client
 
-3. **MediaPipe.js Usage**:
-   - Initialize Pose Landmarker for real-time skeleton overlay
-   - Preview-only (≥15 FPS target)
-   - Server-side Python MediaPipe is source of truth
+5. **MediaPipe.js Usage**:
+   - Initialize Pose Landmarker in `useMediaPipe` hook
+   - Stream landmarks at ≥15 FPS to `useBalanceTest`
+   - `useBalanceTest` accumulates positions for metric calculation
+   - **Client is source of truth** - backend only stores and adds duration score
 
-4. **Video Recording Flow**:
+6. **Video Recording Flow**:
    ```
    Coach clicks "Start"
-   → 3-second countdown
-   → Record for 30 seconds (or until failure)
-   → Preview playback
-   → Confirm or reshoot
-   → Upload to Firebase Storage
-   → POST to backend API
+   → 3-second countdown (CountdownOverlay)
+   → Record for 30 seconds (or until failure detected)
+   → Calculate all 11 metrics (metricsCalculation.ts)
+   → Upload video to Firebase Storage
+   → POST metrics to backend (/assessments/analyze)
+   → Backend adds duration_score + age_expectation
+   → Display results (TestResults)
    ```
 
-5. **Edit Locking**:
-   - `useEditLock(resourceType, resourceId)` prevents concurrent athlete edits
-   - Uses Firestore transactions to ensure only one coach can edit at a time
-
-6. **State Management**:
+7. **State Management**:
    - Global: AuthContext for user state
    - Local: `useState` for component UI state
-   - Optional: React Query for server state caching
+   - Hook-based: `useBalanceTest` manages full test lifecycle
 
 ---
 
 ## Performance Requirements
 
-**NFR-1: Live Skeleton Overlay**
+**NFR-1: Live Skeleton Overlay** ✅ ACHIEVED
 - Target: ≥15 FPS
 - Technology: MediaPipe.js Pose Landmarker (client-side)
 - Optimization: Use lightweight BlazePose model, render on Canvas
+- Status: Implemented in `useMediaPipe` hook
 
-**NFR-2: Server Video Analysis**
-- Target: <30 seconds for full processing pipeline
-- Includes: Video download + MediaPipe analysis + metric calculation + keypoint storage
-- Optimization: Async background task, process frames in batches
+**NFR-2: Assessment Storage** ✅ ACHIEVED (changed from original)
+- Target: <2 seconds
+- Original: <30 seconds for server-side video analysis
+- Current: Client calculates metrics, backend only stores - no server-side processing
+- Note: Server-side MediaPipe analysis NOT IMPLEMENTED
 
-**NFR-3: AI Feedback Generation**
+**NFR-3: AI Feedback Generation** ❌ NOT IMPLEMENTED
 - Target: <10 seconds
-- Includes: Orchestrator routing + compression (if needed) + Sonnet inference
-- Optimization: Prompt caching for static LTAD benchmarks (~90% cost savings + speed boost)
+- Status: Phase 7 - AI agents not yet implemented
+- Planned: Orchestrator routing + compression + Sonnet inference
 
-**NFR-4: Page Load Time**
+**NFR-4: Page Load Time** ✅ ACHIEVED
 - Target: <3 seconds for initial load
 - Optimization: Code splitting, lazy load assessment components, cache API responses
 
 **NFR-5: Concurrent Users**
 - Target: Support 50 concurrent coaches
 - Backend: Render.com scaling (horizontal for backend, Firebase auto-scales)
+- Rate limiting: 10 assessments/hour per coach (in-memory)
 
 ---
 
 ## Technology Stack
 
-### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 18.x | UI framework |
-| TypeScript | 5.x | Type safety |
-| Vite | 5.x | Build tool & dev server |
-| Material-UI | 5.x | Component library |
-| React Router | 6.x | Client-side routing |
-| Firebase JS SDK | 10.x | Auth, Firestore, Storage |
-| MediaPipe.js | 0.10.9 | Client-side pose detection |
-| Axios | 1.x | HTTP client |
+### Frontend (Implemented)
+| Technology | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| React | 18.x | UI framework | ✅ |
+| TypeScript | 5.x | Type safety | ✅ |
+| Vite | 5.x | Build tool & dev server | ✅ |
+| Material-UI | 5.x | Component library | ✅ |
+| React Router | 6.x | Client-side routing | ✅ |
+| Firebase JS SDK | 10.x | Auth, Firestore, Storage | ✅ |
+| MediaPipe.js | 0.10.x | Client-side pose detection (SOURCE OF TRUTH) | ✅ |
+| Axios | 1.x | HTTP client | ✅ |
 
-### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Python | 3.11 | Runtime |
-| FastAPI | 0.104+ | Web framework |
-| pip + requirements.txt | - | Dependency management |
-| Firebase Admin SDK | 6.x | Server-side Firebase |
-| MediaPipe Python | 0.10.9 | Server-side pose detection |
-| OpenCV | 4.8+ | Video processing |
-| SciPy | 1.11+ | Signal processing (Butterworth filter) |
-| OpenRouter SDK | Custom | Claude API access |
-| Resend SDK | 0.7+ | Email delivery |
+### Backend (Implemented)
+| Technology | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| Python | 3.11 | Runtime | ✅ |
+| FastAPI | 0.104+ | Web framework | ✅ |
+| pip + requirements.txt | - | Dependency management | ✅ |
+| Firebase Admin SDK | 6.x | Server-side Firebase | ✅ |
+| Resend SDK | 0.7+ | Email delivery | ✅ |
+| Pydantic | 2.x | Data validation | ✅ |
+
+### Backend (NOT Implemented - Phase 7)
+| Technology | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| MediaPipe Python | 0.10.9 | Server-side pose detection | ❌ Not used |
+| OpenCV | 4.8+ | Video processing | ❌ Not used |
+| SciPy | 1.11+ | Signal processing | ❌ Not used |
+| OpenRouter SDK | Custom | Claude API access | ❌ Phase 7 |
 
 ### Infrastructure
-| Service | Purpose |
-|---------|---------|
-| Vercel | Frontend hosting |
-| Render.com | Backend hosting |
-| Firebase Auth | Authentication |
-| Cloud Firestore | NoSQL database |
-| Firebase Storage | File storage |
-| OpenRouter | Claude API gateway |
-| Resend | Transactional email |
+| Service | Purpose | Status |
+|---------|---------|--------|
+| Vercel | Frontend hosting | ✅ |
+| Render.com | Backend hosting | ✅ |
+| Firebase Auth | Authentication | ✅ |
+| Cloud Firestore | NoSQL database | ✅ |
+| Firebase Storage | Video storage | ✅ |
+| Resend | Transactional email | ✅ |
+| OpenRouter | Claude API gateway | ❌ Phase 7 |
 
 ---
 
@@ -694,6 +772,6 @@ graph TB
 
 ---
 
-**Last Updated**: 2025-12-11
-**Document Version**: 1.0.0
-**Status**: Documentation complete, implementation pending
+**Last Updated**: 2025-12-13
+**Document Version**: 0.3.0
+**Status**: Updated to reflect actual implementation (Phases 0-7 complete, Phase 8+ pending)

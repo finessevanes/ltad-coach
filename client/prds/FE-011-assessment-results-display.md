@@ -6,6 +6,12 @@ blocks: [FE-012, FE-013]
 
 # FE-011: Assessment Results Display
 
+> ## ⚠️ Implementation Note
+>
+> The polling logic described below is no longer needed. With client-side metrics
+> calculation, assessments are stored as "completed" immediately - no "processing"
+> state exists. Assessments load synchronously without polling.
+
 ## Title
 Implement assessment results page with metrics, AI feedback, and peer comparison
 
@@ -42,8 +48,8 @@ Implement assessment results page with metrics, AI feedback, and peer comparison
 - [ ] AI feedback rendered with formatting
 - [ ] Coach notes editable with save
 - [ ] Video playback available
-- [ ] Polling continues while status is "processing"
-- [ ] Loading state during processing
+- [ ] ~~Polling continues while status is "processing"~~ (No longer needed - assessments complete synchronously)
+- [ ] Loading state while fetching assessment data
 
 ## Files to Create/Modify
 
@@ -171,7 +177,6 @@ The `camelcase-keys` interceptor (configured in FE-001) automatically converts a
 | `metrics.failure_reason` | `metrics.failureReason` |
 | `ai_feedback` | `aiFeedback` |
 | `coach_notes` | `coachNotes` |
-| `team_rank` | `teamRank` |
 | `team_total` | `teamTotal` |
 
 ### pages/Assessment/Results.tsx

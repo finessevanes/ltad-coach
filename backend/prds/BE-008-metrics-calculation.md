@@ -2,23 +2,42 @@
 id: BE-008
 depends_on: [BE-007]
 blocks: [BE-009, BE-010, BE-012]
-status: completed
+status: superseded
 ---
 
 # BE-008: Metrics Calculation
 
+> ## ⚠️ FULLY SUPERSEDED
+>
+> **This PRD has been superseded by client-side implementation.**
+>
+> The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics. **All metrics are now in real-world units (cm, degrees)** calculated from MediaPipe's `worldLandmarks`. The backend only implements:
+> - **LTAD duration score (1-5)** - `get_duration_score()` in [backend/app/services/metrics.py](../app/services/metrics.py)
+> - **Age expectation** - `get_age_expectation()` in the same file
+>
+> All other metrics are calculated client-side in real-world units:
+> - [client/src/utils/metricsCalculation.ts](../../client/src/utils/metricsCalculation.ts)
+>
+> **Metrics use world landmarks (not normalized coordinates)**:
+> - Sway metrics: cm (swayStdX, swayStdY, swayPathLength, swayVelocity)
+> - Arm metrics: degrees (armAngleLeft, armAngleRight from horizontal)
+> - Temporal analysis: fatigue pattern across test thirds
+
 ## Title
-Implement balance test metrics calculation from pose landmarks
+~~Implement balance test metrics calculation from pose landmarks~~
 
 ## Scope
 
-### In Scope
-- Stability score calculation
-- Sway metrics (std, path length, velocity)
-- Arm excursion metrics
-- Corrections count
+### ~~In Scope~~ (Superseded - now client-side)
+- ~~Stability score calculation~~
+- ~~Sway metrics (std, path length, velocity)~~
+- ~~Arm excursion metrics~~
+- ~~Corrections count~~
+- ~~Team-relative quality rankings~~
+
+### Still Implemented (Backend)
 - LTAD duration score (1-5)
-- Team-relative quality rankings
+- Age expectation comparison (above/meets/below)
 
 ### Out of Scope
 - AI feedback generation (BE-009, BE-010)
@@ -376,53 +395,6 @@ def get_age_expectation(age: int, score: int) -> str:
 
     return "meets"  # Default if age not in range
 
-async def calculate_team_ranking(
-    coach_id: str,
-    athlete_id: str,
-    stability_score: float
-) -> Tuple[int, int]:
-    """
-    Calculate athlete's ranking within coach's roster.
-
-    Returns:
-        (rank, total) tuple, e.g., (3, 12) for "3rd of 12"
-    """
-    from app.repositories.assessment import AssessmentRepository
-    from app.repositories.athlete import AthleteRepository
-
-    assessment_repo = AssessmentRepository()
-    athlete_repo = AthleteRepository()
-
-    # Get all athletes for coach
-    athletes = await athlete_repo.get_by_coach(coach_id)
-
-    # Get latest assessment for each athlete
-    scores = []
-    for athlete in athletes:
-        assessments = await assessment_repo.get_by_athlete(athlete.id, limit=1)
-        if assessments and assessments[0].metrics:
-            scores.append({
-                "athlete_id": athlete.id,
-                "stability_score": assessments[0].metrics.stability_score
-            })
-
-    # Add current athlete's score
-    scores.append({
-        "athlete_id": athlete_id,
-        "stability_score": stability_score
-    })
-
-    # Sort by stability score (descending)
-    scores.sort(key=lambda x: x["stability_score"], reverse=True)
-
-    # Find rank
-    rank = next(
-        i + 1
-        for i, s in enumerate(scores)
-        if s["athlete_id"] == athlete_id
-    )
-
-    return (rank, len(scores))
 
 
 async def calculate_progress_comparison(
@@ -500,7 +472,6 @@ Update `services/analysis.py` to use metrics:
 from app.services.metrics import (
     MetricsCalculator,
     get_duration_score,
-    calculate_team_ranking,
     calculate_progress_comparison,
     calculate_leg_asymmetry,
 )
@@ -514,11 +485,6 @@ calculator = MetricsCalculator(
     leg_tested=leg_tested,
 )
 metrics = calculator.calculate_all()
-
-# Calculate team ranking (uses raw scores, not body-size-adjusted)
-rank, total = await calculate_team_ranking(
-    coach_id, athlete_id, metrics["stability_score"]
-)
 
 # Calculate progress comparison to rolling 3-test average
 progress_comparison = await calculate_progress_comparison(
@@ -559,12 +525,10 @@ assert 0 <= metrics["stability_score"] <= 100
 ```
 
 2. Test with real video analysis output
-3. Verify team ranking updates when new assessments added
 
 ## Notes
 - Metrics are stored as raw values (no height normalization) for intra-individual progress tracking
 - Stability score uses reference value scaling (not height-based normalization)
-- Team ranking uses raw scores (acceptable for MVP team context; not marketed as scientifically normalized)
 - Progress comparison enables "You improved 18% since last month" style feedback
 - Leg asymmetry is optional - only calculated when both legs tested in same session
 - National percentiles are post-MVP (requires torso-length normalization + data collection)

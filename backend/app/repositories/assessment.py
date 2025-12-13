@@ -23,7 +23,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
         video_path: str,
         client_metrics: Optional[Dict] = None,
     ) -> Assessment:
-        """Create assessment in processing state.
+        """Create assessment in processing state (legacy method).
 
         Args:
             coach_id: Coach user ID
@@ -49,8 +49,54 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "raw_keypoints_url": None,
             "metrics": None,
             "client_metrics": client_metrics,
-            "ai_feedback": None,
+            "ai_coach_assessment": None,
             "failure_reason": None,
+            "error_message": None,
+        }
+
+        assessment_id = await self.create(data)
+        assessment = await self.get(assessment_id)
+        return assessment
+
+    async def create_completed(
+        self,
+        coach_id: str,
+        athlete_id: str,
+        test_type: str,
+        leg_tested: str,
+        video_url: str,
+        video_path: str,
+        metrics: Dict,
+    ) -> Assessment:
+        """Create assessment in completed state with consolidated metrics.
+
+        This is the primary method - the client calculates all metrics,
+        backend adds LTAD scoring, and everything is stored in a single metrics object.
+
+        Args:
+            coach_id: Coach user ID
+            athlete_id: Athlete ID
+            test_type: Type of test
+            leg_tested: Which leg was tested
+            video_url: Firebase Storage download URL
+            video_path: Firebase Storage path
+            metrics: Consolidated metrics dict (client metrics + backend scores)
+
+        Returns:
+            Created assessment in completed state
+        """
+        data = {
+            "coach_id": coach_id,
+            "athlete_id": athlete_id,
+            "test_type": test_type,
+            "leg_tested": leg_tested,
+            "video_url": video_url,
+            "video_path": video_path,
+            "status": AssessmentStatus.COMPLETED.value,
+            "created_at": datetime.utcnow(),
+            "raw_keypoints_url": None,
+            "metrics": metrics,
+            "ai_coach_assessment": None,  # Populated in Phase 7
             "error_message": None,
         }
 
@@ -63,7 +109,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
         assessment_id: str,
         metrics: Dict,
         raw_keypoints_url: str,
-        ai_feedback: str = "",
+        ai_coach_assessment: str = "",
     ) -> bool:
         """Update assessment with analysis results.
 
@@ -71,7 +117,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             assessment_id: Assessment ID
             metrics: Calculated metrics dictionary
             raw_keypoints_url: URL to raw keypoints JSON
-            ai_feedback: AI-generated feedback (populated in Phase 7)
+            ai_coach_assessment: AI-generated coach-friendly assessment feedback (Phase 7)
 
         Returns:
             True if successful
@@ -80,7 +126,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "status": AssessmentStatus.COMPLETED.value,
             "metrics": metrics,
             "raw_keypoints_url": raw_keypoints_url,
-            "ai_feedback": ai_feedback,
+            "ai_coach_assessment": ai_coach_assessment,
         }
         return await self.update(assessment_id, update_data)
 

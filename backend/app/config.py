@@ -22,9 +22,12 @@ class Settings(BaseSettings):
     firebase_project_id: str
     firebase_storage_bucket: str
 
-    # OpenRouter API (Claude access)
-    openrouter_api_key: str
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # Anthropic API (Direct Claude access)
+    anthropic_api_key: str
+
+    # Claude Model IDs (Direct Anthropic API)
+    haiku_model: str = "claude-3-haiku-20240307"
+    sonnet_model: str = "claude-3-haiku-20240307"  # Using Haiku temporarily until Sonnet access enabled
 
     # Email Service (Resend)
     resend_api_key: str

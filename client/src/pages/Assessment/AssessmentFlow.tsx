@@ -44,17 +44,6 @@ export default function AssessmentFlow() {
   };
 
   const handleRecordingComplete = (blob: Blob, duration: number, result?: TestResult) => {
-    console.log('Recording complete:', { duration, result });
-    if (result) {
-      console.log('Test Result:', {
-        success: result.success,
-        holdTime: result.holdTime,
-        failureReason: result.failureReason,
-        armDeviationLeft: result.armDeviationLeft,
-        armDeviationRight: result.armDeviationRight,
-        landmarkFrames: result.landmarkHistory.length,
-      });
-    }
     setVideoBlob(blob);
     setVideoDuration(duration);
     setTestResult(result || null);
