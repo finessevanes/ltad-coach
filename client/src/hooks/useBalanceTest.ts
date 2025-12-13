@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { PoseResult } from '../types/mediapipe';
 import { LegTested } from '../types/assessment';
+import type { TestResult } from '../types/balanceTest';
 import {
   TestState,
   PositionStatus,
-  TestResult,
   TimestampedLandmarks,
   POSITION_HOLD_BUFFER_MS,
   TRACKING_LOST_TIMEOUT_MS,
@@ -15,15 +15,16 @@ import {
   SUPPORT_FOOT_MOVEMENT_THRESHOLD,
   CONSECUTIVE_FAIL_FRAMES_REQUIRED,
   LANDMARK_INDEX,
+  REQUIRED_LANDMARK_INDICES,
 } from '../types/balanceTest';
 import {
   checkBalancePosition,
   checkFootTouchdown,
   checkSupportFootMoved,
-  calculateArmDeviation,
   getInitialPositions,
   InitialPositions,
 } from '../utils/positionDetection';
+import { calculateMetrics } from '../utils/metricsCalculation';
 
 interface UseBalanceTestOptions {
   targetDuration?: number;
@@ -97,16 +98,12 @@ export function useBalanceTest(
   const lastTrackingTimeRef = useRef<number>(Date.now());
   const initialPositionsRef = useRef<InitialPositions | null>(null);
   const landmarkHistoryRef = useRef<TimestampedLandmarks[]>([]);
-  // Track arm deviation: sum of deviations and count for averaging
-  const armDeviationSumRef = useRef<{ left: number; right: number }>({ left: 0, right: 0 });
-  const armDeviationCountRef = useRef(0);
   const holdTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Consecutive failure frame tracking (prevents false positives from occlusion)
   const consecutiveTouchdownFramesRef = useRef(0);
   const consecutiveMovementFramesRef = useRef(0);
 
   const startTest = useCallback(() => {
-    console.log('[BalanceTest] Starting test, transitioning to READY state');
     setTestState('ready');
     setHoldTime(0);
     setFailureReason(null);
@@ -115,8 +112,6 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armDeviationSumRef.current = { left: 0, right: 0 };
-    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
   }, []);
@@ -131,8 +126,6 @@ export function useBalanceTest(
     holdingStartTimeRef.current = null;
     initialPositionsRef.current = null;
     landmarkHistoryRef.current = [];
-    armDeviationSumRef.current = { left: 0, right: 0 };
-    armDeviationCountRef.current = 0;
     consecutiveTouchdownFramesRef.current = 0;
     consecutiveMovementFramesRef.current = 0;
     if (holdTimeIntervalRef.current) {
@@ -143,8 +136,6 @@ export function useBalanceTest(
 
   const endTest = useCallback(
     (success: boolean, reason?: string) => {
-      console.log('[BalanceTest] Ending test:', { success, reason });
-
       if (holdTimeIntervalRef.current) {
         clearInterval(holdTimeIntervalRef.current);
         holdTimeIntervalRef.current = null;
@@ -154,26 +145,62 @@ export function useBalanceTest(
         ? (Date.now() - holdingStartTimeRef.current) / 1000
         : 0;
 
-      console.log('[BalanceTest] Final hold time:', finalHoldTime);
-
       setTestState(success ? 'completed' : 'failed');
       setFailureReason(reason || null);
       setHoldTime(finalHoldTime);
 
-      // Calculate average arm deviation (sum / count)
-      const count = armDeviationCountRef.current || 1; // Avoid division by zero
-      const avgArmDeviationLeft = armDeviationSumRef.current.left / count;
-      const avgArmDeviationRight = armDeviationSumRef.current.right / count;
+      // Calculate metrics from landmark history (world landmarks - real units: cm, degrees)
+      const metrics = calculateMetrics(
+        landmarkHistoryRef.current,
+        finalHoldTime
+      );
 
-      const result = {
+      if (!metrics) {
+        console.error('[BalanceTest] Failed to calculate metrics - world landmarks not available');
+        // Create result with zero metrics as fallback
+        const result: TestResult = {
+          success: false,
+          holdTime: Math.round(finalHoldTime * 100) / 100,
+          failureReason: 'Failed to calculate metrics',
+          landmarkHistory: [...landmarkHistoryRef.current],
+          swayStdX: 0,
+          swayStdY: 0,
+          swayPathLength: 0,
+          swayVelocity: 0,
+          correctionsCount: 0,
+          armAngleLeft: 0,
+          armAngleRight: 0,
+          armAsymmetryRatio: 1,
+          temporal: {
+            firstThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+            middleThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+            lastThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
+          },
+        };
+        setTestResult(result);
+        return;
+      }
+
+      const result: TestResult = {
         success,
-        holdTime: finalHoldTime,
+        holdTime: Math.round(finalHoldTime * 100) / 100,
         failureReason: reason,
         landmarkHistory: [...landmarkHistoryRef.current],
-        armDeviationLeft: avgArmDeviationLeft,
-        armDeviationRight: avgArmDeviationRight,
+        // Metrics in real-world units (cm, degrees)
+        swayStdX: metrics.swayStdX,
+        swayStdY: metrics.swayStdY,
+        swayPathLength: metrics.swayPathLength,
+        swayVelocity: metrics.swayVelocity,
+        correctionsCount: metrics.correctionsCount,
+        armAngleLeft: metrics.armAngleLeft,
+        armAngleRight: metrics.armAngleRight,
+        armAsymmetryRatio: metrics.armAsymmetryRatio,
+        temporal: metrics.temporal,
+        // Enhanced temporal data for LLM
+        fiveSecondSegments: metrics.fiveSecondSegments,
+        events: metrics.events,
       };
-      console.log('[BalanceTest] Setting test result:', result);
+
       setTestResult(result);
     },
     []
@@ -201,20 +228,18 @@ export function useBalanceTest(
     lastTrackingTimeRef.current = now;
     const landmarks = poseResult.landmarks;
 
-    // Record landmarks during test (READY and HOLDING states)
+    // Record only the 8 required landmarks during test (READY and HOLDING states)
+    // This reduces storage/memory while keeping all data needed for metrics calculation
+    const filteredLandmarks = REQUIRED_LANDMARK_INDICES.map((idx) => landmarks[idx]);
+    const filteredWorldLandmarks = poseResult.worldLandmarks
+      ? REQUIRED_LANDMARK_INDICES.map((idx) => poseResult.worldLandmarks![idx])
+      : [];
+
     landmarkHistoryRef.current.push({
       timestamp: now,
-      landmarks: [...landmarks],
-      worldLandmarks: poseResult.worldLandmarks ? [...poseResult.worldLandmarks] : [],
+      landmarks: filteredLandmarks,
+      worldLandmarks: filteredWorldLandmarks,
     });
-
-    // Calculate arm deviation during HOLDING (for averaging later)
-    if (testState === 'holding') {
-      const deviation = calculateArmDeviation(landmarks);
-      armDeviationSumRef.current.left += deviation.left;
-      armDeviationSumRef.current.right += deviation.right;
-      armDeviationCountRef.current++;
-    }
 
     // READY state logic
     if (testState === 'ready') {
@@ -223,13 +248,10 @@ export function useBalanceTest(
 
       if (status.isInPosition) {
         if (positionHoldStartRef.current === null) {
-          console.log('[BalanceTest] Position detected, starting 1s buffer...');
           positionHoldStartRef.current = now;
         } else if (now - positionHoldStartRef.current >= POSITION_HOLD_BUFFER_MS) {
           // Position held for required buffer time - transition to HOLDING
-          console.log('[BalanceTest] Position held for 1s, transitioning to HOLDING');
           const positions = getInitialPositions(landmarks, legTested);
-          console.log('[BalanceTest] Initial positions:', positions);
           initialPositionsRef.current = positions;
           holdingStartTimeRef.current = now;
           setTestState('holding');
@@ -330,23 +352,12 @@ export function useBalanceTest(
 
       // Check for foot touchdown (requires consecutive frames to prevent false positives)
       if (consecutiveTouchdownFramesRef.current >= CONSECUTIVE_FAIL_FRAMES_REQUIRED) {
-        console.log('[BalanceTest] Foot touchdown detected!', {
-          yDifference: touchdownResult.yDifference,
-          descent: touchdownResult.descent,
-          consecutiveFrames: consecutiveTouchdownFramesRef.current,
-        });
         endTest(false, 'Foot touched down');
         return;
       }
 
       // Check for support foot movement (requires consecutive frames to prevent false positives)
       if (consecutiveMovementFramesRef.current >= CONSECUTIVE_FAIL_FRAMES_REQUIRED) {
-        console.log('[BalanceTest] Support foot moved!', {
-          xShift: movementResult.xShift,
-          yShift: movementResult.yShift,
-          displacement: movementResult.displacement,
-          consecutiveFrames: consecutiveMovementFramesRef.current,
-        });
         endTest(false, 'Support foot moved');
         return;
       }

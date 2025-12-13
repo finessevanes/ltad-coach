@@ -436,10 +436,10 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
               variant="contained"
               color="primary"
               size="large"
-              disabled={!isPersonDetected || loading}
+              disabled={ loading}
               onClick={handleStartTest}
             >
-              {!isPersonDetected ? 'Waiting for Athlete...' : 'Start Test'}
+              {'Start Test'}
             </Button>
           </>
         )}

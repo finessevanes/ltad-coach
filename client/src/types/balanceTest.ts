@@ -20,15 +20,88 @@ export interface TimestampedLandmarks {
   worldLandmarks: PoseLandmark[];
 }
 
+/**
+ * Metrics for a temporal segment (first/middle/last third of test)
+ */
+export interface SegmentMetrics {
+  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
+  armAngleLeft: number;
+  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
+  armAngleRight: number;
+  /** Sway velocity in cm/s */
+  swayVelocity: number;
+  /** Number of balance corrections in this segment */
+  correctionsCount: number;
+}
+
+/**
+ * Temporal analysis - metrics broken down by time segments
+ */
+export interface TemporalMetrics {
+  firstThird: SegmentMetrics;
+  middleThird: SegmentMetrics;
+  lastThird: SegmentMetrics;
+}
+
+/**
+ * Metrics for a 5-second segment of the test (for LLM temporal analysis).
+ * Provides granular timeline data so LLM can understand *when* things happened.
+ */
+export interface FiveSecondSegment {
+  startTime: number;      // seconds
+  endTime: number;        // seconds
+  avgVelocity: number;    // cm/s
+  corrections: number;    // count
+  armAngleLeft: number;   // degrees (average)
+  armAngleRight: number;  // degrees (average)
+  swayStdX: number;       // cm
+  swayStdY: number;       // cm
+}
+
+/**
+ * Significant events detected during balance test.
+ * Highlights key moments for LLM coaching feedback.
+ */
+export interface BalanceEvent {
+  time: number;           // seconds into test
+  type: 'flapping' | 'correction_burst' | 'stabilized' | 'arm_drop';
+  severity?: 'low' | 'medium' | 'high';
+  detail: string;
+}
+
+/**
+ * Test result with metrics in real-world units (cm, degrees).
+ * Calculated from MediaPipe's worldLandmarks.
+ */
 export interface TestResult {
   success: boolean;
   holdTime: number;
   failureReason?: string;
   landmarkHistory: TimestampedLandmarks[];
-  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
-  armDeviationLeft: number;
-  /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
-  armDeviationRight: number;
+
+  // ========== METRICS (real-world units: cm, degrees) ==========
+  /** Sway standard deviation in X (cm) */
+  swayStdX: number;
+  /** Sway standard deviation in Y (cm) */
+  swayStdY: number;
+  /** Total sway path length (cm) */
+  swayPathLength: number;
+  /** Average sway velocity (cm/s) */
+  swayVelocity: number;
+  /** Number of balance corrections detected */
+  correctionsCount: number;
+  /** Arm angle from horizontal in degrees. 0° = T-position, positive = dropped */
+  armAngleLeft: number;
+  /** Arm angle from horizontal in degrees. 0° = T-position, positive = dropped */
+  armAngleRight: number;
+  /** Left/Right arm angle ratio */
+  armAsymmetryRatio: number;
+  /** Temporal breakdown of metrics (fatigue analysis) */
+  temporal: TemporalMetrics;
+  /** 5-second segment breakdown for LLM temporal analysis */
+  fiveSecondSegments?: FiveSecondSegment[];
+  /** Significant balance events detected during test */
+  events?: BalanceEvent[];
 }
 
 // Constants for position detection
@@ -57,6 +130,21 @@ export const LANDMARK_INDEX = {
   RIGHT_SHOULDER: 12,
   LEFT_WRIST: 15,
   RIGHT_WRIST: 16,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
   LEFT_ANKLE: 27,
   RIGHT_ANKLE: 28,
 } as const;
+
+// Required landmark indices for metrics calculation (8 total)
+// These are the only landmarks we need to store for sway/stability analysis
+export const REQUIRED_LANDMARK_INDICES = [
+  LANDMARK_INDEX.LEFT_SHOULDER,  // 11 - Arm deviation baseline
+  LANDMARK_INDEX.RIGHT_SHOULDER, // 12 - Arm deviation baseline
+  LANDMARK_INDEX.LEFT_WRIST,     // 15 - Arm deviation
+  LANDMARK_INDEX.RIGHT_WRIST,    // 16 - Arm deviation
+  LANDMARK_INDEX.LEFT_HIP,       // 23 - Sway (CoM proxy)
+  LANDMARK_INDEX.RIGHT_HIP,      // 24 - Sway (CoM proxy)
+  LANDMARK_INDEX.LEFT_ANKLE,     // 27 - Failure detection
+  LANDMARK_INDEX.RIGHT_ANKLE,    // 28 - Failure detection
+] as const;

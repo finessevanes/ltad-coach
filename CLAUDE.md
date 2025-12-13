@@ -43,11 +43,11 @@ ltad-coach/
 ├── backend/                   # Python FastAPI backend
 │   ├── app/
 │   │   ├── main.py           # FastAPI app initialization
-│   │   ├── routes/           # API endpoints
+│   │   ├── routers/          # API endpoints
 │   │   ├── services/         # Business logic
 │   │   ├── models/           # Pydantic schemas
-│   │   ├── agents/           # AI agent implementations
-│   │   └── utils/            # Helpers & config
+│   │   ├── agents/           # AI agent implementations (Phase 7)
+│   │   └── repositories/     # Data access layer
 │   └── requirements.txt
 │
 ├── prd.md                     # Main product requirements
@@ -58,12 +58,8 @@ ltad-coach/
 ## Critical Performance Requirements
 
 **NFR-1**: Live skeleton overlay ≥15 FPS
-- Use MediaPipe.js client-side for preview only
-- Server-side MediaPipe is source of truth for metrics
-
-**NFR-2**: Server video analysis <30 seconds
-- Async background processing
-- Offload raw keypoints to Cloud Storage (context offloading)
+- MediaPipe.js client-side is SOURCE OF TRUTH for all metrics
+- Skeleton overlay for visual feedback + metrics calculation
 
 **NFR-3**: AI feedback <10 seconds
 - Haiku for compression, Sonnet for assessment/progress
@@ -127,16 +123,17 @@ Backend uses a service account JSON file for Firebase Admin SDK authentication:
 ```
 Client (React)                    Backend (FastAPI)                 External
 ─────────────────                ──────────────────                ─────────
-Camera capture ──────────────────► Video upload ──────────────────► Firebase Storage
-MediaPipe.js (preview only)       MediaPipe Python (metrics)
-                                  Metrics calculation
+Camera capture
+MediaPipe.js (metrics) ──────────► Validate auth/consent
+All 11 CV metrics calculated     Duration scoring (LTAD 1-5)
+Video upload ────────────────────► ─────────────────────────────► Firebase Storage
                                   Agent orchestrator ─────────────► OpenRouter (Claude)
                                   Store results ──────────────────► Firestore
-◄─────────────────────────────── Poll for completion
-Display results
+◄─────────────────────────────── Return completed assessment
+Display results (synchronous)
 ```
 
-**Important**: Client-side MediaPipe is for live preview only. Server-side MediaPipe is the source of truth for all metrics.
+**Important**: Client-side MediaPipe.js is the SOURCE OF TRUTH for all CV metrics. The backend only calculates LTAD duration scoring (1-5) and generates AI feedback. No server-side MediaPipe.
 
 ## Frontend Patterns
 
@@ -178,39 +175,26 @@ import snakecaseKeys from 'snakecase-keys';
 ### FastAPI Route Structure
 ```python
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.services.auth import get_current_user
+from app.middleware.auth import get_current_user
+from app.models.assessment import AssessmentCreate
+from app.models.user import User
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
 @router.post("/analyze")
 async def analyze_video(
-    video: UploadFile,
-    athlete_id: str = Form(...),
-    current_user: str = Depends(get_current_user)
+    data: AssessmentCreate,
+    current_user: User = Depends(get_current_user)
 ):
-    # 1. Upload video to Firebase Storage
-    # 2. Create assessment with status: "processing"
-    # 3. Queue background task
-    # 4. Return assessment ID immediately
+    # 1. Validate athlete ownership and consent status
+    # 2. Receive client-calculated metrics (SOURCE OF TRUTH)
+    # 3. Calculate duration_score (1-5) and age_expectation
+    # 4. Store assessment as "completed" immediately
+    # 5. Return assessment ID (synchronous - no polling needed)
     pass
 ```
 
-### Async Background Processing
-```python
-import asyncio
-
-async def process_video_async(assessment_id: str, video_url: str):
-    keypoints = await mediapipe_service.extract_keypoints(video_url)
-    metrics = calculate_metrics(keypoints)
-    feedback = await agent_service.get_feedback(metrics)
-    await db.update_assessment(assessment_id, {
-        "status": "completed",
-        "metrics": metrics,
-        "aiFeedback": feedback
-    })
-
-# In route: asyncio.create_task(process_video_async(...))
-```
+> **Note**: Assessments complete synchronously. The client calculates all metrics via MediaPipe.js and sends them to this endpoint. No background processing or polling required.
 
 ## Database Schema (Firestore)
 
@@ -225,7 +209,7 @@ athletes/{athleteId}
 assessments/{assessmentId}
   - athleteId, coachId, testType, legTested
   - videoUrl, status: "processing" | "completed" | "failed"
-  - metrics: { durationSeconds, swayVelocity, stabilityScore, ... }
+  - metrics: { holdTime, swayVelocity, durationScore, ... }
   - aiFeedback, createdAt
 
 reports/{reportId}

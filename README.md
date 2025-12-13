@@ -18,13 +18,16 @@
 
 AI Coach is a computer vision-powered athletic assessment platform designed for youth sports coaches working with athletes ages 5-13. The platform enables coaches to conduct standardized athletic tests, automatically analyze performance using MediaPipe pose estimation, and generate AI-powered feedback using a multi-agent system built on Claude.
 
+> **Implementation Status (December 2025)**: Phases 0-6 complete. Client-side MediaPipe is source of truth for metrics. AI agents (Phase 7) not yet implemented.
+
 ### Key Features
 
 - **Automated Assessment**: Replace subjective observations with objective CV-measured metrics
-- **AI-Powered Insights**: Transform raw metrics into actionable coaching feedback using LLM agents
-- **Progress Tracking**: Historical trend analysis with team ranking comparisons
-- **Parent Communication**: Professional, shareable reports with PIN protection
-- **LTAD Alignment**: Assessments tied to established youth athletic development frameworks
+- **Client-Side Analysis**: MediaPipe.js calculates all 11 metrics directly in the browser
+- **AI-Powered Insights**: (Phase 7 - planned) Transform raw metrics into actionable coaching feedback
+- **Progress Tracking**: (Phase 8 - planned) Historical trend analysis with team ranking comparisons
+- **Parent Communication**: (Phase 9 - planned) Professional, shareable reports with PIN protection
+- **LTAD Alignment**: Duration scoring tied to established youth athletic development frameworks
 
 ### Target Users
 
@@ -33,15 +36,20 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 ### MVP Scope
 
-**Included**:
+**Implemented (Phases 0-6)**:
 - Coach authentication (Google OAuth + email/password)
 - Athlete roster management (max 25 per coach)
 - Parental consent workflow with automated emails
 - One-Leg Balance Test with live skeleton overlay
-- Video recording and upload
-- Full AI agent system (Assessment, Progress, Compression agents)
+- Video recording with client-side metrics calculation
+- Backend storage of client-calculated metrics
+- LTAD duration scoring and age expectations
+
+**Planned (Phases 7-10)**:
+- AI agent system (Assessment, Progress, Compression agents)
 - Team ranking comparisons
 - Parent report generation with PIN protection
+- Coach dashboard with statistics
 
 **Post-MVP**:
 - Additional test types (Superman reps, Y-Balance, etc.)
@@ -53,24 +61,30 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 ## Architecture
 
-### High-Level Overview
+### High-Level Overview (Current Implementation)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Client (React)                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │   Camera +   │  │  MediaPipe.js│  │  Firebase SDK│         │
-│  │   Recording  │  │  (preview)   │  │  (auth/data) │         │
+│  │   Camera +   │  │ MediaPipe.js │  │  Firebase SDK│         │
+│  │   Recording  │  │ SOURCE OF   │  │  (auth/data) │         │
+│  │              │  │ TRUTH       │  │              │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
+│                           │                                      │
+│               ┌───────────▼──────────┐                          │
+│               │  Metrics Calculator  │                          │
+│               │  (11 CV metrics)     │                          │
+│               └──────────────────────┘                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                              │ HTTPS
+                              │ HTTPS (POST client_metrics)
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Backend (FastAPI)                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │  MediaPipe   │  │   Metrics    │  │  AI Agents   │         │
-│  │  (Python)    │─▶│  Calculator  │─▶│  (Claude)    │         │
+│  │  Validate    │  │   Duration   │  │  AI Agents   │         │
+│  │  Auth/Consent│─▶│   Scoring    │  │  (Phase 7)   │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -80,6 +94,8 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 │    Firestore (DB)  │  Storage (Videos)  │  Auth (Google)       │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+> **Note**: The architecture has evolved from the original PRD. MediaPipe now runs client-side and is the source of truth for all CV metrics. The backend validates auth/consent and adds LTAD duration scoring.
 
 ### Tech Stack
 
@@ -100,30 +116,31 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 ### Key Architectural Decisions
 
-#### MediaPipe: Client vs Server
+#### MediaPipe: Client-Side Source of Truth (Current Implementation)
 
-**Client-side (MediaPipe.js)**: Live preview only
+**Client-side (MediaPipe.js)**: SOURCE OF TRUTH
 - Real-time skeleton overlay for visual feedback
-- Helps coach frame athlete correctly
-- NOT used for metrics calculation
+- **Calculates all 11 CV metrics** in `utils/metricsCalculation.ts`
+- Detects failures via `utils/positionDetection.ts`
+- Sends pre-calculated metrics to backend
 
-**Server-side (MediaPipe Python)**: Source of truth
-- Official metric extraction
-- Performs all calculations
-- Results stored in database
+**Server-side (MediaPipe Python)**: NOT IMPLEMENTED
+- Originally planned as source of truth
+- Current implementation: backend only stores client metrics
+- Backend adds duration_score and age_expectation (LTAD benchmarks)
 
-#### AI Agent Architecture
+#### AI Agent Architecture (Phase 7 - NOT YET IMPLEMENTED)
 
-Four-agent system using Claude via OpenRouter:
+Planned four-agent system using Claude via OpenRouter:
 
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| Orchestrator | Python Logic | Routes requests (no LLM) |
-| Compression | Claude Haiku | Summarizes history (12 assessments → 150 tokens) |
-| Assessment | Claude Sonnet | Single test feedback |
-| Progress | Claude Sonnet | Historical trend analysis |
+| Agent | Model | Purpose | Status |
+|-------|-------|---------|--------|
+| Orchestrator | Python Logic | Routes requests (no LLM) | Planned |
+| Compression | Claude Haiku | Summarizes history (12 assessments → 150 tokens) | Planned |
+| Assessment | Claude Sonnet | Single test feedback | Planned |
+| Progress | Claude Sonnet | Historical trend analysis | Planned |
 
-**Deep Agent Patterns**:
+**Planned Deep Agent Patterns**:
 1. **Context Offloading**: Store raw keypoints externally, send only metrics to LLM
 2. **Context Compression**: Summarize history before processing
 3. **Context Isolation**: Each agent receives only relevant data
@@ -217,12 +234,16 @@ See component-specific READMEs for detailed setup instructions.
 ltad-coach/
 ├── client/                    # React frontend
 │   ├── src/
-│   │   ├── components/       # Reusable MUI components
+│   │   ├── components/       # Reusable MUI components (BalanceTest, etc.)
 │   │   ├── pages/            # Route pages
-│   │   ├── hooks/            # Custom React hooks
+│   │   ├── hooks/            # Custom React hooks (useBalanceTest, useMediaPipe)
 │   │   ├── services/         # API calls (Firebase + backend)
+│   │   ├── contexts/         # React contexts (AuthContext)
 │   │   ├── types/            # TypeScript interfaces
-│   │   └── utils/            # Utility functions
+│   │   └── utils/            # Metrics calculation (SOURCE OF TRUTH)
+│   │       ├── metricsCalculation.ts  # All 11 CV metrics
+│   │       ├── positionDetection.ts   # Pose state machine
+│   │       └── metricsComparison.ts   # Compare test results
 │   ├── public/
 │   ├── prds/                 # Frontend PRD specs (FE-001 to FE-016)
 │   ├── package.json
@@ -231,17 +252,25 @@ ltad-coach/
 ├── backend/                   # Python FastAPI backend
 │   ├── app/
 │   │   ├── main.py           # FastAPI app initialization
-│   │   ├── routes/           # API endpoints
-│   │   ├── services/         # Business logic
-│   │   ├── agents/           # AI agent implementations
+│   │   ├── routers/          # API endpoints (NOT routes/)
+│   │   │   ├── auth.py
+│   │   │   ├── athletes.py
+│   │   │   ├── consent.py
+│   │   │   └── assessments.py
+│   │   ├── repositories/     # Data access layer
+│   │   ├── services/         # Business logic (email, metrics, video)
+│   │   ├── middleware/       # Auth, rate limiting
 │   │   ├── models/           # Pydantic schemas
-│   │   └── utils/            # Helpers & config
+│   │   ├── constants/        # LTAD scoring thresholds
+│   │   ├── agents/           # EMPTY - Phase 7
+│   │   └── prompts/          # EMPTY - Phase 7
 │   ├── tests/
 │   ├── prds/                 # Backend PRD specs (BE-001 to BE-015)
-│   ├── pyproject.toml
+│   ├── requirements.txt
 │   └── README.md             # Backend setup guide
 │
 ├── CLAUDE.md                  # Developer guide (patterns, standards)
+├── ARCHITECTURE.md            # System architecture diagrams
 ├── prd.md                     # Product requirements document
 ├── DEPENDENCY_GRAPH.md        # Implementation phase ordering
 ├── .gitignore
@@ -326,25 +355,26 @@ Configure Firebase Security Rules:
 
 ## Key Technical Details
 
-### Assessment Processing Pipeline
+### Assessment Processing Pipeline (Current Implementation)
 
-1. Coach records video with live MediaPipe.js preview
-2. Raw video uploaded to Firebase Storage
-3. Backend creates assessment record (status: "processing")
-4. Background task:
-   - MediaPipe Python extracts pose landmarks (33 keypoints)
-   - Calculate metrics: duration, sway, stability, arm excursion
-   - Store raw keypoints to Storage (context offloading)
-   - Pass derived metrics to AI agents
-   - Generate coach-friendly feedback
-5. Update assessment (status: "completed")
-6. Frontend polls and displays results
+1. Coach records video with live MediaPipe.js skeleton overlay
+2. During recording: MediaPipe.js streams landmarks at ≥15 FPS
+3. Client tracks positions in real-time via `useBalanceTest` hook
+4. On stop: `metricsCalculation.ts` calculates all 11 metrics
+5. Video uploaded to Firebase Storage
+6. **POST /assessments/analyze** with client_metrics
+7. Backend validates auth/consent
+8. Backend calculates duration_score + age_expectation (LTAD)
+9. Assessment stored as "completed" immediately (synchronous)
+10. Frontend displays results
+
+> **Note**: No background processing, no server-side MediaPipe, no polling. Assessment completes in <2 seconds.
 
 **Performance Requirements**:
-- **NFR-1**: Live skeleton overlay ≥15 FPS
-- **NFR-2**: Server video analysis <30 seconds
-- **NFR-3**: AI feedback <10 seconds
-- **NFR-4**: Page load <3 seconds
+- **NFR-1**: Live skeleton overlay ≥15 FPS - ACHIEVED
+- **NFR-2**: Assessment storage <2 seconds - ACHIEVED (changed from server video analysis)
+- **NFR-3**: AI feedback <10 seconds - NOT IMPLEMENTED (Phase 7)
+- **NFR-4**: Page load <3 seconds - ACHIEVED
 
 ### Metrics Calculated
 
@@ -381,27 +411,28 @@ See [prd.md Section 11.4](./prd.md#114-hybrid-scoring-model) for complete scorin
 
 ## Roadmap & Status
 
-**Current Phase**: Pre-implementation (documentation complete)
+**Current Phase**: Phase 6 Complete (Phases 7+ pending)
 **Target Milestone**: Investor Demo - December 18, 2025
-**Estimated Effort**: 86-112 hours
+
+> **Implementation Note**: Phase 6 was implemented differently than planned. Client-side MediaPipe is source of truth instead of server-side. See ARCHITECTURE.md for details.
 
 See [DEPENDENCY_GRAPH.md](./DEPENDENCY_GRAPH.md) for detailed phase breakdown.
 
 ### Implementation Phases
 
-| Phase | Description | PRDs |
-|-------|-------------|------|
-| 0 | Infrastructure + Deployment | BE-001, FE-001 |
-| 1 | Firebase Integration | BE-002, FE-002 |
-| 2 | Authentication | BE-003, FE-003 |
-| 3 | Athlete Management | BE-004, FE-004, FE-005 |
-| 4 | Consent Workflow | BE-005, FE-006, FE-007 |
-| 5 | Video Capture | FE-008, FE-009, FE-010 |
-| 6 | CV Analysis | BE-006, BE-007, BE-008 |
-| 7 | AI Agents | BE-009, BE-010, BE-011 |
-| 8 | Assessment Results | BE-012, FE-011, FE-012 |
-| 9 | Parent Reports | BE-013, BE-014, FE-013, FE-014 |
-| 10 | Dashboard & Polish | BE-015, FE-015, FE-016 |
+| Phase | Description | PRDs | Status |
+|-------|-------------|------|--------|
+| 0 | Infrastructure + Deployment | BE-001, FE-001 | COMPLETE |
+| 1 | Firebase Integration | BE-002, FE-002 | COMPLETE |
+| 2 | Authentication | BE-003, FE-003 | COMPLETE |
+| 3 | Athlete Management | BE-004, FE-004, FE-005 | COMPLETE |
+| 4 | Consent Workflow | BE-005, FE-006, FE-007 | COMPLETE |
+| 5 | Video Capture | FE-008, FE-009, FE-010 | COMPLETE |
+| 6 | CV Analysis | BE-006, BE-007, BE-008 | COMPLETE (client-side) |
+| 7 | AI Agents | BE-009, BE-010, BE-011 | PENDING |
+| 8 | Assessment Results | BE-012, FE-011, FE-012 | PARTIAL (list endpoint done) |
+| 9 | Parent Reports | BE-013, BE-014, FE-013, FE-014 | PENDING |
+| 10 | Dashboard & Polish | BE-015, FE-015, FE-016 | PENDING |
 
 ---
 

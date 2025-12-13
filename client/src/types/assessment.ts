@@ -15,28 +15,81 @@ export interface RecordingState {
   duration: number;
 }
 
+import { FiveSecondSegment, BalanceEvent } from './balanceTest';
+
+/**
+ * Metrics for a temporal segment (first/middle/last third of test)
+ */
+export interface ClientSegmentMetrics {
+  armAngleLeft: number;      // degrees
+  armAngleRight: number;     // degrees
+  swayVelocity: number;      // cm/s
+  correctionsCount: number;
+  swayStdX?: number;         // cm (optional for backward compat)
+  swayStdY?: number;         // cm (optional for backward compat)
+}
+
+/**
+ * Temporal breakdown of metrics
+ */
+export interface ClientTemporalMetrics {
+  firstThird: ClientSegmentMetrics;
+  middleThird: ClientSegmentMetrics;
+  lastThird: ClientSegmentMetrics;
+}
+
+/**
+ * Client-calculated metrics in real-world units (cm, degrees).
+ * Calculated from MediaPipe's worldLandmarks.
+ */
 export interface ClientMetrics {
   success: boolean;
   holdTime: number;
   failureReason?: string;
-  armDeviationLeft: number;
-  armDeviationRight: number;
+  // Sway metrics (cm)
+  swayStdX: number;           // cm
+  swayStdY: number;           // cm
+  swayPathLength: number;     // cm
+  swayVelocity: number;       // cm/s
+  correctionsCount: number;
+  // Arm metrics (degrees)
+  armAngleLeft: number;       // degrees from horizontal (0° = T-position)
+  armAngleRight: number;      // degrees from horizontal (0° = T-position)
+  armAsymmetryRatio: number;
+  // Temporal analysis
+  temporal: ClientTemporalMetrics;
+  // Enhanced temporal data for LLM (optional for backward compat)
+  fiveSecondSegments?: FiveSecondSegment[];
+  events?: BalanceEvent[];
 }
 
+/**
+ * Assessment metrics returned from backend.
+ * Consolidated single source of truth for all metrics.
+ * All metrics in real-world units (cm, degrees).
+ */
 export interface AssessmentMetrics {
+  // Test result
+  success: boolean;
   holdTime: number;
-  stabilityScore: number;
-  swayVelocity: number;
-  swayStdX: number;
-  swayStdY: number;
-  swayPathLength: number;
-  armDeviationLeft: number;
-  armDeviationRight: number;
-  armAsymmetryRatio: number;
+  failureReason?: string;
+  // Sway metrics (cm)
+  swayStdX: number;           // cm
+  swayStdY: number;           // cm
+  swayPathLength: number;     // cm
+  swayVelocity: number;       // cm/s
   correctionsCount: number;
-  durationScore: number;
-  durationScoreLabel: string;
-  ageExpectation?: string;
+  // Arm metrics (degrees)
+  armAngleLeft: number;       // degrees from horizontal (0° = T-position)
+  armAngleRight: number;      // degrees from horizontal (0° = T-position)
+  armAsymmetryRatio: number;
+  // LTAD Score (validated by Athletics Canada LTAD framework)
+  durationScore: number;      // 1-5 LTAD scale
+  // Temporal analysis
+  temporal?: ClientTemporalMetrics;
+  // Enhanced temporal data for LLM
+  fiveSecondSegments?: FiveSecondSegment[];
+  events?: BalanceEvent[];
 }
 
 export interface Assessment {
@@ -50,9 +103,7 @@ export interface Assessment {
   status: AssessmentStatus;
   createdAt: string;
   metrics?: AssessmentMetrics;
-  clientMetrics?: ClientMetrics;
   aiFeedback?: string;
-  failureReason?: string;
   errorMessage?: string;
 }
 

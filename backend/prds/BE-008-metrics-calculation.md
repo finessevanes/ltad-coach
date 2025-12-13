@@ -2,23 +2,42 @@
 id: BE-008
 depends_on: [BE-007]
 blocks: [BE-009, BE-010, BE-012]
-status: completed
+status: superseded
 ---
 
 # BE-008: Metrics Calculation
 
+> ## ⚠️ FULLY SUPERSEDED
+>
+> **This PRD has been superseded by client-side implementation.**
+>
+> The architecture changed to use client-side MediaPipe.js as the SOURCE OF TRUTH for all CV metrics. **All metrics are now in real-world units (cm, degrees)** calculated from MediaPipe's `worldLandmarks`. The backend only implements:
+> - **LTAD duration score (1-5)** - `get_duration_score()` in [backend/app/services/metrics.py](../app/services/metrics.py)
+> - **Age expectation** - `get_age_expectation()` in the same file
+>
+> All other metrics are calculated client-side in real-world units:
+> - [client/src/utils/metricsCalculation.ts](../../client/src/utils/metricsCalculation.ts)
+>
+> **Metrics use world landmarks (not normalized coordinates)**:
+> - Sway metrics: cm (swayStdX, swayStdY, swayPathLength, swayVelocity)
+> - Arm metrics: degrees (armAngleLeft, armAngleRight from horizontal)
+> - Temporal analysis: fatigue pattern across test thirds
+
 ## Title
-Implement balance test metrics calculation from pose landmarks
+~~Implement balance test metrics calculation from pose landmarks~~
 
 ## Scope
 
-### In Scope
-- Stability score calculation
-- Sway metrics (std, path length, velocity)
-- Arm excursion metrics
-- Corrections count
+### ~~In Scope~~ (Superseded - now client-side)
+- ~~Stability score calculation~~
+- ~~Sway metrics (std, path length, velocity)~~
+- ~~Arm excursion metrics~~
+- ~~Corrections count~~
+- ~~Team-relative quality rankings~~
+
+### Still Implemented (Backend)
 - LTAD duration score (1-5)
-- Team-relative quality rankings
+- Age expectation comparison (above/meets/below)
 
 ### Out of Scope
 - AI feedback generation (BE-009, BE-010)
