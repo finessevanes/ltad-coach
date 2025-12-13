@@ -125,7 +125,7 @@ Client (React)                    Backend (FastAPI)                 External
 ─────────────────                ──────────────────                ─────────
 Camera capture
 MediaPipe.js (metrics) ──────────► Validate auth/consent
-All 11 CV metrics calculated     Duration scoring (LTAD 1-5)
+17+ CV metrics calculated        Duration scoring (LTAD 1-5)
 Video upload ────────────────────► ─────────────────────────────► Firebase Storage
                                   Agent orchestrator ─────────────► OpenRouter (Claude)
                                   Store results ──────────────────► Firestore

@@ -74,7 +74,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 │                           │                                      │
 │               ┌───────────▼──────────┐                          │
 │               │  Metrics Calculator  │                          │
-│               │  (11 CV metrics)     │                          │
+│               │  (17+ CV metrics)    │                          │
 │               └──────────────────────┘                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -120,7 +120,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 **Client-side (MediaPipe.js)**: SOURCE OF TRUTH
 - Real-time skeleton overlay for visual feedback
-- **Calculates all 11 CV metrics** in `utils/metricsCalculation.ts`
+- **Calculates 17+ CV metrics** in `utils/metricsCalculation.ts` (sway, arm angles, temporal analysis, events)
 - Detects failures via `utils/positionDetection.ts`
 - Sends pre-calculated metrics to backend
 
@@ -241,7 +241,7 @@ ltad-coach/
 │   │   ├── contexts/         # React contexts (AuthContext)
 │   │   ├── types/            # TypeScript interfaces
 │   │   └── utils/            # Metrics calculation (SOURCE OF TRUTH)
-│   │       ├── metricsCalculation.ts  # All 11 CV metrics
+│   │       ├── metricsCalculation.ts  # 17+ CV metrics
 │   │       ├── positionDetection.ts   # Pose state machine
 │   │       └── metricsComparison.ts   # Compare test results
 │   ├── public/

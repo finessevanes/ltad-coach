@@ -40,7 +40,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 >
 > **Key changes from this PRD:**
 > - MediaPipe runs in the browser (not server-side Python)
-> - All 11 CV metrics calculated client-side before upload
+> - 17+ CV metrics calculated client-side before upload (sway, arm angles, temporal analysis, events)
 > - Backend validates auth/consent and adds LTAD duration scoring only
 > - Assessments complete synchronously (no background processing or polling)
 > - AI agents (Phase 7) are not yet implemented
@@ -128,7 +128,7 @@ The system follows a client-server architecture with client-side MediaPipe.js as
 - MediaPipe.js (v0.10.9) for real-time skeleton overlay AND metrics calculation (SOURCE OF TRUTH)
 - MediaRecorder for capturing raw video (no skeleton baked in)
 - Canvas overlay for skeleton visualization during preview
-- All 11 CV metrics calculated client-side before upload
+- 17+ CV metrics calculated client-side before upload (sway, arm angles, temporal analysis, events)
 
 #### Server Layer (Cloud)
 
@@ -137,7 +137,7 @@ The system follows a client-server architecture with client-side MediaPipe.js as
 - Deep Agent System generates AI feedback from metrics
 - Results persisted to Firestore
 
-> **Key Architectural Decision**: Client-side MediaPipe.js is the SOURCE OF TRUTH for all CV metrics. The client calculates all 11 metrics (duration, sway, arm excursion, stability score, etc.) and sends them to the backend. The server only calculates the LTAD duration score (1-5) and generates AI feedback. This simplifies the backend and enables synchronous assessment completion.
+> **Key Architectural Decision**: Client-side MediaPipe.js is the SOURCE OF TRUTH for all CV metrics. The client calculates 17+ metrics (sway, arm angles, temporal analysis, events) and sends them to the backend. The server only calculates the LTAD duration score (1-5) and generates AI feedback. This simplifies the backend and enables synchronous assessment completion.
 
 ### 3.3 Data Flow
 
@@ -150,7 +150,7 @@ The system follows a client-server architecture with client-side MediaPipe.js as
 5. **Live Preview**: Real-time skeleton overlay via MediaPipe.js
 6. **Recording**: 3-2-1 countdown, then 30-second test with visible timer
 7. **Preview**: Playback of recorded video, coach chooses Analyze or Reshoot
-8. **Client Metrics**: MediaPipe.js calculates all 11 CV metrics client-side
+8. **Client Metrics**: MediaPipe.js calculates 17+ CV metrics client-side (sway, arm angles, temporal, events)
 9. **Upload**: Video blob + pre-calculated metrics uploaded to backend
 10. **Server Processing**: Backend validates auth/consent, calculates LTAD duration score (1-5)
 11. **AI Processing**: Deep Agent System generates feedback from metrics
@@ -208,7 +208,7 @@ The following sequence shows the synchronous processing flow with client-side me
 ```
 
 **Key Implementation Notes:**
-- Client calculates all 11 CV metrics using MediaPipe.js before upload
+- Client calculates 17+ CV metrics using MediaPipe.js before upload (sway, arm angles, temporal, events)
 - Backend receives pre-calculated metrics (no server-side MediaPipe)
 - Processing is synchronous - no polling required
 - Backend only calculates LTAD duration score (1-5) and age expectations

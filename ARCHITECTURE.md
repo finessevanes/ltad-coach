@@ -537,7 +537,7 @@ graph TB
     end
 
     subgraph "Utils - Metrics (src/utils/) - SOURCE OF TRUTH"
-        MetricsCalc[metricsCalculation.ts<br/>All 11 CV metrics<br/>stabilityScore, sway, etc.]
+        MetricsCalc[metricsCalculation.ts<br/>17+ CV metrics<br/>sway, arm angles, temporal, events]
         PositionDetect[positionDetection.ts<br/>Pose state machine<br/>Failure detection]
         MetricsCompare[metricsComparison.ts<br/>Compare test results]
         Validation[validation.ts<br/>Form validation]
