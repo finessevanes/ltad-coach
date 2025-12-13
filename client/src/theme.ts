@@ -221,7 +221,7 @@ export const theme = createTheme({
           border: 'none',
         },
         colorError: {
-          backgroundColor: '#FEF2F2', // Light red background
+          backgroundColor: '#FEE2E2', // Light red background
           color: '#DC2626', // Dark red text
           border: 'none',
         },

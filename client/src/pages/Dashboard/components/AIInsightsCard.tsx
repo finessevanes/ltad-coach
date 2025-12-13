@@ -49,7 +49,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({
   return (
     <Card
       sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        bgcolor: 'primary.main',
         color: 'white',
       }}
     >
