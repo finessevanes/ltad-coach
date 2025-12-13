@@ -15,10 +15,49 @@ export interface RecordingState {
   duration: number;
 }
 
+/**
+ * Metrics for a temporal segment (first/middle/last third of test)
+ */
+export interface ClientSegmentMetrics {
+  armAngleLeft: number;      // degrees
+  armAngleRight: number;     // degrees
+  swayVelocity: number;      // cm/s
+  correctionsCount: number;
+}
+
+/**
+ * Temporal breakdown of metrics
+ */
+export interface ClientTemporalMetrics {
+  firstThird: ClientSegmentMetrics;
+  middleThird: ClientSegmentMetrics;
+  lastThird: ClientSegmentMetrics;
+}
+
+/**
+ * World landmark metrics - real-world units (cm, degrees)
+ */
+export interface ClientWorldMetrics {
+  swayStdX: number;           // cm
+  swayStdY: number;           // cm
+  swayPathLength: number;     // cm
+  swayVelocity: number;       // cm/s
+  correctionsCount: number;
+  armAngleLeft: number;       // degrees
+  armAngleRight: number;      // degrees
+  armAsymmetryRatio: number;
+  stabilityScore: number;     // 0-100
+  temporal: ClientTemporalMetrics;
+}
+
+/**
+ * Client-calculated metrics (normalized coordinates)
+ */
 export interface ClientMetrics {
   success: boolean;
   holdTime: number;
   failureReason?: string;
+  // Normalized metrics (0-1 scale)
   armDeviationLeft: number;
   armDeviationRight: number;
   armAsymmetryRatio: number;
@@ -28,6 +67,8 @@ export interface ClientMetrics {
   swayVelocity: number;
   correctionsCount: number;
   stabilityScore: number;
+  // World metrics (real units: cm, degrees)
+  worldMetrics?: ClientWorldMetrics;
 }
 
 export interface AssessmentMetrics {
@@ -44,6 +85,8 @@ export interface AssessmentMetrics {
   durationScore: number;
   durationScoreLabel: string;
   ageExpectation?: string;
+  // World metrics (real units)
+  worldMetrics?: ClientWorldMetrics;
 }
 
 export interface Assessment {

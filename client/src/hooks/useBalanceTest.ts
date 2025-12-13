@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { PoseResult } from '../types/mediapipe';
 import { LegTested } from '../types/assessment';
+import type { TestResult } from '../types/balanceTest';
 import {
   TestState,
   PositionStatus,
-  TestResult,
   TimestampedLandmarks,
   POSITION_HOLD_BUFFER_MS,
   TRACKING_LOST_TIMEOUT_MS,
@@ -25,7 +25,7 @@ import {
   getInitialPositions,
   InitialPositions,
 } from '../utils/positionDetection';
-import { calculateAllMetrics } from '../utils/metricsCalculation';
+import { calculateAllMetrics, calculateWorldMetrics } from '../utils/metricsCalculation';
 
 interface UseBalanceTestOptions {
   targetDuration?: number;
@@ -167,7 +167,7 @@ export function useBalanceTest(
       const avgArmDeviationLeft = armDeviationSumRef.current.left / count;
       const avgArmDeviationRight = armDeviationSumRef.current.right / count;
 
-      // Calculate all metrics from landmark history
+      // Calculate all metrics from landmark history (normalized)
       const metrics = calculateAllMetrics(
         landmarkHistoryRef.current,
         finalHoldTime,
@@ -177,11 +177,18 @@ export function useBalanceTest(
         avgArmDeviationRight
       );
 
-      const result = {
+      // Calculate world metrics (real-world units: cm, degrees)
+      const worldMetrics = calculateWorldMetrics(
+        landmarkHistoryRef.current,
+        finalHoldTime
+      );
+
+      const result: TestResult = {
         success,
         holdTime: metrics.holdTime,
         failureReason: reason,
         landmarkHistory: [...landmarkHistoryRef.current],
+        // Normalized metrics (existing)
         armDeviationLeft: metrics.armDeviationLeft,
         armDeviationRight: metrics.armDeviationRight,
         armAsymmetryRatio: metrics.armAsymmetryRatio,
@@ -191,8 +198,16 @@ export function useBalanceTest(
         swayVelocity: metrics.swayVelocity,
         correctionsCount: metrics.correctionsCount,
         stabilityScore: metrics.stabilityScore,
+        // World metrics (new - real units)
+        worldMetrics: worldMetrics || undefined,
       };
+
       console.log('[BalanceTest] Setting test result with metrics:', result);
+      if (worldMetrics) {
+        console.log('[BalanceTest] World metrics (cm, degrees):', worldMetrics);
+      } else {
+        console.warn('[BalanceTest] World landmarks not available - world metrics not calculated');
+      }
       setTestResult(result);
     },
     []

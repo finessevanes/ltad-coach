@@ -50,12 +50,13 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 
         setSaving(true);
 
-        // Build client metrics from test result (now includes all sway/stability metrics)
+        // Build client metrics from test result (includes normalized + world metrics)
         const clientMetrics: ClientMetrics | undefined = testResult
           ? {
               success: testResult.success,
               holdTime: testResult.holdTime,
               failureReason: testResult.failureReason,
+              // Normalized metrics
               armDeviationLeft: testResult.armDeviationLeft,
               armDeviationRight: testResult.armDeviationRight,
               armAsymmetryRatio: testResult.armAsymmetryRatio,
@@ -65,6 +66,8 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               swayVelocity: testResult.swayVelocity,
               correctionsCount: testResult.correctionsCount,
               stabilityScore: testResult.stabilityScore,
+              // World metrics (real units: cm, degrees)
+              worldMetrics: testResult.worldMetrics,
             }
           : undefined;
 

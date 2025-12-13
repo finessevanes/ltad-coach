@@ -20,29 +20,85 @@ export interface TimestampedLandmarks {
   worldLandmarks: PoseLandmark[];
 }
 
+/**
+ * Metrics for a temporal segment (first/middle/last third of test)
+ */
+export interface SegmentMetrics {
+  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
+  armAngleLeft: number;
+  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
+  armAngleRight: number;
+  /** Sway velocity in cm/s */
+  swayVelocity: number;
+  /** Number of balance corrections in this segment */
+  correctionsCount: number;
+}
+
+/**
+ * Temporal analysis - metrics broken down by time segments
+ */
+export interface TemporalMetrics {
+  firstThird: SegmentMetrics;
+  middleThird: SegmentMetrics;
+  lastThird: SegmentMetrics;
+}
+
+/**
+ * World landmark metrics - real-world units (cm, degrees)
+ * These are calculated from MediaPipe's worldLandmarks (in meters)
+ */
+export interface WorldMetrics {
+  /** Sway standard deviation in X (cm) */
+  swayStdX: number;
+  /** Sway standard deviation in Y (cm) */
+  swayStdY: number;
+  /** Total sway path length (cm) */
+  swayPathLength: number;
+  /** Average sway velocity (cm/s) */
+  swayVelocity: number;
+  /** Number of balance corrections detected */
+  correctionsCount: number;
+  /** Arm angle from horizontal in degrees. 0° = T-position, positive = dropped */
+  armAngleLeft: number;
+  /** Arm angle from horizontal in degrees. 0° = T-position, positive = dropped */
+  armAngleRight: number;
+  /** Left/Right arm angle ratio */
+  armAsymmetryRatio: number;
+  /** Composite stability score (0-100, higher is better) */
+  stabilityScore: number;
+  /** Temporal breakdown of metrics */
+  temporal: TemporalMetrics;
+}
+
 export interface TestResult {
   success: boolean;
   holdTime: number;
   failureReason?: string;
   landmarkHistory: TimestampedLandmarks[];
+
+  // ========== NORMALIZED METRICS (existing - for comparison) ==========
   /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
   armDeviationLeft: number;
   /** Average arm deviation from T-position (wrist Y - shoulder Y). Positive = dropped below shoulder. */
   armDeviationRight: number;
   /** Left/Right arm deviation ratio */
   armAsymmetryRatio: number;
-  /** Sway standard deviation in X (normalized) */
+  /** Sway standard deviation in X (normalized 0-1) */
   swayStdX: number;
-  /** Sway standard deviation in Y (normalized) */
+  /** Sway standard deviation in Y (normalized 0-1) */
   swayStdY: number;
-  /** Total sway path length (normalized) */
+  /** Total sway path length (normalized 0-1) */
   swayPathLength: number;
-  /** Average sway velocity (normalized) */
+  /** Average sway velocity (normalized units/s) */
   swayVelocity: number;
   /** Number of balance corrections detected */
   correctionsCount: number;
   /** Composite stability score (0-100, higher is better) */
   stabilityScore: number;
+
+  // ========== WORLD METRICS (new - real units) ==========
+  /** World landmark metrics in real-world units (cm, degrees) */
+  worldMetrics?: WorldMetrics;
 }
 
 // Constants for position detection

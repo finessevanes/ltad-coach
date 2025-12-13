@@ -93,6 +93,8 @@ async def analyze_video_endpoint(
         "duration_score": duration_score,
         "duration_score_label": duration_score_label,
         "age_expectation": age_expectation,
+        # World metrics (real units: cm, degrees) - pass through from client
+        "world_metrics": client_metrics.world_metrics.model_dump() if client_metrics.world_metrics else None,
     }
 
     # Create assessment as completed (no background processing needed)
