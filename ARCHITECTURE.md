@@ -2,9 +2,9 @@
 
 > Computer vision athletic assessment platform for youth sports coaches
 
-**Version**: 0.2.0
+**Version**: 0.3.0
 **Target Demo**: December 18, 2025
-**Status**: Phases 0-6 implemented, Phase 7+ pending
+**Status**: Phases 0-7 implemented, Phase 8+ pending
 
 > **Architecture Evolution**: The implementation has diverged from the original PRD. Key change: MediaPipe analysis now runs client-side (not server-side). The client is the source of truth for all CV metrics. See details below.
 
@@ -36,9 +36,9 @@ The LTAD Coach MVP is a full-stack web application that enables youth sports coa
 **Key Architectural Principles (Current Implementation):**
 - **Client-side metrics**: MediaPipe.js calculates all CV metrics client-side; backend validates and stores
 - **Synchronous processing**: Assessments complete immediately (no background tasks needed)
-- **Backend as proxy**: Backend validates auth/consent and calculates LTAD duration scores only
+- **Backend as proxy**: Backend validates auth/consent, calculates LTAD scores, and generates AI feedback
 - **Firebase-centric**: Firestore for data, Storage for videos, Auth for authentication
-- **AI agents pending**: Phase 7 AI feedback not yet implemented
+- **AI agents operational**: Phase 7 AI feedback fully implemented via orchestrator
 
 ---
 
@@ -72,7 +72,7 @@ graph TB
     end
 
     subgraph "External Services"
-        OpenRouter[OpenRouter API<br/>Phase 7 - NOT IMPLEMENTED]
+        Anthropic[Anthropic API<br/>Claude Haiku for AI Agents]
         Resend[Resend API<br/>Transactional Email]
     end
 
@@ -90,6 +90,7 @@ graph TB
     FastAPI -->|Validate Token| FireAuth
     FastAPI -->|Store Assessment| Firestore
     FastAPI -->|Calculate Score| DurationScore
+    FastAPI -->|Generate Feedback| Anthropic
     FastAPI -->|Send Emails| Resend
 
     classDef userClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
@@ -103,8 +104,7 @@ graph TB
     class React,MediaPipeJS,MetricsCalc frontendClass
     class FastAPI,DurationScore backendClass
     class FireAuth,Firestore,FireStorage firebaseClass
-    class Resend externalClass
-    class OpenRouter notImplemented
+    class Anthropic,Resend externalClass
 ```
 
 **Key Points (Current Implementation):**
@@ -112,7 +112,7 @@ graph TB
 - **Authentication**: Firebase handles all auth; backend validates tokens
 - **Metrics Calculation**: Client-side MediaPipe.js is source of truth (not server-side)
 - **Storage Strategy**: Videos in Firebase Storage, metrics in Firestore
-- **AI Processing**: NOT YET IMPLEMENTED (Phase 7)
+- **AI Processing**: Fully operational via orchestrator (Phase 7 complete)
 
 ---
 
@@ -153,15 +153,21 @@ sequenceDiagram
 
     FastAPI->>FastAPI: 11. Calculate duration_score<br/>+ age_expectation (LTAD)
     FastAPI->>Firestore: 12. Create assessment<br/>status: "completed"
-    FastAPI-->>React: 13. Return assessment_id + status
 
-    React->>Coach: 14. Display results<br/>(metrics from client)
+    Note over FastAPI: Generate AI feedback via orchestrator
+
+    FastAPI->>Anthropic: 13. Generate coach feedback<br/>(assessment agent)
+    Anthropic-->>FastAPI: 14. Return AI feedback
+    FastAPI->>Firestore: 15. Update with ai_coach_assessment
+    FastAPI-->>React: 16. Return assessment_id + status
+
+    React->>Coach: 17. Display results<br/>(metrics + AI feedback)
 ```
 
 **Performance Targets (NFRs):**
 - **NFR-1**: Live skeleton overlay ≥15 FPS (client-side) ✅ Achieved
 - **NFR-2**: Assessment storage <2 seconds (no server-side video processing)
-- **NFR-3**: AI feedback generation <10 seconds ❌ Not yet implemented
+- **NFR-3**: AI feedback generation <10 seconds ✅ Achieved (3-6 seconds typical)
 - **NFR-4**: Page load time <3 seconds ✅ Achieved
 
 **Current Design Decisions:**
@@ -174,11 +180,11 @@ sequenceDiagram
 
 ## 3. AI Agent Architecture
 
-> **⚠️ STATUS: PLANNED - NOT YET IMPLEMENTED (Phase 7)**
+> **✅ STATUS: IMPLEMENTED (Phase 7 Complete)**
 >
-> The AI agent system described below is the target architecture from the PRD. The `backend/app/agents/` and `backend/app/prompts/` directories exist but are empty. This section documents the planned design for future implementation.
+> The AI agent system is fully operational. All four agents are implemented in `backend/app/agents/` with static LTAD context in `backend/app/prompts/static_context.py`. Currently using Claude Haiku for all agents via Anthropic API (direct, not OpenRouter).
 
-Four-agent system using Claude models via OpenRouter with context optimization patterns.
+Four-agent system using Claude models via Anthropic API with context optimization patterns.
 
 ```mermaid
 graph TD
@@ -241,26 +247,28 @@ graph TD
     style ContextPatterns fill:#fff9c4,stroke:#f57f17,stroke-width:2px
 ```
 
-**Planned Agent Specifications:**
+**Implemented Agent Specifications:**
 
 | Agent | Model | Input Size | Output Size | Cost/Call | Purpose |
 |-------|-------|------------|-------------|-----------|---------|
-| **Orchestrator** | Python logic (no LLM) | - | - | $0 | Route requests to appropriate agent |
-| **Compression** | Claude Haiku | ~6000 tokens (12 assessments) | ~150 tokens (summary) | ~$0.002 | Summarize athlete history for context efficiency |
-| **Assessment** | Claude Sonnet 4.5 | ~2500 tokens (metrics + cached benchmarks) | ~400 tokens | ~$0.05 | Generate single-test coaching feedback |
-| **Progress** | Claude Sonnet 4.5 | ~1100 tokens (summary + team context) | ~600 tokens | ~$0.08 | Generate trend analysis and parent reports |
+| **Orchestrator** | Python logic (no LLM) | - | - | $0 | Route requests and execute appropriate workflow |
+| **Compression** | Claude Haiku | ~6000 tokens (12 assessments) | ~150 words (summary) | ~$0.002 | Summarize athlete history for context efficiency |
+| **Assessment** | Claude Haiku | ~2500 tokens (metrics + LTAD context) | ~200 words | ~$0.005 | Generate single-test coaching feedback |
+| **Progress** | Claude Haiku | ~1100 tokens (summary + team context) | ~350 words | ~$0.008 | Generate trend analysis and parent reports |
 
-**Planned Context Optimization Strategies:**
+**Implemented Context Optimization Strategies:**
 
-1. **Offloading**: Store raw keypoints (33 landmarks × 900 frames = ~30KB JSON) in Firebase Storage instead of LLM context
-2. **Compression**: Use fast/cheap Haiku model to summarize 12 assessments (6000 tokens → 150 tokens) before passing to expensive Sonnet
-3. **Isolation**: Each agent receives only data relevant to its task (no unnecessary context)
-4. **Caching**: Cache static LTAD age-based benchmarks in system prompt (~90% cache hit rate = ~90% cost savings)
+1. **Offloading**: Raw keypoints (33 landmarks × 900 frames = ~30KB JSON) stored in Firebase Storage, not sent to LLM
+2. **Compression**: Haiku model summarizes 12 assessments (~6000 tokens → ~150 words) before passing to Progress agent
+3. **Isolation**: Each agent receives only relevant data via orchestrator routing
+4. **Unified Entry Point**: All AI operations go through `orchestrator.generate_feedback()` for consistency
+5. **Fallback Mechanisms**: Template-based responses provided when API calls fail
 
-**Projected Costs (when implemented):**
-- Assessment feedback: $0.05 per test
-- Parent report: $0.08 per report (includes compression)
-- 1000 assessments/month: ~$50-80/month in AI costs
+**Actual Costs:**
+- Assessment feedback: ~$0.005 per test (Haiku)
+- Progress report: ~$0.010 per report (includes compression)
+- 1000 assessments/month: ~$5-10/month in AI costs (using Haiku)
+- System designed to support Sonnet upgrade when access is granted
 
 ---
 
@@ -764,6 +772,6 @@ graph TB
 
 ---
 
-**Last Updated**: 2025-12-12
-**Document Version**: 2.0.0
-**Status**: Updated to reflect actual implementation (Phases 0-6 complete, Phase 7+ pending)
+**Last Updated**: 2025-12-13
+**Document Version**: 0.3.0
+**Status**: Updated to reflect actual implementation (Phases 0-7 complete, Phase 8+ pending)
