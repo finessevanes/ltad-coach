@@ -118,26 +118,26 @@ async def analyze_video_endpoint(
 
     logger.info(f"Assessment {assessment.id} created and completed immediately")
 
-    # Generate AI feedback (Phase 7)
-    ai_feedback = ""
+    # Generate coach assessment feedback (Phase 7)
+    ai_coach_assessment = ""
     try:
-        ai_feedback = await generate_assessment_feedback(
+        ai_coach_assessment = await generate_assessment_feedback(
             athlete_name=athlete.name,
             athlete_age=athlete.age,
             leg_tested=data.leg_tested.value,
             metrics=metrics,
         )
 
-        # Update assessment with AI feedback
+        # Update assessment with coach feedback
         await assessment_repo.update(
             assessment.id,
-            {"ai_feedback": ai_feedback}
+            {"ai_coach_assessment": ai_coach_assessment}
         )
-        logger.info(f"AI feedback generated for assessment {assessment.id}")
+        logger.info(f"Coach assessment feedback generated for assessment {assessment.id}")
 
     except Exception as e:
-        logger.error(f"Failed to generate AI feedback for {assessment.id}: {e}")
-        # Continue without AI feedback - assessment is still valid
+        logger.error(f"Failed to generate coach assessment for {assessment.id}: {e}")
+        # Continue without coach assessment - assessment is still valid
 
     return AnalyzeResponse(
         id=assessment.id,
@@ -192,7 +192,7 @@ async def get_assessments_for_athlete(
             status=a.status,
             created_at=a.created_at,
             metrics=a.metrics,
-            ai_feedback=a.ai_feedback,
+            ai_coach_assessment=a.ai_coach_assessment,
             error_message=a.error_message,
         )
         for a in assessments
@@ -248,6 +248,6 @@ async def get_assessment(
         status=assessment.status,
         created_at=assessment.created_at,
         metrics=assessment.metrics,
-        ai_feedback=assessment.ai_feedback,
+        ai_coach_assessment=assessment.ai_coach_assessment,
         error_message=assessment.error_message,
     )
