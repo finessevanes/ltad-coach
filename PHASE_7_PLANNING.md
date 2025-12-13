@@ -204,7 +204,7 @@ elif request_type in ("parent_report", "progress_trends"):
 
 1. **`backend/app/agents/assessment.py`**
    - `generate_assessment_feedback()` function using Sonnet
-   - Input: Athlete name, age, leg tested, metrics, optional team rank
+   - Input: Athlete name, age, leg tested, metrics
    - Output: 150-200 word coaching feedback
    - `_identify_focus_areas()`: Algorithm to detect problem areas
    - `_generate_fallback_feedback()`: Template-based backup
@@ -228,7 +228,6 @@ ai_feedback = await generate_assessment_feedback(
     athlete_age=athlete.age,
     leg_tested=data.leg_tested,
     metrics=metrics_dict,
-    team_rank=None,  # Can add team ranking later
 )
 
 await assessment_repo.update_with_results(
@@ -266,7 +265,7 @@ await assessment_repo.update_with_results(
 
 1. **`backend/app/agents/progress.py`**
    - `generate_progress_report()` function using Sonnet
-   - Input: Athlete info, compressed history, current metrics, team rank, assessment count
+   - Input: Athlete info, compressed history, current metrics, assessment count
    - Output: 250-350 word parent report
    - `analyze_trends()`: Helper for trend detection
    - `_generate_fallback_report()`: Template-based backup
@@ -291,7 +290,6 @@ await assessment_repo.update_with_results(
 - [ ] Generates parent-friendly report
 - [ ] Uses compressed history from Compression Agent
 - [ ] Includes trend analysis (improving/stable/declining)
-- [ ] References team ranking appropriately
 - [ ] Explains metrics in accessible language
 - [ ] Provides developmental context (LTAD)
 - [ ] Includes encouragement and home activities
@@ -664,19 +662,9 @@ After completing Phase 7, verify:
 ### 2. Team Ranking Implementation Timing
 **Question**: Implement team ranking in Phase 7 or defer to Phase 8?
 
-**Context**: Assessment agent can accept `team_rank` parameter for context.
+**Context**: Ranking functionality removed from scope.
 
-**Options**:
-- **Option A**: Implement basic team ranking now
-  - Add `calculate_team_ranking()` helper in `services/metrics.py`
-  - Query assessments by coach_id, sort by stability_score
-  - Include in Assessment Agent call
-
-- **Option B**: Defer to Phase 8
-  - Pass `team_rank=None` for now
-  - Implement when building dashboard
-
-**Recommendation**: Defer to Phase 8. Not critical for demo.
+**Decision**: Team ranking feature has been removed from the project. Assessments will focus on individual athlete performance and historical comparisons without relative team positioning.
 
 ---
 
@@ -790,7 +778,6 @@ report = await generate_progress_report(
     athlete_age=athlete.age,
     compressed_history=routing["compressed_history"],
     current_metrics=latest_metrics,
-    team_rank=(3, 12),
     assessment_count=routing["assessment_count"],
 )
 ```

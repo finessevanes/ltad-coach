@@ -21,6 +21,7 @@ Implement Assessment Agent for single test feedback generation
 ### Out of Scope
 - Historical trend analysis (BE-011)
 - Parent report generation (BE-011)
+- Team ranking (not implemented - removed from scope)
 
 ## Technical Decisions
 
@@ -68,7 +69,6 @@ async def generate_assessment_feedback(
     athlete_age: int,
     leg_tested: str,
     metrics: dict,
-    team_rank: tuple = None,  # (rank, total)
 ) -> str:
     """
     Generate coach-friendly feedback for a single assessment.
@@ -78,7 +78,6 @@ async def generate_assessment_feedback(
         athlete_age: Athlete's age
         leg_tested: 'left' or 'right'
         metrics: Dict of calculated metrics
-        team_rank: Optional (rank, total) for team context
 
     Returns:
         Feedback string (150-200 words)
@@ -111,12 +110,6 @@ async def generate_assessment_feedback(
 - Corrections: {metrics.get('corrections_count', 0)}
 - Result: {metrics.get('failure_reason', 'Unknown').replace('_', ' ').title()}
 
-"""
-
-    if team_rank:
-        rank, total = team_rank
-        dynamic_context += f"""
-**Team Ranking**: #{rank} of {total} athletes
 """
 
     # Add temporal breakdown if available
@@ -318,17 +311,13 @@ def _generate_fallback_feedback(
 # Add to analyze_video function after metrics calculation:
 
 from app.agents.assessment import generate_assessment_feedback
-from app.services.metrics import calculate_team_ranking
 
 # Generate AI feedback
-team_rank = await calculate_team_ranking(coach_id, athlete_id, metrics["stability_score"])
-
 ai_feedback = await generate_assessment_feedback(
     athlete_name=athlete.name,
     athlete_age=athlete.age,
     leg_tested=leg_tested,
     metrics=metrics,
-    team_rank=team_rank,
 )
 
 # Update assessment with results
@@ -400,7 +389,6 @@ feedback = await generate_assessment_feedback(
             {"time": 3.2, "type": "stabilized", "detail": "Velocity dropped below 2 cm/s and maintained for 2+ seconds"}
         ],
     },
-    team_rank=(1, 8),
 )
 print(feedback)
 
@@ -430,7 +418,6 @@ feedback_low = await generate_assessment_feedback(
             {"time": 7.3, "type": "correction_burst", "severity": "high", "detail": "6 corrections in 2s"},
         ],
     },
-    team_rank=(7, 8),
 )
 print(feedback_low)
 ```
