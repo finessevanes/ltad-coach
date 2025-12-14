@@ -76,9 +76,9 @@ export const UploadStep: React.FC<UploadStepProps> = ({
           athleteId,
           testType,
           legTested,
-          videoUrl: url,
-          videoPath: path,
-          duration: videoDuration,
+          leftVideoUrl: url,      // UPDATED: renamed from videoUrl
+          leftVideoPath: path,     // UPDATED: renamed from videoPath
+          leftDuration: videoDuration,  // UPDATED: renamed from duration
           clientMetrics,
         });
 
