@@ -35,14 +35,16 @@ Implement assessment retrieval, listing, and management endpoints
 
 ## Acceptance Criteria
 
-- [ ] `GET /assessments` returns coach's recent assessments
-- [ ] `GET /assessments/athlete/{athleteId}` returns athlete's assessments
-- [ ] `GET /assessments/{id}` returns single assessment with full details (status always "completed" or "failed")
-- [ ] `PUT /assessments/{id}/notes` updates coach notes
-- [ ] `DELETE /assessments/{id}` removes assessment (deletes video and keypoints from Firebase Storage)
-- [ ] All endpoints validate coach ownership
-- [ ] Pagination supports loading more results
-- [ ] ~~Polling support for processing status~~ **❌ NOT NEEDED** - Assessments complete immediately
+- [x] `GET /assessments` returns coach's recent assessments
+- [x] `GET /assessments/athlete/{athleteId}` returns athlete's assessments
+- [x] `GET /assessments/{id}` returns single assessment with full details (status always "completed" or "failed")
+- [x] `PUT /assessments/{id}/notes` updates coach notes
+- [x] `DELETE /assessments/{id}` removes assessment (deletes video and keypoints from Firebase Storage)
+- [x] All endpoints validate coach ownership
+- [x] Pagination supports loading more results
+- [x] ~~Polling support for processing status~~ **❌ NOT NEEDED** - Assessments complete immediately
+
+**Status: ✅ COMPLETED**
 
 ## Files to Create/Modify
 
