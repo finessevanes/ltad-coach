@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "parent_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "athlete_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
