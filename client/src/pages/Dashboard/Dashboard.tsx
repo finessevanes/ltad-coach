@@ -22,7 +22,6 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
 export function Dashboard() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | undefined>();
   const { showSnackbar } = useSnackbar();
 
   // Dashboard data state
@@ -131,8 +130,6 @@ export function Dashboard() {
         <Grid item xs={12} md={4}>
           <AthleteQuickSelector
             athletes={athletes}
-            selectedAthleteId={selectedAthleteId}
-            onSelectAthlete={setSelectedAthleteId}
           />
         </Grid>
 

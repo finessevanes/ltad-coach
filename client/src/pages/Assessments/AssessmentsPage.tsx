@@ -26,7 +26,6 @@ import { useNavigate } from 'react-router-dom';
 export const AssessmentsPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [assessments, setAssessments] = useState([]);
 
   useEffect(() => {
     fetchAssessments();
