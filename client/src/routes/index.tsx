@@ -1,15 +1,13 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Landing } from "../pages/Landing";
-import { Home } from "../pages/Home";
 import { Dashboard } from "../pages/Dashboard";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import { AthletesList, AddAthlete, AthleteProfile } from "../pages/Athletes";
 import ConsentForm from "../pages/Consent";
-import AssessmentFlow from "../pages/Assessment/AssessmentFlow";
-import AssessmentResults from "../pages/Assessment/AssessmentResults";
+import { AssessmentFlow, AssessmentResults, AssessmentsList } from "../pages/Assessment";
 import BackupUpload from "../pages/Assessment/BackupUpload";
 import ReportPreview from "../pages/Reports/ReportPreview";
 import PublicReport from "../pages/Reports/PublicReport";
@@ -127,7 +125,7 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <Home /> {/* Placeholder until FE-011 */}
+          <AssessmentsList />
         </ProtectedRoute>
       </Layout>
     ),
