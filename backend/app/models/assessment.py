@@ -145,7 +145,7 @@ class Assessment(BaseModel):
     created_at: datetime
     raw_keypoints_url: Optional[str] = None
     metrics: Optional[MetricsData] = None
-    ai_feedback: Optional[str] = None  # Populated in Phase 7
+    ai_coach_assessment: Optional[str] = None  # Coach-friendly assessment feedback (Phase 7)
     error_message: Optional[str] = None
 
 
@@ -169,7 +169,7 @@ class AssessmentResponse(BaseModel):
     status: AssessmentStatus
     created_at: datetime
     metrics: Optional[MetricsData] = None
-    ai_feedback: Optional[str] = None
+    ai_coach_assessment: Optional[str] = None
     error_message: Optional[str] = None
 
 

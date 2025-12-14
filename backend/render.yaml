@@ -16,9 +16,7 @@ services:
         sync: false
       - key: FIREBASE_STORAGE_BUCKET
         sync: false
-      - key: OPENROUTER_API_KEY
-        sync: false
-      - key: OPENROUTER_BASE_URL
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: RESEND_API_KEY
         sync: false

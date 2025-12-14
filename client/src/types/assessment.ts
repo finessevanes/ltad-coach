@@ -103,7 +103,7 @@ export interface Assessment {
   status: AssessmentStatus;
   createdAt: string;
   metrics?: AssessmentMetrics;
-  aiFeedback?: string;
+  aiCoachAssessment?: string;
   errorMessage?: string;
 }
 

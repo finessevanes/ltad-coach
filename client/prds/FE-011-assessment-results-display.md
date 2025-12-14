@@ -177,7 +177,6 @@ The `camelcase-keys` interceptor (configured in FE-001) automatically converts a
 | `metrics.failure_reason` | `metrics.failureReason` |
 | `ai_feedback` | `aiFeedback` |
 | `coach_notes` | `coachNotes` |
-| `team_rank` | `teamRank` |
 | `team_total` | `teamTotal` |
 
 ### pages/Assessment/Results.tsx

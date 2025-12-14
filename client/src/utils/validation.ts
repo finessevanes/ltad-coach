@@ -30,7 +30,7 @@ export const athleteSchema = yup.object({
     .required('Age is required'),
   gender: yup
     .string()
-    .oneOf(['male', 'female', 'other'], 'Invalid gender selection')
+    .oneOf(['male', 'female'], 'Invalid gender selection')
     .required('Gender is required'),
   parentEmail: yup
     .string()

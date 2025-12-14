@@ -384,7 +384,7 @@ async def analyze_video(
         leg_tested: 'left' or 'right'
 
     Returns:
-        Dict with metrics, raw_keypoints_url, ai_feedback, team_rank
+        Dict with metrics, raw_keypoints_url, ai_feedback
     """
     processor = PoseProcessor()
     failure_detector = FailureDetector(leg_tested)

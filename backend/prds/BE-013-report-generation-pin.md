@@ -79,8 +79,6 @@ class ReportPreview(BaseModel):
     content: str
     assessment_count: int
     latest_score: Optional[int] = None
-    team_rank: Optional[int] = None
-    team_total: Optional[int] = None
 
 class ReportCreate(BaseModel):
     """Store report for sending"""
@@ -205,7 +203,7 @@ from app.agents.orchestrator import orchestrator
 from app.agents.progress import generate_progress_report
 from app.repositories.athlete import AthleteRepository
 from app.repositories.assessment import AssessmentRepository
-from app.services.metrics import calculate_team_ranking, get_duration_score
+from app.services.metrics import get_duration_score
 
 def generate_pin() -> str:
     """Generate 6-digit PIN"""
@@ -238,13 +236,6 @@ async def generate_report_content(
     latest = assessments[0]
     current_metrics = latest.metrics.model_dump() if latest.metrics else None
 
-    # Calculate team ranking
-    rank, total = (None, None)
-    if current_metrics and current_metrics.get("stability_score"):
-        rank, total = await calculate_team_ranking(
-            coach_id, athlete_id, current_metrics["stability_score"]
-        )
-
     # Get compressed history via orchestrator
     routing = await orchestrator.route(
         request_type="parent_report",
@@ -261,7 +252,6 @@ async def generate_report_content(
         athlete_age=athlete.age,
         compressed_history=routing["compressed_history"],
         current_metrics=current_metrics,
-        team_rank=(rank, total) if rank else (1, 1),
         assessment_count=routing["assessment_count"],
     )
 
@@ -274,8 +264,6 @@ async def generate_report_content(
     metadata = {
         "assessment_count": routing["assessment_count"],
         "latest_score": latest_score,
-        "team_rank": rank,
-        "team_total": total,
         "assessment_ids": [a.id for a in assessments],
     }
 
@@ -333,8 +321,6 @@ async def generate_report(
         content=content,
         assessment_count=metadata["assessment_count"],
         latest_score=metadata["latest_score"],
-        team_rank=metadata["team_rank"],
-        team_total=metadata["team_total"],
     )
 
 @router.post("/{athlete_id}/send", response_model=ReportSendResponse)
@@ -542,9 +528,7 @@ async def resend_report(
   "athlete_name": "John Smith",
   "content": "Dear Parent,\n\nWe're pleased to share...",
   "assessment_count": 5,
-  "latest_score": 4,
-  "team_rank": 3,
-  "team_total": 12
+  "latest_score": 4
 }
 ```
 

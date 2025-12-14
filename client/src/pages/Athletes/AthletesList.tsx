@@ -36,24 +36,31 @@ export default function AthletesList() {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
 
+  // Function to fetch athletes
+  const fetchAthletes = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await athletesService.getAll(statusFilter || undefined);
+      setAthletes(data);
+    } catch (err) {
+      console.error('Error fetching athletes:', err);
+      setError('Failed to load athletes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch athletes when component mounts or status filter changes
   useEffect(() => {
-    const fetchAthletes = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const data = await athletesService.getAll(statusFilter || undefined);
-        setAthletes(data);
-      } catch (err) {
-        console.error('Error fetching athletes:', err);
-        setError('Failed to load athletes. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAthletes();
   }, [statusFilter]);
+
+  // Callback for when an athlete is updated
+  const handleAthleteUpdated = () => {
+    fetchAthletes();
+    showSnackbar('Athlete updated successfully', 'success');
+  };
 
   // Filter athletes by search query (client-side)
   const filteredAthletes = athletes.filter((athlete) =>
@@ -175,7 +182,11 @@ export default function AthletesList() {
       </Stack>
 
       {/* Athletes Table */}
-      <AthletesTable athletes={filteredAthletes} loading={loading} />
+      <AthletesTable
+        athletes={filteredAthletes}
+        loading={loading}
+        onAthleteUpdated={handleAthleteUpdated}
+      />
 
       {/* Show info message if search/filter yields no results but athletes exist */}
       {!loading &&

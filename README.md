@@ -18,13 +18,13 @@
 
 AI Coach is a computer vision-powered athletic assessment platform designed for youth sports coaches working with athletes ages 5-13. The platform enables coaches to conduct standardized athletic tests, automatically analyze performance using MediaPipe pose estimation, and generate AI-powered feedback using a multi-agent system built on Claude.
 
-> **Implementation Status (December 2025)**: Phases 0-6 complete. Client-side MediaPipe is source of truth for metrics. AI agents (Phase 7) not yet implemented.
+> **Implementation Status (December 2025)**: Phases 0-7 complete. Client-side MediaPipe is source of truth for metrics. AI agents fully implemented and operational.
 
 ### Key Features
 
 - **Automated Assessment**: Replace subjective observations with objective CV-measured metrics
 - **Client-Side Analysis**: MediaPipe.js calculates all 11 metrics directly in the browser
-- **AI-Powered Insights**: (Phase 7 - planned) Transform raw metrics into actionable coaching feedback
+- **AI-Powered Insights**: Transform raw metrics into actionable coaching feedback using Claude AI
 - **Progress Tracking**: (Phase 8 - planned) Historical trend analysis with team ranking comparisons
 - **Parent Communication**: (Phase 9 - planned) Professional, shareable reports with PIN protection
 - **LTAD Alignment**: Duration scoring tied to established youth athletic development frameworks
@@ -45,10 +45,14 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 - Backend storage of client-calculated metrics
 - LTAD duration scoring and age expectations
 
-**Planned (Phases 7-10)**:
-- AI agent system (Assessment, Progress, Compression agents)
+**Implemented (Phase 7)**:
+- AI agent system (Assessment, Progress, Compression agents via orchestrator)
+- Real-time coaching feedback generation
+- Progress report generation with historical analysis
+
+**Planned (Phases 8-10)**:
 - Team ranking comparisons
-- Parent report generation with PIN protection
+- Parent report distribution with PIN protection
 - Coach dashboard with statistics
 
 **Post-MVP**:
@@ -74,7 +78,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 │                           │                                      │
 │               ┌───────────▼──────────┐                          │
 │               │  Metrics Calculator  │                          │
-│               │  (11 CV metrics)     │                          │
+│               │  (17+ CV metrics)    │                          │
 │               └──────────────────────┘                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -109,7 +113,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 | Storage | Firebase Storage | Video & keypoint files |
 | Auth | Firebase Auth | Google OAuth + email/password |
 | Computer Vision | MediaPipe v0.10.9 | Pose detection (33 landmarks) |
-| AI/LLM | Claude via OpenRouter | Assessment feedback |
+| AI/LLM | Claude via Anthropic API | Assessment & progress feedback |
 | Email | Resend | Transactional emails |
 | Frontend Deploy | Vercel | Static hosting |
 | Backend Deploy | Render | Python hosting |
@@ -120,7 +124,7 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 
 **Client-side (MediaPipe.js)**: SOURCE OF TRUTH
 - Real-time skeleton overlay for visual feedback
-- **Calculates all 11 CV metrics** in `utils/metricsCalculation.ts`
+- **Calculates 17+ CV metrics** in `utils/metricsCalculation.ts` (sway, arm angles, temporal analysis, events)
 - Detects failures via `utils/positionDetection.ts`
 - Sends pre-calculated metrics to backend
 
@@ -129,22 +133,24 @@ AI Coach is a computer vision-powered athletic assessment platform designed for 
 - Current implementation: backend only stores client metrics
 - Backend adds duration_score and age_expectation (LTAD benchmarks)
 
-#### AI Agent Architecture (Phase 7 - NOT YET IMPLEMENTED)
+#### AI Agent Architecture (Phase 7 - IMPLEMENTED)
 
-Planned four-agent system using Claude via OpenRouter:
+Four-agent system using Claude via Anthropic API:
 
 | Agent | Model | Purpose | Status |
 |-------|-------|---------|--------|
-| Orchestrator | Python Logic | Routes requests (no LLM) | Planned |
-| Compression | Claude Haiku | Summarizes history (12 assessments → 150 tokens) | Planned |
-| Assessment | Claude Sonnet | Single test feedback | Planned |
-| Progress | Claude Sonnet | Historical trend analysis | Planned |
+| Orchestrator | Python Logic | Routes requests (no LLM) | ✅ Implemented |
+| Compression | Claude Haiku | Summarizes history (12 assessments → 150 words) | ✅ Implemented |
+| Assessment | Claude Haiku | Single test feedback (coach-friendly) | ✅ Implemented |
+| Progress | Claude Haiku | Historical trend analysis (parent-friendly) | ✅ Implemented |
 
-**Planned Deep Agent Patterns**:
-1. **Context Offloading**: Store raw keypoints externally, send only metrics to LLM
-2. **Context Compression**: Summarize history before processing
-3. **Context Isolation**: Each agent receives only relevant data
-4. **Prompt Caching**: Cache static LTAD content (~90% cost savings)
+**Implemented Agent Patterns**:
+1. **Context Offloading**: Raw keypoints stored in Firebase Storage, only metrics sent to LLM
+2. **Context Compression**: Haiku summarizes up to 12 assessments before progress analysis
+3. **Context Isolation**: Each agent receives only relevant data via orchestrator routing
+4. **Unified Entry Point**: All AI operations go through `orchestrator.generate_feedback()`
+
+**Note**: Currently using Haiku for all agents. System designed to support Sonnet when access is enabled.
 
 ---
 
@@ -241,7 +247,7 @@ ltad-coach/
 │   │   ├── contexts/         # React contexts (AuthContext)
 │   │   ├── types/            # TypeScript interfaces
 │   │   └── utils/            # Metrics calculation (SOURCE OF TRUTH)
-│   │       ├── metricsCalculation.ts  # All 11 CV metrics
+│   │       ├── metricsCalculation.ts  # 17+ CV metrics
 │   │       ├── positionDetection.ts   # Pose state machine
 │   │       └── metricsComparison.ts   # Compare test results
 │   ├── public/
@@ -262,8 +268,8 @@ ltad-coach/
 │   │   ├── middleware/       # Auth, rate limiting
 │   │   ├── models/           # Pydantic schemas
 │   │   ├── constants/        # LTAD scoring thresholds
-│   │   ├── agents/           # EMPTY - Phase 7
-│   │   └── prompts/          # EMPTY - Phase 7
+│   │   ├── agents/           # AI agents (orchestrator, assessment, progress, compression)
+│   │   └── prompts/          # Static LTAD context for AI agents
 │   ├── tests/
 │   ├── prds/                 # Backend PRD specs (BE-001 to BE-015)
 │   ├── requirements.txt
@@ -365,15 +371,16 @@ Configure Firebase Security Rules:
 6. **POST /assessments/analyze** with client_metrics
 7. Backend validates auth/consent
 8. Backend calculates duration_score + age_expectation (LTAD)
-9. Assessment stored as "completed" immediately (synchronous)
-10. Frontend displays results
+9. Agent orchestrator generates AI coaching feedback (3-6 seconds)
+10. Assessment stored as "completed" with AI feedback
+11. Frontend displays results with AI insights
 
 > **Note**: No background processing, no server-side MediaPipe, no polling. Assessment completes in <2 seconds.
 
 **Performance Requirements**:
 - **NFR-1**: Live skeleton overlay ≥15 FPS - ACHIEVED
 - **NFR-2**: Assessment storage <2 seconds - ACHIEVED (changed from server video analysis)
-- **NFR-3**: AI feedback <10 seconds - NOT IMPLEMENTED (Phase 7)
+- **NFR-3**: AI feedback <10 seconds - ACHIEVED (3-6 seconds typical)
 - **NFR-4**: Page load <3 seconds - ACHIEVED
 
 ### Metrics Calculated
@@ -411,7 +418,7 @@ See [prd.md Section 11.4](./prd.md#114-hybrid-scoring-model) for complete scorin
 
 ## Roadmap & Status
 
-**Current Phase**: Phase 6 Complete (Phases 7+ pending)
+**Current Phase**: Phase 7 Complete (Phases 8+ pending)
 **Target Milestone**: Investor Demo - December 18, 2025
 
 > **Implementation Note**: Phase 6 was implemented differently than planned. Client-side MediaPipe is source of truth instead of server-side. See ARCHITECTURE.md for details.
@@ -429,7 +436,7 @@ See [DEPENDENCY_GRAPH.md](./DEPENDENCY_GRAPH.md) for detailed phase breakdown.
 | 4 | Consent Workflow | BE-005, FE-006, FE-007 | COMPLETE |
 | 5 | Video Capture | FE-008, FE-009, FE-010 | COMPLETE |
 | 6 | CV Analysis | BE-006, BE-007, BE-008 | COMPLETE (client-side) |
-| 7 | AI Agents | BE-009, BE-010, BE-011 | PENDING |
+| 7 | AI Agents | BE-009, BE-010, BE-011 | COMPLETE |
 | 8 | Assessment Results | BE-012, FE-011, FE-012 | PARTIAL (list endpoint done) |
 | 9 | Parent Reports | BE-013, BE-014, FE-013, FE-014 | PENDING |
 | 10 | Dashboard & Polish | BE-015, FE-015, FE-016 | PENDING |
