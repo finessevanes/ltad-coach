@@ -280,8 +280,9 @@ async def update_athlete(
     if update_data:
         await athlete_repo.update(athlete_id, update_data)
 
-        # Fetch updated athlete
-        athlete = await athlete_repo.get(athlete_id)
+        # Apply updates to in-memory object to avoid re-fetching
+        for key, value in update_data.items():
+            setattr(athlete, key, value)
 
     return AthleteResponse(
         id=athlete.id,
