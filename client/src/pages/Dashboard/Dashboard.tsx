@@ -6,7 +6,7 @@ import { PendingConsentAlerts } from './components/PendingConsentAlerts';
 import { AthleteQuickSelector } from './components/AthleteQuickSelector';
 import { AIInsightsCard } from './components/AIInsightsCard';
 import athletesService from '../../services/athletes';
-import dashboardService from '../../services/dashboard';
+import { dashboardApi } from '../../services/dashboardApi';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
@@ -19,40 +19,36 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
  * - Athlete quick selector
  * - AI insights
  */
-interface AssessmentListItem {
-  id: string;
-  athleteId: string;
-  athleteName: string;
-  testType: string;
-  legTested: string;
-  createdAt: string;
-  status: string;
-  durationSeconds?: number;
-  stabilityScore?: number;
-}
-
 export function Dashboard() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
-  const [recentAssessments, setRecentAssessments] = useState<AssessmentListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | undefined>();
   const { showSnackbar } = useSnackbar();
 
-  // Fetch dashboard data using optimized endpoint + athletes list
-  // Key optimization: /dashboard eliminates N+1 queries for assessment athlete names
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState<any>(null);
+
+  // Fetch dashboard data on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Fetch dashboard data and athletes in parallel
-        // Dashboard endpoint returns stats + recent assessments (with athlete names pre-loaded)
-        // Athletes call needed for AthleteQuickSelector component
-        const [dashboardData, allAthletes] = await Promise.all([
-          dashboardService.getDashboard(),
-          athletesService.getAll(),
-        ]);
 
-        setAthletes(allAthletes);
-        setRecentAssessments(dashboardData.recentAssessments);
+        // TODO: Once BE-015 is implemented, use dashboardApi.getData()
+        // For now, fall back to fetching athletes directly
+        try {
+          const data = await dashboardApi.getData();
+          setDashboardData(data.data);
+          setAthletes(data.data.athletes || []);
+        } catch (apiErr: any) {
+          // Fallback: Backend endpoint not ready, use current approach
+          // Suppress 404 error since it's expected until BE-015 is implemented
+          if (apiErr.response?.status !== 404) {
+            console.warn('Dashboard API error:', apiErr);
+          }
+          const athletesData = await athletesService.getAll();
+          setAthletes(athletesData);
+        }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         showSnackbar('Failed to load dashboard data', 'error');
@@ -61,27 +57,29 @@ export function Dashboard() {
       }
     };
 
-    fetchData();
-  }, [showSnackbar]);
+    fetchDashboardData();
+  }, []);
 
-  // Calculate quick stats
-  const totalAthletes = athletes.length;
-  const pendingConsents = athletes.filter((a) => a.consentStatus === 'pending').length;
+  // Calculate quick stats (fallback if API not available)
+  const totalAthletes = dashboardData?.stats?.totalAthletes || athletes.length;
+  const pendingConsents = dashboardData?.stats?.pendingConsent ||
+    athletes.filter((a) => a.consentStatus === 'pending').length;
   const declinedConsents = athletes.filter((a) => a.consentStatus === 'declined').length;
+  const recentTests = dashboardData?.stats?.assessmentsThisWeek || 0;
+  const avgBalanceScore = dashboardData?.stats?.averageScore || 0;
 
-  // Calculate from actual assessments
-  const recentTests = recentAssessments.length;
-  const avgBalanceScore = recentAssessments.length > 0
-    ? recentAssessments.reduce((sum, a) => sum + (a.durationSeconds || 0), 0) / recentAssessments.length
-    : 0;
+  // Use API data if available, otherwise fallback to empty array
+  const recentAssessments = dashboardData?.recentAssessments || [];
 
-  // Mock AI insights - will be replaced with actual Claude insights
-  const aiInsights = athletes.length > 0 ? [
-    {
-      type: 'alert' as const,
-      message: `You have ${totalAthletes} athletes in your roster. Start conducting assessments to get personalized AI insights!`,
-    }
-  ] : [];
+  // AI insights from API or fallback message
+  const aiInsights = dashboardData?.aiInsights
+    ? [{ type: 'alert' as const, message: dashboardData.aiInsights }]
+    : athletes.length > 0
+      ? [{
+          type: 'alert' as const,
+          message: `You have ${totalAthletes} athletes in your roster. Start conducting assessments to get personalized AI insights!`,
+        }]
+      : [];
 
   // Handle resend consent
   const handleResendConsent = async (athleteId: string) => {
@@ -133,6 +131,8 @@ export function Dashboard() {
         <Grid item xs={12} md={4}>
           <AthleteQuickSelector
             athletes={athletes}
+            selectedAthleteId={selectedAthleteId}
+            onSelectAthlete={setSelectedAthleteId}
           />
         </Grid>
 
