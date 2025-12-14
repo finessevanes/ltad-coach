@@ -17,3 +17,8 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export default app;
+
+// Expose auth instance globally in development for debugging
+if (import.meta.env.DEV) {
+  window.auth = auth;
+}

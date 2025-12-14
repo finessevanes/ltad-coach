@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import { Auth } from 'firebase/auth';
+
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
   readonly VITE_FIREBASE_API_KEY: string;
@@ -12,4 +14,11 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+// Extend Window interface for development debug helpers
+declare global {
+  interface Window {
+    auth?: Auth;
+  }
 }

@@ -6,7 +6,7 @@ import { Dashboard } from '../pages/Dashboard';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import { AthletesList, AddAthlete } from '../pages/Athletes';
+import { AthletesList, AddAthlete, AthleteProfile } from '../pages/Athletes';
 import ConsentForm from '../pages/Consent';
 import AssessmentFlow from '../pages/Assessment/AssessmentFlow';
 import AssessmentResults from '../pages/Assessment/AssessmentResults';
@@ -69,7 +69,7 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <Home /> {/* Placeholder - will be athlete detail page */}
+          <AthleteProfile />
         </ProtectedRoute>
       </Layout>
     ),

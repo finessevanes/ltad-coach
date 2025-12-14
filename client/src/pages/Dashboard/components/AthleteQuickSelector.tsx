@@ -32,13 +32,11 @@ interface Athlete {
 
 interface AthleteQuickSelectorProps {
   athletes: Athlete[];
-  onSelectAthlete?: (athleteId: string) => void;
   selectedAthleteId?: string;
 }
 
 export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
   athletes,
-  onSelectAthlete,
   selectedAthleteId,
 }) => {
   const navigate = useNavigate();
@@ -148,7 +146,7 @@ export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
                         selectedAthleteId === athlete.id ? '#EFF6FF' : 'action.hover',
                     },
                   }}
-                  onClick={() => onSelectAthlete?.(athlete.id)}
+                  onClick={() => navigate(`/athletes/${athlete.id}`)}
                 >
                   <ListItemAvatar>
                     <Avatar
@@ -171,11 +169,9 @@ export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
                       </Typography>
                     }
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Age {athlete.age} • {athlete.gender}
-                        </Typography>
-                      </Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        Age {athlete.age} • {athlete.gender}
+                      </Typography>
                     }
                   />
                   <Chip

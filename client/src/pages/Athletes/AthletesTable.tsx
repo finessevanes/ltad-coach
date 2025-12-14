@@ -158,6 +158,8 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
             <TableRow
               key={athlete.id}
               hover
+              onClick={() => navigate(`/athletes/${athlete.id}`)}
+              sx={{ cursor: 'pointer' }}
             >
               <TableCell>
                 <Typography variant="body2" fontWeight={500}>

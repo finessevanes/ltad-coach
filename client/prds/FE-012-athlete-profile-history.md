@@ -40,20 +40,22 @@ Implement athlete profile page with assessment history and progress visualizatio
 
 ## Acceptance Criteria
 
-- [ ] Profile page shows athlete name, age, gender
+- [x] Profile page shows athlete name, age, gender
 - [ ] ~~Report history section shows previously sent reports~~ (Phase 9)
 - [ ] ~~Each report row shows date sent, PIN (masked), resend button~~ (Phase 9)
 - [ ] ~~"Resend Report" generates new PIN and sends email~~ (Phase 9)
 - [ ] ~~Success/error toast after resend~~ (Phase 9)
-- [ ] Consent status shown with appropriate badge
-- [ ] Assessment history displayed in chronological order
-- [ ] Each assessment row shows date, score, duration
-- [ ] Click assessment row navigates to results
-- [ ] Progress chart shows duration trend over time
-- [ ] "New Assessment" button (disabled if pending consent)
-- [ ] "Edit Athlete" opens edit modal
-- [ ] "Delete Athlete" with confirmation dialog
-- [ ] Empty state when no assessments
+- [x] Consent status shown with appropriate badge
+- [x] Assessment history displayed in chronological order
+- [x] Each assessment row shows date, score, duration
+- [x] Click assessment row navigates to results
+- [x] Progress chart shows duration trend over time
+- [x] "New Assessment" button (disabled if pending consent)
+- [x] "Edit Athlete" opens edit modal
+- [x] "Delete Athlete" with confirmation dialog
+- [x] Empty state when no assessments
+
+**Status: ✅ COMPLETED** (Report history will be added in Phase 9)
 
 ## Files to Create/Modify
 

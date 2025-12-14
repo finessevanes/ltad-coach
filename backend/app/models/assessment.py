@@ -180,7 +180,26 @@ class AnalyzeResponse(BaseModel):
     message: str = "Assessment completed"
 
 
+class AssessmentListItem(BaseModel):
+    """Lightweight assessment for list views (denormalized with athlete name)."""
+    id: str
+    athlete_id: str
+    athlete_name: str = Field(..., description="Denormalized athlete name for display")
+    test_type: TestType
+    leg_tested: LegTested
+    created_at: datetime
+    status: AssessmentStatus
+    duration_seconds: Optional[float] = Field(None, description="Test duration in seconds")
+    stability_score: Optional[float] = Field(None, description="Overall stability score (0-100)")
+
+
 class AssessmentListResponse(BaseModel):
-    """Response model for list of assessments."""
-    assessments: list[AssessmentResponse]
-    total: int
+    """Response model for list of assessments with pagination."""
+    assessments: list[AssessmentListItem]
+    next_cursor: Optional[str] = Field(None, description="Cursor for next page")
+    has_more: bool = Field(False, description="Whether there are more results")
+
+
+class UpdateNotesRequest(BaseModel):
+    """Request to update coach notes."""
+    notes: str = Field(default="", description="Coach notes for this assessment")
