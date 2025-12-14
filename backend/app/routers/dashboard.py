@@ -74,7 +74,7 @@ async def get_dashboard(
             id=athlete.id,
             name=athlete.name,
             age=athlete.age,
-            gender=athlete.gender.value,
+            gender=athlete.gender,
             parent_email=athlete.parent_email,
             created_at=athlete.created_at,
         )
