@@ -12,7 +12,7 @@ import { reportsApi, ReportInfo, ReportView } from '../../services/reports';
 import { PinEntry } from './PinEntry';
 import { ReportContent } from './ReportContent';
 
-export default function PublicReport() {
+export function PublicReport() {
   const { reportId } = useParams();
 
   const [info, setInfo] = useState<ReportInfo | null>(null);
