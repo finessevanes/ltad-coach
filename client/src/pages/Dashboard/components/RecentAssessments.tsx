@@ -15,17 +15,20 @@ import {
 import { Assessment as AssessmentIcon, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-interface Assessment {
+interface AssessmentListItem {
   id: string;
+  athleteId: string;
   athleteName: string;
   testType: string;
-  score?: number;
-  status: 'completed' | 'processing' | 'failed';
+  legTested: string;
   createdAt: string;
+  status: string;
+  durationSeconds?: number;
+  stabilityScore?: number;
 }
 
 interface RecentAssessmentsProps {
-  assessments: Assessment[];
+  assessments: AssessmentListItem[];
   loading?: boolean;
 }
 
@@ -124,15 +127,15 @@ export const RecentAssessments: React.FC<RecentAssessmentsProps> = ({
                     secondary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                         <Typography variant="body2" color="text.secondary">
-                          {assessment.testType}
+                          One-Leg Balance
                         </Typography>
-                        {assessment.score !== undefined && (
+                        {assessment.durationSeconds !== undefined && (
                           <>
                             <Typography variant="body2" color="text.secondary">
                               •
                             </Typography>
                             <Typography variant="body2" fontWeight={600} color="primary.main">
-                              Score: {assessment.score}/100
+                              {assessment.durationSeconds.toFixed(1)}s
                             </Typography>
                           </>
                         )}

@@ -5,7 +5,8 @@ and the backend validates ownership/consent and stores the results.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limit import analysis_rate_limiter
 from app.models.user import User
@@ -13,8 +14,10 @@ from app.models.assessment import (
     AssessmentCreate,
     AssessmentResponse,
     AssessmentListResponse,
+    AssessmentListItem,
     AnalyzeResponse,
     AssessmentStatus,
+    UpdateNotesRequest,
 )
 from app.repositories.assessment import AssessmentRepository
 from app.repositories.athlete import AthleteRepository
@@ -185,25 +188,26 @@ async def get_assessments_for_athlete(
 
     assessments = await assessment_repo.get_by_athlete(athlete_id, limit=limit)
 
-    # Convert to response objects
-    assessment_responses = [
-        AssessmentResponse(
+    # Convert to list items (using new lightweight model)
+    items = [
+        AssessmentListItem(
             id=a.id,
             athlete_id=a.athlete_id,
+            athlete_name=athlete.name,
             test_type=a.test_type,
             leg_tested=a.leg_tested,
-            status=a.status,
             created_at=a.created_at,
-            metrics=a.metrics,
-            ai_coach_assessment=a.ai_coach_assessment,
-            error_message=a.error_message,
+            status=a.status,
+            duration_seconds=a.metrics.hold_time if a.metrics else None,
+            stability_score=None,  # TODO: Calculate if needed
         )
         for a in assessments
     ]
 
     return AssessmentListResponse(
-        assessments=assessment_responses,
-        total=len(assessment_responses),
+        assessments=items,
+        next_cursor=None,
+        has_more=False,
     )
 
 
@@ -327,3 +331,166 @@ async def test_progress(
         "assessment_count": assessment_count,
         "report": report,
     }
+
+
+@router.get("", response_model=AssessmentListResponse)
+async def list_assessments(
+    limit: int = Query(20, ge=1, le=50),
+    cursor: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+):
+    """List all assessments for authenticated coach (activity feed).
+
+    Ordered by most recent first with cursor-based pagination.
+
+    Args:
+        limit: Maximum number of assessments to return (1-50, default 20)
+        cursor: Cursor for next page (optional)
+        current_user: Authenticated user
+
+    Returns:
+        List of assessments with pagination info
+    """
+    assessment_repo = AssessmentRepository()
+    athlete_repo = AthleteRepository()
+
+    # Get assessments (fetch limit + 1 to check if there are more)
+    assessments = await assessment_repo.get_by_coach(current_user.id, limit=limit + 1)
+
+    # Check if there are more results
+    has_more = len(assessments) > limit
+    if has_more:
+        assessments = assessments[:limit]
+
+    # Get athlete names for display (denormalized)
+    athlete_names = {}
+    for assessment in assessments:
+        if assessment.athlete_id not in athlete_names:
+            athlete = await athlete_repo.get(assessment.athlete_id)
+            athlete_names[assessment.athlete_id] = athlete.name if athlete else "Unknown"
+
+    # Build response items
+    items = [
+        AssessmentListItem(
+            id=a.id,
+            athlete_id=a.athlete_id,
+            athlete_name=athlete_names.get(a.athlete_id, "Unknown"),
+            test_type=a.test_type,
+            leg_tested=a.leg_tested,
+            created_at=a.created_at,
+            status=a.status,
+            duration_seconds=a.metrics.hold_time if a.metrics else None,
+            stability_score=None,  # TODO: Calculate if needed
+        )
+        for a in assessments
+    ]
+
+    # Generate next cursor
+    next_cursor = None
+    if has_more and assessments:
+        next_cursor = assessments[-1].id
+
+    return AssessmentListResponse(
+        assessments=items,
+        next_cursor=next_cursor,
+        has_more=has_more,
+    )
+
+
+@router.put("/{assessment_id}/notes")
+async def update_notes(
+    assessment_id: str,
+    data: UpdateNotesRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Update coach notes for an assessment.
+
+    Args:
+        assessment_id: Assessment ID
+        data: Request with notes
+        current_user: Authenticated user
+
+    Returns:
+        Success message
+
+    Raises:
+        404: Assessment not found
+        403: Access denied (not owned by coach)
+    """
+    assessment_repo = AssessmentRepository()
+    athlete_repo = AthleteRepository()
+
+    # Get assessment
+    assessment = await assessment_repo.get(assessment_id)
+    if not assessment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
+
+    # Validate ownership via athlete
+    athlete = await athlete_repo.get_if_owned(assessment.athlete_id, current_user.id)
+    if not athlete:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    # Update notes
+    await assessment_repo.update(assessment_id, {"coach_notes": data.notes})
+
+    return {"message": "Notes updated"}
+
+
+@router.delete("/{assessment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_assessment(
+    assessment_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Delete an assessment and its associated files.
+
+    Args:
+        assessment_id: Assessment ID
+        current_user: Authenticated user
+
+    Raises:
+        404: Assessment not found
+        403: Access denied (not owned by coach)
+    """
+    from firebase_admin import storage
+
+    assessment_repo = AssessmentRepository()
+    athlete_repo = AthleteRepository()
+
+    # Get assessment
+    assessment = await assessment_repo.get(assessment_id)
+    if not assessment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
+
+    # Validate ownership via athlete
+    athlete = await athlete_repo.get_if_owned(assessment.athlete_id, current_user.id)
+    if not athlete:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    # Delete video from Firebase Storage
+    if assessment.video_path:
+        try:
+            bucket = storage.bucket()
+            video_blob = bucket.blob(assessment.video_path)
+            video_blob.delete()
+            logger.info(f"Deleted video: {assessment.video_path}")
+        except Exception as e:
+            logger.error(f"Failed to delete video {assessment.video_path}: {e}")
+            # Continue - don't fail delete if storage cleanup fails
+
+    # Delete assessment document
+    await assessment_repo.delete(assessment_id)
+    logger.info(f"Deleted assessment: {assessment_id}")
+
+    return None

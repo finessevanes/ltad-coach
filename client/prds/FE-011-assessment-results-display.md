@@ -40,16 +40,18 @@ Implement assessment results page with metrics, AI feedback, and peer comparison
 
 ## Acceptance Criteria
 
-- [ ] Page displays duration score as prominent badge
-- [ ] Score label shows (e.g., "Proficient")
-- [ ] Age comparison shown (meets/above/below expected)
-- [ ] Quality metrics displayed in organized cards
-- [ ] Team ranking shown (e.g., "3rd of 12")
-- [ ] AI feedback rendered with formatting
-- [ ] Coach notes editable with save
-- [ ] Video playback available
-- [ ] ~~Polling continues while status is "processing"~~ (No longer needed - assessments complete synchronously)
-- [ ] Loading state while fetching assessment data
+- [x] Page displays duration score as prominent badge
+- [x] Score label shows (e.g., "Proficient")
+- [x] Age comparison shown (meets/above/below expected)
+- [x] Quality metrics displayed in organized cards
+- [x] Team ranking shown (e.g., "3rd of 12")
+- [x] AI feedback rendered with formatting
+- [x] Coach notes editable with save
+- [x] Video playback available
+- [x] Loading state while fetching assessment data
+- [x] ~~Polling continues while status is "processing"~~ **❌ NOT NEEDED** - Assessments complete immediately with no "processing" state
+
+**Status: ✅ COMPLETED**
 
 ## Files to Create/Modify
 
@@ -98,7 +100,7 @@ export interface AssessmentDetail {
   testType: string;
   legTested: string;
   createdAt: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'completed' | 'failed';  // Always 'completed' - no "processing" state (synchronous)
   videoUrl?: string;
   metrics?: AssessmentMetrics;
   aiFeedback?: string;
@@ -118,9 +120,9 @@ export interface AssessmentListItem {
   testType: string;
   legTested: string;
   createdAt: string;
-  status: 'processing' | 'completed' | 'failed';
-  durationSeconds?: number;   // Only present when status === 'completed'
-  stabilityScore?: number;    // Only present when status === 'completed'
+  status: 'completed' | 'failed';  // Always 'completed' - no "processing" state (synchronous)
+  durationSeconds?: number;
+  stabilityScore?: number;
 }
 ```
 
@@ -215,28 +217,6 @@ export default function Results() {
     loadAssessment();
   }, [assessmentId]);
 
-  // Poll while processing (uses strategy from FE-010)
-  // Polling Config: 2s interval, 45s timeout (NFR-2: 30s analysis + NFR-3: 10s AI + 5s buffer)
-  useEffect(() => {
-    if (assessment?.status === 'processing') {
-      const startTime = Date.now();
-      const POLLING_INTERVAL_MS = 2000;
-      const POLLING_TIMEOUT_MS = 45000;
-
-      const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        if (elapsed >= POLLING_TIMEOUT_MS) {
-          clearInterval(interval);
-          setError('Analysis is taking longer than expected. Please refresh the page.');
-          return;
-        }
-        loadAssessment();
-      }, POLLING_INTERVAL_MS);
-
-      return () => clearInterval(interval);
-    }
-  }, [assessment?.status]);
-
   const loadAssessment = async () => {
     if (!assessmentId) return;
     try {
@@ -266,20 +246,6 @@ export default function Results() {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">{error || 'Assessment not found'}</Alert>
-      </Container>
-    );
-  }
-
-  if (assessment.status === 'processing') {
-    return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <CircularProgress sx={{ mb: 2 }} />
-          <Typography variant="h6">Analyzing Video</Typography>
-          <Typography color="text.secondary">
-            This may take up to 30 seconds...
-          </Typography>
-        </Paper>
       </Container>
     );
   }
@@ -661,12 +627,13 @@ export function FeedbackSection({
 ## Testing Instructions
 
 1. Complete an assessment and navigate to results
-2. Verify polling while "processing" status
+2. Verify results display immediately (no "processing" state - synchronous)
 3. Verify all metrics display correctly
-4. Verify AI feedback renders with markdown
+4. Verify AI feedback renders with markdown formatting
 5. Edit coach notes and save
 6. Verify video playback works
-7. Click "Generate Parent Report" button
+7. Verify team ranking displays if data available
+8. Click "Generate Parent Report" button
 
 ## UI Reference
 

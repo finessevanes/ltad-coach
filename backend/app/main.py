@@ -7,6 +7,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.openapi.models import SecuritySchemeType
+from fastapi.security import HTTPBearer
 
 from app.config import get_settings
 from app.firebase import init_firebase, verify_connection
@@ -52,6 +54,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configure security scheme for Swagger UI
+security = HTTPBearer()
+
 # Get settings
 settings = get_settings()
 
@@ -71,6 +76,38 @@ app.include_router(auth_router)
 app.include_router(athletes_router)
 app.include_router(consent_router)
 app.include_router(assessments_router)
+
+
+# Configure OpenAPI schema to show Authorization button in Swagger UI
+def custom_openapi():
+    """Customize OpenAPI schema to include security scheme."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "HTTPBearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your Firebase ID token"
+        }
+    }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 
 @app.get("/health")

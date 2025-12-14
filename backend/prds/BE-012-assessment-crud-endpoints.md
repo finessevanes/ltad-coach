@@ -12,35 +12,39 @@ Implement assessment retrieval, listing, and management endpoints
 ## Scope
 
 ### In Scope
-- Get single assessment endpoint
+- Get single assessment endpoint (returns completed assessments)
 - List assessments by athlete endpoint
 - List all assessments for coach (activity feed)
 - Update coach notes endpoint
 - Delete assessment endpoint
-- Polling endpoint for processing status
 
 ### Out of Scope
 - Analysis endpoint (BE-006)
 - Report generation (BE-013)
+- Polling/processing status (not needed - assessments complete synchronously)
 
 ## Technical Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Pagination | Cursor-based | Better for activity feeds |
-| Polling | Simple GET with status | No WebSockets for MVP |
+| Polling | **Not needed** | Assessments complete synchronously (client-side metrics) |
 | Notes | Separate endpoint | Simpler validation |
+
+> **Implementation Note**: Assessments are created in "completed" state immediately when the client POSTs metrics from BE-006. No "processing" state exists. Status is only "completed" or "failed" when retrieved.
 
 ## Acceptance Criteria
 
-- [ ] `GET /assessments` returns coach's recent assessments
-- [ ] `GET /assessments/athlete/{athleteId}` returns athlete's assessments
-- [ ] `GET /assessments/{id}` returns single assessment with full details
-- [ ] `GET /assessments/{id}` supports polling for processing status
-- [ ] `PUT /assessments/{id}/notes` updates coach notes
-- [ ] `DELETE /assessments/{id}` removes assessment
-- [ ] All endpoints validate coach ownership
-- [ ] Pagination supports loading more results
+- [x] `GET /assessments` returns coach's recent assessments
+- [x] `GET /assessments/athlete/{athleteId}` returns athlete's assessments
+- [x] `GET /assessments/{id}` returns single assessment with full details (status always "completed" or "failed")
+- [x] `PUT /assessments/{id}/notes` updates coach notes
+- [x] `DELETE /assessments/{id}` removes assessment (deletes video and keypoints from Firebase Storage)
+- [x] All endpoints validate coach ownership
+- [x] Pagination supports loading more results
+- [x] ~~Polling support for processing status~~ **❌ NOT NEEDED** - Assessments complete immediately
+
+**Status: ✅ COMPLETED**
 
 ## Files to Create/Modify
 
@@ -459,15 +463,7 @@ curl http://localhost:8000/assessments/assessment_456 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-4. Poll for processing status:
-```bash
-# Same endpoint, check status field
-curl http://localhost:8000/assessments/assessment_456 \
-  -H "Authorization: Bearer $TOKEN"
-# Returns status: "processing" or "completed" or "failed"
-```
-
-5. Update notes:
+4. Update notes:
 ```bash
 curl -X PUT http://localhost:8000/assessments/assessment_456/notes \
   -H "Authorization: Bearer $TOKEN" \

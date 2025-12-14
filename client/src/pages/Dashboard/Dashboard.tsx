@@ -6,6 +6,7 @@ import { PendingConsentAlerts } from './components/PendingConsentAlerts';
 import { AthleteQuickSelector } from './components/AthleteQuickSelector';
 import { AIInsightsCard } from './components/AIInsightsCard';
 import athletesService from '../../services/athletes';
+import assessmentsService from '../../services/assessments';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
@@ -18,28 +19,44 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
  * - Athlete quick selector
  * - AI insights
  */
+interface AssessmentListItem {
+  id: string;
+  athleteId: string;
+  athleteName: string;
+  testType: string;
+  legTested: string;
+  createdAt: string;
+  status: string;
+  durationSeconds?: number;
+  stabilityScore?: number;
+}
+
 export function Dashboard() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [recentAssessments, setRecentAssessments] = useState<AssessmentListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | undefined>();
   const { showSnackbar } = useSnackbar();
 
-  // Fetch athletes on mount
+  // Fetch athletes and assessments on mount
   useEffect(() => {
-    const fetchAthletes = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await athletesService.getAll();
-        setAthletes(data);
+        const [athletesData, assessmentsData] = await Promise.all([
+          athletesService.getAll(),
+          assessmentsService.getAll(10), // Fetch recent 10 assessments
+        ]);
+        setAthletes(athletesData);
+        setRecentAssessments(assessmentsData);
       } catch (err) {
-        console.error('Error fetching athletes:', err);
+        console.error('Error fetching dashboard data:', err);
         showSnackbar('Failed to load dashboard data', 'error');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAthletes();
+    fetchData();
   }, []);
 
   // Calculate quick stats
@@ -47,21 +64,11 @@ export function Dashboard() {
   const pendingConsents = athletes.filter((a) => a.consentStatus === 'pending').length;
   const declinedConsents = athletes.filter((a) => a.consentStatus === 'declined').length;
 
-  // Mock data for now - will be replaced with actual API calls
-  const recentTests = 0; // TODO: Fetch from assessments API
-  const avgBalanceScore = 0; // TODO: Calculate from assessments
-
-  // Mock recent assessments - will be replaced with actual API call
-  const recentAssessments: Array<{
-    id: string;
-    athleteName: string;
-    testType: string;
-    score?: number;
-    status: 'completed' | 'processing' | 'failed';
-    createdAt: string;
-  }> = [
-    // TODO: Fetch from backend API endpoint
-  ];
+  // Calculate from actual assessments
+  const recentTests = recentAssessments.length;
+  const avgBalanceScore = recentAssessments.length > 0
+    ? recentAssessments.reduce((sum, a) => sum + (a.durationSeconds || 0), 0) / recentAssessments.length
+    : 0;
 
   // Mock AI insights - will be replaced with actual Claude insights
   const aiInsights = athletes.length > 0 ? [
@@ -121,8 +128,6 @@ export function Dashboard() {
         <Grid item xs={12} md={4}>
           <AthleteQuickSelector
             athletes={athletes}
-            selectedAthleteId={selectedAthleteId}
-            onSelectAthlete={setSelectedAthleteId}
           />
         </Grid>
 
