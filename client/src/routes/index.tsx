@@ -11,6 +11,8 @@ import ConsentForm from '../pages/Consent';
 import AssessmentFlow from '../pages/Assessment/AssessmentFlow';
 import AssessmentResults from '../pages/Assessment/AssessmentResults';
 import BackupUpload from '../pages/Assessment/BackupUpload';
+import ReportPreview from '../pages/Reports/ReportPreview';
+import PublicReport from '../pages/Reports/PublicReport';
 
 // Route definitions for the application
 export const routes: RouteObject[] = [
@@ -32,6 +34,11 @@ export const routes: RouteObject[] = [
   {
     path: '/consent/:token',
     element: <ConsentForm />,
+  },
+  // Public report view (no auth required)
+  {
+    path: '/report/:reportId',
+    element: <PublicReport />,
   },
   // App routes (inside Layout)
   {
@@ -70,6 +77,16 @@ export const routes: RouteObject[] = [
       <Layout>
         <ProtectedRoute>
           <AthleteProfile />
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: '/athletes/:athleteId/report',
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <ReportPreview />
         </ProtectedRoute>
       </Layout>
     ),
