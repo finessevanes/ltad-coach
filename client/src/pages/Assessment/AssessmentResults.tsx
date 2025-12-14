@@ -26,6 +26,7 @@ import assessmentsService from '../../services/assessments';
 import athletesService from '../../services/athletes';
 import { Assessment } from '../../types/assessment';
 import { Athlete } from '../../types/athlete';
+import { TwoLegResultsView } from './components/TwoLegResultsView';
 
 export default function AssessmentResults() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -85,6 +86,46 @@ export default function AssessmentResults() {
     );
   }
 
+  // Routing logic: bilateral vs single-leg
+  if (!athlete) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">Athlete not found</Alert>
+      </Container>
+    );
+  }
+
+  const isBilateralAssessment = assessment.legTested === 'both';
+  const hasBilateralData = Boolean(
+    assessment.leftLegMetrics &&
+    assessment.rightLegMetrics &&
+    assessment.bilateralComparison
+  );
+
+  // Render bilateral view
+  if (isBilateralAssessment) {
+    if (!hasBilateralData) {
+      return (
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Alert severity="warning">
+            This assessment is marked as bilateral but is missing comparison data.
+            Please contact support if this issue persists.
+          </Alert>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/athletes')}
+            sx={{ mt: 2 }}
+          >
+            Back to Athletes
+          </Button>
+        </Container>
+      );
+    }
+
+    return <TwoLegResultsView assessment={assessment} athlete={athlete} />;
+  }
+
+  // Render single-leg view (existing code below)
   // Use metrics (from backend) - all in real-world units (cm, degrees)
   const { metrics } = assessment;
 

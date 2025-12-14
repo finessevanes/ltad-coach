@@ -1,126 +1,130 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Box, Stepper, Step, StepLabel, Paper } from '@mui/material';
-import { TestSetup } from './steps/TestSetup';
+import { Box } from '@mui/material';
 import { RecordingStep } from './steps/RecordingStep';
-import { ReviewStep } from './steps/ReviewStep';
-import { UploadStep } from './steps/UploadStep';
-import { LegTested, TestType } from '../../types/assessment';
-import { TestResult } from '../../types/balanceTest';
+import { TransitionModal } from './components/TransitionModal';
+import { TwoLegUploadStep } from './components/TwoLegUploadStep';
+import { ClientMetrics } from '../../types/assessment';
 
-const steps = ['Test Setup', 'Recording', 'Review', 'Upload'];
+type TwoLegPhase = 'left-leg-testing' | 'transition-modal' | 'right-leg-testing' | 'uploading';
+
+interface LegTestData {
+  blob: Blob;
+  duration: number;
+  result: ClientMetrics;
+}
 
 export default function AssessmentFlow() {
   const { athleteId } = useParams<{ athleteId: string }>();
   const navigate = useNavigate();
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [testType] = useState<TestType>('one_leg_balance');
-  const [legTested, setLegTested] = useState<LegTested>('left');
-  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-  const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  // Phase state machine
+  const [phase, setPhase] = useState<TwoLegPhase>('left-leg-testing');
 
+  // Test data storage
+  const [leftLegData, setLeftLegData] = useState<LegTestData | null>(null);
+  const [rightLegData, setRightLegData] = useState<LegTestData | null>(null);
+
+  // Modal visibility
+  const [showTransitionModal, setShowTransitionModal] = useState(false);
+
+  // Navigate back if no athleteId
   if (!athleteId) {
     navigate('/athletes');
     return null;
   }
 
-  const handleNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+  /**
+   * Left leg test complete - show transition modal
+   */
+  const handleLeftLegComplete = (blob: Blob, duration: number, testResult?: any) => {
+    if (!testResult) return;
+    setLeftLegData({ blob, duration, result: testResult });
+    setShowTransitionModal(true);
+    setPhase('transition-modal');
   };
 
-  const handleBack = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  /**
+   * User clicks "Continue to Right Leg" in modal
+   */
+  const handleContinueToRightLeg = () => {
+    setShowTransitionModal(false);
+    setPhase('right-leg-testing');
   };
 
-  const handleLegSelect = (leg: LegTested) => {
-    setLegTested(leg);
+  /**
+   * User clicks "Reshoot Left Leg" in modal
+   */
+  const handleReshootLeftLeg = () => {
+    setShowTransitionModal(false);
+    setLeftLegData(null); // Clear left leg data
+    setPhase('left-leg-testing'); // Return to first phase
   };
 
-  const handleDeviceSelect = (deviceId: string) => {
-    setSelectedDevice(deviceId);
+  /**
+   * Right leg test complete - proceed to upload
+   */
+  const handleRightLegComplete = (blob: Blob, duration: number, testResult?: any) => {
+    if (!testResult) return;
+    setRightLegData({ blob, duration, result: testResult });
+    setPhase('uploading');
   };
 
-  const handleRecordingComplete = (blob: Blob, duration: number, result?: TestResult) => {
-    setVideoBlob(blob);
-    setVideoDuration(duration);
-    setTestResult(result || null);
-    handleNext();
-  };
-
-  const handleReshoot = () => {
-    setVideoBlob(null);
-    setCurrentStep(1); // Back to recording
-  };
-
+  /**
+   * Upload complete - navigate to results
+   */
   const handleUploadComplete = (assessmentId: string) => {
     navigate(`/assessments/${assessmentId}`);
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <TestSetup
-            athleteId={athleteId}
-            legTested={legTested}
-            onLegSelect={handleLegSelect}
-            onContinue={handleNext}
-            onBack={() => navigate('/athletes')}
-          />
-        );
-      case 1:
-        return (
-          <RecordingStep
-            athleteId={athleteId}
-            selectedDevice={selectedDevice}
-            onDeviceSelect={handleDeviceSelect}
-            testType={testType}
-            legTested={legTested}
-            onRecordingComplete={handleRecordingComplete}
-            onBack={handleBack}
-          />
-        );
-      case 2:
-        return (
-          <ReviewStep
-            videoBlob={videoBlob}
-            onReshoot={handleReshoot}
-            onContinue={handleNext}
-          />
-        );
-      case 3:
-        return (
-          <UploadStep
-            athleteId={athleteId}
-            videoBlob={videoBlob}
-            videoDuration={videoDuration}
-            testType={testType}
-            legTested={legTested}
-            testResult={testResult}
-            onComplete={handleUploadComplete}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Stepper activeStep={currentStep}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Paper>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      {/* Phase 1: Left Leg Testing */}
+      {phase === 'left-leg-testing' && (
+        <RecordingStep
+          athleteId={athleteId}
+          selectedDevice={null}
+          onDeviceSelect={() => {}}
+          testType="one_leg_balance"
+          legTested="left"
+          autoStart={false}
+          onRecordingComplete={handleLeftLegComplete}
+          onBack={() => navigate(`/athletes/${athleteId}`)}
+        />
+      )}
 
-      <Box>{renderStep()}</Box>
-    </Container>
+      {/* Phase 2: Transition Modal */}
+      <TransitionModal
+        open={showTransitionModal}
+        leftLegResult={leftLegData?.result || null}
+        onContinue={handleContinueToRightLeg}
+        onReshootLeft={handleReshootLeftLeg}
+      />
+
+      {/* Phase 3: Right Leg Testing */}
+      {phase === 'right-leg-testing' && (
+        <RecordingStep
+          athleteId={athleteId}
+          selectedDevice={null}
+          onDeviceSelect={() => {}}
+          testType="one_leg_balance"
+          legTested="right"
+          autoStart={true}
+          instructionText="Testing RIGHT leg"
+          onRecordingComplete={handleRightLegComplete}
+          onBack={() => navigate(`/athletes/${athleteId}`)}
+        />
+      )}
+
+      {/* Phase 4: Upload Both Videos */}
+      {phase === 'uploading' && leftLegData && rightLegData && (
+        <TwoLegUploadStep
+          athleteId={athleteId}
+          leftLegData={leftLegData}
+          rightLegData={rightLegData}
+          onComplete={handleUploadComplete}
+        />
+      )}
+    </Box>
   );
 }

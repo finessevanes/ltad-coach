@@ -13,7 +13,7 @@ from app.repositories.assessment import AssessmentRepository
 
 logger = logging.getLogger(__name__)
 
-RequestType = Literal["assessment_feedback", "parent_report", "progress_trends"]
+RequestType = Literal["assessment_feedback", "bilateral_assessment", "parent_report", "progress_trends"]
 
 
 class AgentOrchestrator:
@@ -58,6 +58,30 @@ class AgentOrchestrator:
                 athlete_age=athlete_age,
                 leg_tested=leg_tested,
                 metrics=metrics,
+            )
+
+        elif request_type == "bilateral_assessment":
+            # Bilateral assessment feedback
+            logger.info(f"Generating bilateral assessment feedback for {athlete_name}")
+
+            if not metrics:
+                raise ValueError("metrics required for bilateral_assessment")
+
+            # Extract left and right leg metrics from metrics dict
+            left_leg_metrics = metrics.get("left_leg_metrics", {})
+            right_leg_metrics = metrics.get("right_leg_metrics", {})
+            bilateral_comparison = metrics.get("bilateral_comparison", {})
+
+            if not left_leg_metrics or not right_leg_metrics or not bilateral_comparison:
+                raise ValueError("bilateral_assessment requires left_leg_metrics, right_leg_metrics, and bilateral_comparison")
+
+            from app.agents.bilateral_assessment import generate_bilateral_assessment_feedback
+            return await generate_bilateral_assessment_feedback(
+                athlete_name=athlete_name,
+                athlete_age=athlete_age,
+                left_leg_metrics=left_leg_metrics,
+                right_leg_metrics=right_leg_metrics,
+                bilateral_comparison=bilateral_comparison,
             )
 
         elif request_type in ("parent_report", "progress_trends"):
