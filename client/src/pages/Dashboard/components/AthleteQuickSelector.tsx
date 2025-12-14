@@ -32,13 +32,11 @@ interface Athlete {
 
 interface AthleteQuickSelectorProps {
   athletes: Athlete[];
-  onSelectAthlete?: (athleteId: string) => void;
   selectedAthleteId?: string;
 }
 
 export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
   athletes,
-  onSelectAthlete,
   selectedAthleteId,
 }) => {
   const navigate = useNavigate();
@@ -148,7 +146,7 @@ export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
                         selectedAthleteId === athlete.id ? '#EFF6FF' : 'action.hover',
                     },
                   }}
-                  onClick={() => onSelectAthlete?.(athlete.id)}
+                  onClick={() => navigate(`/athletes/${athlete.id}`)}
                 >
                   <ListItemAvatar>
                     <Avatar
