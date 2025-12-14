@@ -31,8 +31,8 @@ async def get_dashboard(
     all_athletes = await athlete_repo.get_by_coach(current_user.id)
 
     # Separate athletes by consent status
-    active_athletes = [a for a in all_athletes if a.consent_status.value == "active"]
-    pending_athletes = [a for a in all_athletes if a.consent_status.value == "pending"]
+    active_athletes = [a for a in all_athletes if a.consent_status == "active"]
+    pending_athletes = [a for a in all_athletes if a.consent_status == "pending"]
 
     # Fetch recent assessments (last 10)
     recent_assessments = await assessment_repo.get_by_coach(current_user.id, limit=10)
