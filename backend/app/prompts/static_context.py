@@ -363,6 +363,100 @@ TEMPORAL_TRENDS_GUIDANCE = """# Five-Second Segment Trend Analysis
 - Use as benchmark for other assessments
 """
 
+# Bilateral Balance and Symmetry Context
+BILATERAL_BALANCE_CONTEXT = """# Bilateral Balance and Symmetry
+
+## Normal Asymmetry by Age
+
+Youth athletes naturally exhibit varying levels of bilateral asymmetry based on developmental stage:
+
+### Ages 5-7 (Active Start / FUNdamentals)
+- **Expected Variability**: HIGH (up to 50% difference is normal)
+- **Rationale**: Developing neuromuscular control; laterality still emerging
+- **Coaching Focus**: Fun bilateral activities; don't overemphasize symmetry
+
+### Ages 8-9 (FUNdamentals)
+- **Expected Variability**: MODERATE (20-40% difference is normal)
+- **Rationale**: Motor skills developing; some asymmetry common
+- **Coaching Focus**: ABC development; introduce awareness of both sides
+
+### Ages 10-11 (Learning to Train)
+- **Expected Variability**: LOW-MODERATE (10-30% difference)
+- **Rationale**: Skill refinement stage; asymmetry should decrease
+- **Coaching Focus**: Technical proficiency; balanced development
+
+### Ages 12-13 (Training to Train)
+- **Expected Variability**: MINIMAL (<20% difference goal)
+- **Rationale**: Neuromuscular maturity; sport-specific demands
+- **Coaching Focus**: Performance optimization; address asymmetries proactively
+
+## Asymmetry Thresholds (% Difference in Hold Time)
+
+### Minimal Asymmetry (<20%)
+- **Interpretation**: Normal bilateral variation; both legs well-developed
+- **Action**: Continue balanced training
+- **Split**: 50/50 training volume for both legs
+
+### Moderate Asymmetry (20-40%)
+- **Interpretation**: Noticeable imbalance; weaker leg needs attention
+- **Action**: Add 1-2 extra sets for weaker leg; single-leg exercises
+- **Split**: 60/40 training split favoring weaker leg
+- **Reassess**: After 4-6 weeks of focused training
+
+### Significant Asymmetry (>40%)
+- **Interpretation**: Substantial imbalance; warrants investigation
+- **Action**:
+  - Refer to physiotherapist if persists >8 weeks
+  - Check for injury history on weaker side
+  - Focus heavily on weaker leg development
+- **Split**: 70/30 training split favoring weaker leg
+- **Caution**: May indicate underlying issue; professional assessment recommended
+
+## Bilateral Training Guidelines
+
+### For Minimal Asymmetry
+- Maintain balanced bilateral exercises
+- Occasional single-leg challenges to monitor symmetry
+- Focus on sport-specific skills
+
+### For Moderate Asymmetry
+- **Exercises for Weaker Leg**:
+  - Single-leg balance holds (3x30s)
+  - Single-leg Romanian deadlifts (3x8)
+  - Step-ups on weaker side (3x10)
+- **Frequency**: 2-3x per week
+- **Duration**: 4-6 week blocks
+
+### For Significant Asymmetry
+- **Priority**: Address asymmetry before progressing sport skills
+- **Exercises** (same as moderate, higher volume):
+  - Single-leg balance holds (4x45s)
+  - Progressive single-leg strength work
+  - Proprioceptive training (wobble board, BOSU)
+- **Frequency**: 3-4x per week
+- **Professional Support**: Physiotherapy consultation recommended
+- **Red Flags**: Pain, swelling, or regression warrants immediate medical evaluation
+
+## Temporal Asymmetry Analysis
+
+When comparing temporal patterns between legs:
+
+### Fatigue Patterns
+- **Symmetric Fatigue**: Both legs degrade similarly over time (good sign)
+- **Asymmetric Fatigue**: One leg fatigues faster (needs endurance work)
+- **Example Feedback**: "Left leg held strong for 20s, right leg showed fatigue at 12s"
+
+### Event Comparison
+- **Flapping Events**: Compare timing and frequency of arm corrections
+- **Correction Bursts**: Identify if one leg has more instability episodes
+- **Stabilization**: Note if one leg achieves stability sooner
+
+### Coaching Recommendations
+- If **left leg fatigues faster**: Add left leg isometric holds
+- If **right leg has more corrections**: Focus on right leg proprioception
+- If **asymmetric stabilization**: Work on weaker leg single-leg balance drills
+"""
+
 # Coaching Cues Library
 COACHING_CUES = """# Coaching Cues by Issue Type
 
@@ -467,6 +561,8 @@ Generate parent-friendly report in the following structure (250-350 words total)
 
 # Combined Context for Caching
 FULL_STATIC_CONTEXT = f"""{LTAD_CONTEXT}
+
+{BILATERAL_BALANCE_CONTEXT}
 
 {BALANCE_EVENTS_GUIDANCE}
 
