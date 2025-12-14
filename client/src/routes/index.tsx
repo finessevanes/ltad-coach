@@ -10,7 +10,7 @@ import ConsentForm from "../pages/Consent";
 import { AssessmentFlow, AssessmentResults, AssessmentsList } from "../pages/Assessment";
 import BackupUpload from "../pages/Assessment/BackupUpload";
 import ReportPreview from "../pages/Reports/ReportPreview";
-import PublicReport from "../pages/Reports/PublicReport";
+import { PublicReport } from "../pages/Reports/PublicReport";
 import AICoach from "../pages/AICoach";
 
 // Route definitions for the application
