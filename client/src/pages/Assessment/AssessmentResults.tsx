@@ -21,6 +21,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ReactMarkdown from 'react-markdown';
 import assessmentsService from '../../services/assessments';
 import athletesService from '../../services/athletes';
 import { Assessment } from '../../types/assessment';
@@ -368,6 +369,18 @@ export default function AssessmentResults() {
               </Alert>
             );
           })()}
+        </Paper>
+      )}
+
+      {/* AI Coach Assessment */}
+      {assessment.aiCoachAssessment && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            AI Coach Assessment
+          </Typography>
+          <Box sx={{ '& p': { mb: 1 }, '& ul': { pl: 2 } }}>
+            <ReactMarkdown>{assessment.aiCoachAssessment}</ReactMarkdown>
+          </Box>
         </Paper>
       )}
 
