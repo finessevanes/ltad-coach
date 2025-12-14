@@ -43,13 +43,13 @@ Implement automatic email sending for parent reports
 
 ## Acceptance Criteria
 
-- [ ] Email sent automatically when report is created
-- [ ] Email contains report link with report ID
-- [ ] Email contains 6-digit PIN in clear text
-- [ ] Email is parent-friendly (not technical)
-- [ ] Report marked as sent with timestamp
-- [ ] Email failure doesn't crash report creation
-- [ ] Coach can resend report email
+- [x] Email sent automatically when report is created
+- [x] Email contains report link with report ID
+- [x] Email contains 6-digit PIN in clear text
+- [x] Email is parent-friendly (not technical)
+- [x] Report marked as sent with timestamp
+- [x] Email failure doesn't crash report creation
+- [x] Coach can resend report email
 
 ## Files to Create/Modify
 

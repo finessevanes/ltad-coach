@@ -32,15 +32,15 @@ Implement public PIN-protected report viewing for parents
 
 ## Acceptance Criteria
 
-- [ ] Page accessible at `/report/:id` without login
-- [ ] Shows athlete name before PIN entry
-- [ ] PIN input accepts 6 digits
-- [ ] Auto-submit when all digits entered
-- [ ] Invalid PIN shows error message
-- [ ] Valid PIN reveals report content
-- [ ] Report renders with markdown formatting
-- [ ] Mobile-responsive design
-- [ ] No navigation to other parts of app
+- [x] Page accessible at `/report/:id` without login
+- [x] Shows athlete name before PIN entry
+- [x] PIN input accepts 6 digits
+- [x] Auto-submit when all digits entered
+- [x] Invalid PIN shows error message
+- [x] Valid PIN reveals report content
+- [x] Report renders with markdown formatting
+- [x] Mobile-responsive design
+- [x] No navigation to other parts of app
 
 ## Files to Create/Modify
 

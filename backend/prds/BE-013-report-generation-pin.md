@@ -35,16 +35,16 @@ Implement parent report generation and PIN-protected access
 
 ## Acceptance Criteria
 
-- [ ] `POST /reports/generate/{athleteId}` generates report preview
-- [ ] Report includes AI-generated content from Progress Agent
-- [ ] `POST /reports/{id}/send` creates stored report with PIN
-- [ ] PIN is 6 random digits
-- [ ] `GET /reports/view/{id}` requires PIN verification
-- [ ] `POST /reports/view/{id}/verify` validates PIN
-- [ ] Invalid PIN returns 401
-- [ ] Report content only returned after PIN verification
-- [ ] `GET /reports/athlete/{athleteId}` returns list of sent reports for athlete
-- [ ] `POST /reports/{reportId}/resend` generates new PIN and triggers email resend
+- [x] `POST /reports/generate/{athleteId}` generates report preview
+- [x] Report includes AI-generated content from Progress Agent
+- [x] `POST /reports/{id}/send` creates stored report with PIN
+- [x] PIN is 6 random digits
+- [x] `GET /reports/view/{id}` requires PIN verification
+- [x] `POST /reports/view/{id}/verify` validates PIN
+- [x] Invalid PIN returns 401
+- [x] Report content only returned after PIN verification
+- [x] `GET /reports/athlete/{athleteId}` returns list of sent reports for athlete
+- [x] `POST /reports/{reportId}/resend` generates new PIN and triggers email resend
 
 ## Files to Create/Modify
 

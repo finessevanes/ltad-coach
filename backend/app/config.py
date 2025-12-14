@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     haiku_model: str = "claude-3-haiku-20240307"
     sonnet_model: str = "claude-3-haiku-20240307"  # Using Haiku temporarily until Sonnet access enabled
 
+    # OpenAI API (for Chat Assistant)
+    openai_api_key: Optional[str] = None
+    openai_model: str = "gpt-4o"
+
     # Email Service (Resend)
     resend_api_key: str
 
