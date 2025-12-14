@@ -171,11 +171,9 @@ export const AthleteQuickSelector: React.FC<AthleteQuickSelectorProps> = ({
                       </Typography>
                     }
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Age {athlete.age} • {athlete.gender}
-                        </Typography>
-                      </Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        Age {athlete.age} • {athlete.gender}
+                      </Typography>
                     }
                   />
                   <Chip
