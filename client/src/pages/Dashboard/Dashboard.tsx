@@ -6,7 +6,7 @@ import { PendingConsentAlerts } from './components/PendingConsentAlerts';
 import { AthleteQuickSelector } from './components/AthleteQuickSelector';
 import { AIInsightsCard } from './components/AIInsightsCard';
 import athletesService from '../../services/athletes';
-import assessmentsService from '../../services/assessments';
+import dashboardService from '../../services/dashboard';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
@@ -37,17 +37,22 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { showSnackbar } = useSnackbar();
 
-  // Fetch athletes and assessments on mount
+  // Fetch dashboard data using optimized endpoint + athletes list
+  // Key optimization: /dashboard eliminates N+1 queries for assessment athlete names
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [athletesData, assessmentsData] = await Promise.all([
+        // Fetch dashboard data and athletes in parallel
+        // Dashboard endpoint returns stats + recent assessments (with athlete names pre-loaded)
+        // Athletes call needed for AthleteQuickSelector component
+        const [dashboardData, allAthletes] = await Promise.all([
+          dashboardService.getDashboard(),
           athletesService.getAll(),
-          assessmentsService.getAll(10), // Fetch recent 10 assessments
         ]);
-        setAthletes(athletesData);
-        setRecentAssessments(assessmentsData);
+
+        setAthletes(allAthletes);
+        setRecentAssessments(dashboardData.recentAssessments);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         showSnackbar('Failed to load dashboard data', 'error');
@@ -57,7 +62,7 @@ export function Dashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [showSnackbar]);
 
   // Calculate quick stats
   const totalAthletes = athletes.length;

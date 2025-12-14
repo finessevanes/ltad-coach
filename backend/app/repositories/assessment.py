@@ -203,3 +203,15 @@ class AssessmentRepository(BaseRepository[Assessment]):
         if assessment and assessment.coach_id == coach_id:
             return assessment
         return None
+
+    async def count_by_coach(self, coach_id: str) -> int:
+        """Count total assessments for a coach.
+
+        Args:
+            coach_id: Coach ID
+
+        Returns:
+            Total number of assessments
+        """
+        docs = self.collection.where("coach_id", "==", coach_id).stream()
+        return sum(1 for _ in docs)
