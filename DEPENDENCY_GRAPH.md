@@ -107,18 +107,18 @@ Phase 8: Assessment Results ✅ COMPLETE
     (Athlete Profile)
 
                     ▼
-Phase 9: Parent Reports
+Phase 9: Parent Reports ✅ COMPLETE
 ═══════════════════════════════════════════════════
-    BE-013 ◄─── BE-011, BE-012
+    BE-013 ✅ ◄─── BE-011, BE-012
     (Report Generation + PIN)
 
-    BE-014 ◄─── BE-005, BE-013
+    BE-014 ✅ ◄─── BE-005, BE-013
     (Report Email)
 
-    FE-013 ◄─── FE-004, FE-011, FE-012
+    FE-013 ✅ ◄─── FE-004, FE-011, FE-012
     (Report Preview + Send)
 
-    FE-014 ◄─── FE-001      (No auth needed - public)
+    FE-014 ✅ ◄─── FE-001      (No auth needed - public)
     (Public Report View)
 
                     ▼
@@ -152,7 +152,7 @@ Items in the same group can be worked on in parallel by different engineers.
 | 6 | H | BE-006, BE-007, BE-008 | CV Analysis | 13-16 | ⚠️ Different |
 | 7 | I | BE-009, BE-010, BE-011 | AI Agents | 10-12 | ✅ Done |
 | 8 | J | BE-012, FE-011, FE-012 | Results & Profile | 10-12 | ✅ Done |
-| 9 | K | BE-013, BE-014, FE-013, FE-014 | Parent Reports | 12-14 | |
+| 9 | K | BE-013, BE-014, FE-013, FE-014 | Parent Reports | 12-14 | ✅ Done |
 | 10 | L | BE-015, FE-015, FE-016 | Dashboard + Landing | 7-9 | |
 
 **Total Estimated Hours: 86-112 hours**
@@ -230,8 +230,8 @@ Week 3-4:
 | BE-010 | Assessment Agent | S | BE-009 | ✅ Done |
 | BE-011 | Progress Agent | S | BE-009, BE-010 | ✅ Done |
 | BE-012 | Assessment CRUD | S | BE-006, BE-008, BE-010 | ✅ Done |
-| BE-013 | Report Generation + PIN | M | BE-011, BE-012 | |
-| BE-014 | Report Email | S | BE-005, BE-013 | |
+| BE-013 | Report Generation + PIN | M | BE-011, BE-012 | ✅ Done |
+| BE-014 | Report Email | S | BE-005, BE-013 | ✅ Done |
 | BE-015 | Dashboard Endpoint | S | BE-002, BE-004, BE-012 | |
 
 ### Frontend PRs (16 total)
@@ -250,8 +250,8 @@ Week 3-4:
 | FE-010 | Video Upload | M | FE-002 | ✅ Done |
 | FE-011 | Assessment Results | M | FE-009, FE-010 | ✅ Done |
 | FE-012 | Athlete Profile + History | M | FE-004, FE-011 | ✅ Done |
-| FE-013 | Report Preview + Send | S | FE-004, FE-011, FE-012 | |
-| FE-014 | Public Report View | S | FE-001 | |
+| FE-013 | Report Preview + Send | S | FE-004, FE-011, FE-012 | ✅ Done |
+| FE-014 | Public Report View | S | FE-001 | ✅ Done |
 | FE-015 | Coach Dashboard | S | FE-002, FE-004, FE-005, FE-011 | |
 | FE-016 | Landing Page | S | FE-001 | |
 

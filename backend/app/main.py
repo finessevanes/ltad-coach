@@ -17,6 +17,7 @@ from app.routers.athletes import router as athletes_router
 from app.routers.consent import router as consent_router
 from app.routers.assessments import router as assessments_router
 from app.routers.chat import router as chat_router
+from app.routers.reports import router as reports_router
 from app.models.errors import (
     AppException,
     ErrorCode,
@@ -78,6 +79,7 @@ app.include_router(athletes_router)
 app.include_router(consent_router)
 app.include_router(assessments_router)
 app.include_router(chat_router)
+app.include_router(reports_router)
 
 
 # Configure OpenAPI schema to show Authorization button in Swagger UI

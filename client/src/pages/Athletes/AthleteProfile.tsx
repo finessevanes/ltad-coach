@@ -25,14 +25,17 @@ import {
   MoreVert as MoreIcon,
   Delete as DeleteIcon,
   Upload as UploadIcon,
+  Description as ReportIcon,
 } from '@mui/icons-material';
 import athletesService from '../../services/athletes';
 import assessmentsService from '../../services/assessments';
+import { reportsApi, ReportListItem } from '../../services/reports';
 import { Athlete } from '../../types/athlete';
 import { StatusBadge } from '../../components/StatusBadge';
 import { AssessmentHistory } from './AssessmentHistory';
 import { ProgressChart } from './ProgressChart';
 import { EditAthleteModal } from './EditAthleteModal';
+import { ReportHistory } from '../Reports/ReportHistory';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
 interface AssessmentListItem {
@@ -54,6 +57,7 @@ export default function AthleteProfile() {
 
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
+  const [reports, setReports] = useState<ReportListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -69,12 +73,14 @@ export default function AthleteProfile() {
     if (!athleteId) return;
     try {
       setLoading(true);
-      const [athleteData, assessmentsResponse] = await Promise.all([
+      const [athleteData, assessmentsResponse, reportsData] = await Promise.all([
         athletesService.getById(athleteId),
         assessmentsService.getByAthlete(athleteId),
+        reportsApi.getByAthlete(athleteId),
       ]);
       setAthlete(athleteData);
       setAssessments(assessmentsResponse.assessments);
+      setReports(reportsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load athlete data');
     } finally {
@@ -174,6 +180,14 @@ export default function AthleteProfile() {
             >
               Upload Video
             </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ReportIcon />}
+              onClick={() => navigate(`/athletes/${athlete.id}/report`)}
+              disabled={isPending || assessments.length === 0}
+            >
+              Generate Report
+            </Button>
             <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)}>
               <MoreIcon />
             </IconButton>
@@ -224,6 +238,15 @@ export default function AthleteProfile() {
               onAssessmentClick={(id) => navigate(`/assessments/${id}`)}
             />
           </Paper>
+        </Grid>
+
+        {/* Report History */}
+        <Grid item xs={12}>
+          <ReportHistory
+            athleteId={athleteId!}
+            reports={reports}
+            onReportResent={loadData}
+          />
         </Grid>
       </Grid>
 

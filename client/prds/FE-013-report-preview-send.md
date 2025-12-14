@@ -33,15 +33,15 @@ Implement parent report preview and send functionality for coaches
 
 ## Acceptance Criteria
 
-- [ ] Preview page shows AI-generated report content
-- [ ] Report metadata shown (assessment count, latest score, team rank)
-- [ ] "Send to Parent" button triggers confirmation modal
-- [ ] Modal shows parent email for confirmation
-- [ ] Sending shows loading state
-- [ ] Success state displays PIN prominently
-- [ ] "Copy PIN" button copies to clipboard
-- [ ] "Done" returns to athlete profile
-- [ ] Error state if send fails
+- [x] Preview page shows AI-generated report content
+- [x] Report metadata shown (assessment count, latest score, team rank)
+- [x] "Send to Parent" button triggers confirmation modal
+- [x] Modal shows parent email for confirmation
+- [x] Sending shows loading state
+- [x] Success state displays PIN prominently
+- [x] "Copy PIN" button copies to clipboard
+- [x] "Done" returns to athlete profile
+- [x] Error state if send fails
 
 ## Files to Create/Modify
 
