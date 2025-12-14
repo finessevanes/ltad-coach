@@ -4,7 +4,6 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 export function Landing() {
   const navigate = useNavigate();
@@ -57,7 +56,7 @@ export function Landing() {
                 fontSize: '20px',
               }}
             >
-              CoachLens
+              Coach Lens
             </Typography>
 
             {/* Right Side: Sign In + CTA */}
@@ -121,9 +120,9 @@ export function Landing() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '72px', md: '140px', lg: '160px' },
+              fontSize: { xs: '64px', md: '120px', lg: '140px' },
               fontWeight: 500,
-              lineHeight: 1.05,
+              lineHeight: 0.98,
               color: '#000000',
               fontFamily: 'Jost, sans-serif',
               mb: 10,
@@ -142,10 +141,10 @@ export function Landing() {
               },
             }}
           >
-            Keep Athletes in the Game
+            The Foundation Before the Scoreboard
           </Typography>
 
-          {/* Dashboard Screenshot */}
+          {/* Video Demo Section */}
           <Box
             sx={{
               position: 'relative',
@@ -166,151 +165,35 @@ export function Landing() {
               },
             }}
           >
-            {/* Decorative background blob */}
-            <Box
-              sx={{
-                position: 'absolute',
-                width: '120%',
-                height: '280px',
-                bottom: 0,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                bgcolor: '#9CA3C4',
-                borderRadius: '300px',
-                zIndex: 0,
-              }}
-            />
-
-            {/* Dashboard Screenshot Container */}
+            {/* Screen Frame Container */}
             <Box
               sx={{
                 position: 'relative',
                 zIndex: 1,
-                bgcolor: '#E8EEF3',
+                bgcolor: '#000000',
                 borderRadius: '20px',
                 border: '16px solid #1A1A1A',
                 overflow: 'hidden',
                 boxShadow: '0 30px 80px rgba(0,0,0,0.2)',
-                backgroundImage: 'linear-gradient(180deg, rgba(200, 220, 235, 0.3) 0%, rgba(232, 238, 243, 0.8) 100%)',
               }}
             >
-              {/* Dashboard Content - with placeholder for background image */}
+              {/* Video Element */}
               <Box
+                component="video"
+                autoPlay
+                loop
+                muted
+                playsInline
                 sx={{
-                  p: 5,
-                  position: 'relative',
-                  minHeight: '400px',
-                  // Add your outdoor/cloud background image here:
-                  // backgroundImage: 'url(/path/to/outdoor-clouds-image.jpg)',
-                  // backgroundSize: 'cover',
-                  // backgroundPosition: 'center',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
                 }}
               >
-                {/* Breadcrumb */}
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    color: 'rgba(0, 0, 0, 0.5)',
-                    mb: 4,
-                    fontFamily: 'Jost, sans-serif',
-                  }}
-                >
-                  Reports › Overview
-                </Typography>
-
-                {/* Main Stat */}
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, mb: 2 }}>
-                  <Typography
-                    sx={{
-                      fontSize: '72px',
-                      fontWeight: 700,
-                      color: '#FFFFFF',
-                      fontFamily: 'Jost, sans-serif',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    }}
-                  >
-                    78%
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '20px',
-                      fontWeight: 400,
-                      color: '#FFFFFF',
-                      fontFamily: 'Jost, sans-serif',
-                    }}
-                  >
-                    Efficiency Improvements
-                  </Typography>
-                </Box>
-
-                {/* Chart Area */}
-                <Box
-                  sx={{
-                    mt: 5,
-                    height: '220px',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'space-between',
-                    gap: 6,
-                    position: 'relative',
-                  }}
-                >
-                  {/* Year Labels */}
-                  <Box sx={{ position: 'absolute', bottom: -35, left: 0, right: 0, display: 'flex', justifyContent: 'space-between' }}>
-                    {['2021', '2022', '2023', '2024'].map((year) => (
-                      <Typography key={year} sx={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', fontFamily: 'Jost, sans-serif' }}>
-                        {year}
-                      </Typography>
-                    ))}
-                  </Box>
-
-                  {/* Bar Chart Visualization with line chart overlay */}
-                  {[100, 140, 170, 210].map((height, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        width: '100%',
-                        height: `${height}px`,
-                        bgcolor: 'rgba(255, 255, 255, 0.4)',
-                        borderRadius: '6px',
-                        position: 'relative',
-                        backdropFilter: 'blur(10px)',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: '-10px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '10px',
-                          height: '10px',
-                          bgcolor: 'white',
-                          borderRadius: '50%',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        },
-                      }}
-                    />
-                  ))}
-
-                  {/* Dropdown in top right */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: -50,
-                      right: 0,
-                      bgcolor: 'rgba(255, 255, 255, 0.3)',
-                      backdropFilter: 'blur(10px)',
-                      px: 3,
-                      py: 1.5,
-                      borderRadius: '24px',
-                      fontSize: '13px',
-                      color: 'rgba(0, 0, 0, 0.7)',
-                      fontFamily: 'Jost, sans-serif',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                    }}
-                  >
-                    All Regions (33) ▼
-                  </Box>
-                </Box>
+                <source src="/landingpagevideocoachlens.mov" type="video/quicktime" />
+                <source src="/landingpagevideocoachlens.mov" type="video/mp4" />
+                Your browser does not support the video tag.
               </Box>
             </Box>
           </Box>
@@ -685,27 +568,22 @@ export function Landing() {
           <Box
             sx={{
               display: 'flex',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
               alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 4,
+              gap: 2,
             }}
           >
-            {/* Left side - Logo and copyright */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box
-                sx={{
-                  width: '40px',
-                  height: '40px',
-                  bgcolor: '#2D2D2D',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <FiberManualRecordIcon sx={{ fontSize: 20, color: '#FFFFFF' }} />
-              </Box>
+            {/* Top row - Copyright and rights */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                flexWrap: 'wrap',
+                gap: 2,
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: '14px',
@@ -713,69 +591,29 @@ export function Landing() {
                   fontFamily: 'Jost, sans-serif',
                 }}
               >
-                © CoachLens. 2025
+                © Coach Lens 2025
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  color: '#6B6B6B',
+                  fontFamily: 'Jost, sans-serif',
+                }}
+              >
+                All Rights Reserved
               </Typography>
             </Box>
 
-            {/* Center - Links */}
-            <Box sx={{ display: 'flex', gap: 4 }}>
-              <Button
-                sx={{
-                  color: '#2D2D2D',
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    color: '#2563EB',
-                  },
-                }}
-              >
-                Product
-              </Button>
-              <Button
-                sx={{
-                  color: '#2D2D2D',
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    color: '#2563EB',
-                  },
-                }}
-              >
-                About
-              </Button>
-              <Button
-                onClick={() => navigate('/login')}
-                sx={{
-                  color: '#2D2D2D',
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                    color: '#2563EB',
-                  },
-                }}
-              >
-                Sign In
-              </Button>
-            </Box>
-
-            {/* Right side - All Rights Reserved */}
+            {/* Bottom row - Built by (centered) */}
             <Typography
               sx={{
                 fontSize: '14px',
                 color: '#6B6B6B',
                 fontFamily: 'Jost, sans-serif',
+                textAlign: 'center',
               }}
             >
-              All Rights Reserved
+              Built by laschicas.ai
             </Typography>
           </Box>
         </Container>
