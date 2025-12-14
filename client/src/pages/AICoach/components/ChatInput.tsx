@@ -58,6 +58,7 @@ export function ChatInput({
           getOptionLabel={(option) => `${option.name} (Age ${option.age})`}
           value={selectedAthlete}
           onChange={(_, value) => onAthleteSelect(value)}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           renderInput={(params) => (
             <TextField
               {...params}
