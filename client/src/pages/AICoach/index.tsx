@@ -21,6 +21,14 @@ export function AICoach() {
   const { showSnackbar } = useSnackbar();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const streamingContentRef = useRef<string>('');
+
+  // Cleanup on unmount - abort any ongoing stream
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -63,6 +71,7 @@ export function AICoach() {
 
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setIsStreaming(true);
+    streamingContentRef.current = ''; // Reset streaming content ref
 
     // Prepare message history for API (exclude the placeholder)
     const messageHistory = [...messages, userMessage].map((m) => ({
@@ -76,13 +85,18 @@ export function AICoach() {
           messages: messageHistory,
           athleteId,
         },
-        // onChunk
+        // onChunk - accumulate in ref to avoid StrictMode double-append
         (chunk) => {
+          streamingContentRef.current += chunk;
           setMessages((prev) => {
             const updated = [...prev];
             const lastMsg = updated[updated.length - 1];
             if (lastMsg.role === 'assistant') {
-              lastMsg.content += chunk;
+              // Set content from ref instead of appending to avoid duplication
+              updated[updated.length - 1] = {
+                ...lastMsg,
+                content: streamingContentRef.current,
+              };
             }
             return updated;
           });

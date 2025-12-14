@@ -62,44 +62,54 @@ export const streamChat = async (
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let doneCalled = false; // Guard against double onDone() calls
 
     // Read the stream
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
-        onDone();
+        if (!doneCalled) {
+          doneCalled = true;
+          onDone();
+        }
         break;
       }
 
       buffer += decoder.decode(value, { stream: true });
 
-      // Parse SSE events from buffer
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+      // Parse SSE events from buffer - events are separated by double newline
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || ''; // Keep incomplete event in buffer
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          try {
-            const chunk: SSEChunk = JSON.parse(data);
+      for (const event of events) {
+        const lines = event.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            try {
+              const chunk: SSEChunk = JSON.parse(data);
 
-            if (chunk.error) {
-              onError(chunk.error);
-              return controller;
+              if (chunk.error) {
+                onError(chunk.error);
+                return controller;
+              }
+
+              if (chunk.done) {
+                if (!doneCalled) {
+                  doneCalled = true;
+                  onDone();
+                }
+                return controller;
+              }
+
+              if (chunk.content) {
+                onChunk(chunk.content);
+              }
+            } catch {
+              // Skip malformed JSON
+              console.warn('Failed to parse SSE chunk:', data);
             }
-
-            if (chunk.done) {
-              onDone();
-              return controller;
-            }
-
-            if (chunk.content) {
-              onChunk(chunk.content);
-            }
-          } catch {
-            // Skip malformed JSON
-            console.warn('Failed to parse SSE chunk:', data);
           }
         }
       }
