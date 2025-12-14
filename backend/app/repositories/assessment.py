@@ -1,6 +1,6 @@
 """Assessment repository for database operations."""
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from app.repositories.base import BaseRepository
 from app.models.assessment import Assessment, AssessmentStatus, MetricsData, ClientMetricsData
@@ -97,6 +97,82 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "raw_keypoints_url": None,
             "metrics": metrics,
             "ai_coach_assessment": None,  # Populated in Phase 7
+            "error_message": None,
+        }
+
+        assessment_id = await self.create(data)
+        assessment = await self.get(assessment_id)
+        return assessment
+
+    async def create_completed_dual_leg(
+        self,
+        coach_id: str,
+        athlete_id: str,
+        test_type: str,
+        left_leg_video_url: str,
+        left_leg_video_path: str,
+        left_leg_metrics: Dict[str, Any],
+        right_leg_video_url: str,
+        right_leg_video_path: str,
+        right_leg_metrics: Dict[str, Any],
+        bilateral_comparison: Dict[str, Any],
+    ) -> Assessment:
+        """Create a completed dual-leg assessment with bilateral comparison.
+
+        Stores assessment with left and right leg metrics plus symmetry analysis.
+        Status is always "completed" since client provides all metrics.
+
+        Args:
+            coach_id: ID of the coach who created the assessment
+            athlete_id: ID of the athlete being assessed
+            test_type: Type of test (e.g., "one_leg_balance")
+            left_leg_video_url: Public URL to left leg video in Firebase Storage
+            left_leg_video_path: Storage path for left leg video (e.g., "videos/abc123.mp4")
+            left_leg_metrics: Dictionary of left leg metrics (includes temporal data)
+            right_leg_video_url: Public URL to right leg video in Firebase Storage
+            right_leg_video_path: Storage path for right leg video
+            right_leg_metrics: Dictionary of right leg metrics (includes temporal data)
+            bilateral_comparison: Dictionary of bilateral comparison metrics
+
+        Returns:
+            Assessment model instance with generated ID
+
+        Example:
+            >>> repo = AssessmentRepository()
+            >>> assessment = await repo.create_completed_dual_leg(
+            ...     coach_id="coach123",
+            ...     athlete_id="athlete456",
+            ...     test_type="one_leg_balance",
+            ...     left_leg_video_url="https://storage.example.com/left.mp4",
+            ...     left_leg_video_path="videos/left.mp4",
+            ...     left_leg_metrics={"hold_time": 25.3, "duration_score": 4, ...},
+            ...     right_leg_video_url="https://storage.example.com/right.mp4",
+            ...     right_leg_video_path="videos/right.mp4",
+            ...     right_leg_metrics={"hold_time": 23.8, "duration_score": 4, ...},
+            ...     bilateral_comparison={"overall_symmetry_score": 82.0, ...},
+            ... )
+            >>> assert assessment.leg_tested == "both"
+            >>> assert assessment.status == AssessmentStatus.COMPLETED
+        """
+        data = {
+            "coach_id": coach_id,
+            "athlete_id": athlete_id,
+            "test_type": test_type,
+            "leg_tested": "both",
+            "status": AssessmentStatus.COMPLETED.value,
+            "created_at": datetime.utcnow(),
+            # Left leg fields
+            "left_leg_video_url": left_leg_video_url,
+            "left_leg_video_path": left_leg_video_path,
+            "left_leg_metrics": left_leg_metrics,
+            # Right leg fields
+            "right_leg_video_url": right_leg_video_url,
+            "right_leg_video_path": right_leg_video_path,
+            "right_leg_metrics": right_leg_metrics,
+            # Bilateral comparison
+            "bilateral_comparison": bilateral_comparison,
+            # Optional fields (may be added later)
+            "ai_coach_assessment": None,
             "error_message": None,
         }
 
