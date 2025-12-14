@@ -95,7 +95,9 @@ class BaseRepository(Generic[T]):
         self,
         field: str,
         value: Any,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        order_by: Optional[str] = None,
+        direction: str = "DESCENDING"
     ) -> List[T]:
         """List documents where field equals value.
 
@@ -103,20 +105,74 @@ class BaseRepository(Generic[T]):
             field: Field name to filter on
             value: Value to match
             limit: Optional maximum number of results
+            order_by: Optional field to order results by
+            direction: Sort direction - "ASCENDING" or "DESCENDING" (default)
 
         Returns:
             List of model instances
         """
         query = self.collection.where(field, "==", value)
+        if order_by:
+            query = query.order_by(order_by, direction=direction)
         if limit:
             query = query.limit(limit)
 
-        docs = query.stream()
+        # Use .get() instead of .stream() for better performance with <1000 docs
+        docs = query.get()
         results = []
         for doc in docs:
             data = doc.to_dict()
             data["id"] = doc.id
             results.append(self.model_class(**data))
+        return results
+
+    async def get_first(self, field: str, value: Any) -> Optional[T]:
+        """Optimized single-result lookup by field.
+
+        Args:
+            field: Field name to filter on
+            value: Value to match
+
+        Returns:
+            First matching model instance or None
+        """
+        docs = self.collection.where(field, "==", value).limit(1).get()
+        if not docs:
+            return None
+        doc = docs[0]
+        data = doc.to_dict()
+        data["id"] = doc.id
+        return self.model_class(**data)
+
+    async def batch_get(self, doc_ids: List[str]) -> Dict[str, Optional[T]]:
+        """Batch fetch multiple documents by ID.
+
+        Args:
+            doc_ids: List of document IDs to fetch
+
+        Returns:
+            Dict mapping document ID to model instance (or None if not found)
+        """
+        if not doc_ids:
+            return {}
+
+        doc_refs = [self.collection.document(doc_id) for doc_id in doc_ids]
+        docs = self.collection._client.get_all(doc_refs)
+
+        results = {}
+        for doc in docs:
+            if doc.exists:
+                data = doc.to_dict()
+                data["id"] = doc.id
+                results[doc.id] = self.model_class(**data)
+            else:
+                results[doc.id] = None
+
+        # Ensure all requested IDs are in the result dict
+        for doc_id in doc_ids:
+            if doc_id not in results:
+                results[doc_id] = None
+
         return results
 
     async def exists(self, doc_id: str) -> bool:

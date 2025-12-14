@@ -69,7 +69,8 @@ class AthleteRepository(BaseRepository[Athlete]):
             # Filter by coach_id only
             query = self.collection.where("coach_id", "==", coach_id)
 
-        docs = query.stream()
+        # Use .get() instead of .stream() for better performance with <1000 docs
+        docs = query.get()
         athletes = []
         for doc in docs:
             data = doc.to_dict()
@@ -102,16 +103,7 @@ class AthleteRepository(BaseRepository[Athlete]):
         Returns:
             Athlete with matching token, or None
         """
-        query = self.collection.where("consent_token", "==", token)
-        docs = list(query.stream())
-
-        if not docs:
-            return None
-
-        doc = docs[0]
-        data = doc.to_dict()
-        data["id"] = doc.id
-        return Athlete(**data)
+        return await self.get_first("consent_token", token)
 
     async def update_consent_status(
         self, athlete_id: str, status: ConsentStatus, timestamp: datetime

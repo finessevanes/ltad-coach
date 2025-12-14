@@ -158,32 +158,38 @@ class AssessmentRepository(BaseRepository[Assessment]):
         athlete_id: str,
         limit: Optional[int] = None,
     ) -> List[Assessment]:
-        """Get assessments for an athlete.
+        """Get assessments for an athlete, ordered by newest first.
 
         Args:
             athlete_id: Athlete ID
             limit: Optional limit
 
         Returns:
-            List of assessments
+            List of assessments ordered by created_at descending
         """
-        return await self.list_by_field("athlete_id", athlete_id, limit)
+        return await self.list_by_field(
+            "athlete_id", athlete_id, limit,
+            order_by="created_at", direction="DESCENDING"
+        )
 
     async def get_by_coach(
         self,
         coach_id: str,
         limit: Optional[int] = None,
     ) -> List[Assessment]:
-        """Get assessments for a coach.
+        """Get assessments for a coach, ordered by newest first.
 
         Args:
             coach_id: Coach ID
             limit: Optional limit
 
         Returns:
-            List of assessments
+            List of assessments ordered by created_at descending
         """
-        return await self.list_by_field("coach_id", coach_id, limit)
+        return await self.list_by_field(
+            "coach_id", coach_id, limit,
+            order_by="created_at", direction="DESCENDING"
+        )
 
     async def get_if_owned(
         self,
