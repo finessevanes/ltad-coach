@@ -1,48 +1,49 @@
-import { RouteObject } from 'react-router-dom';
-import { Layout } from '../components/Layout';
-import { Landing } from '../pages/Landing';
-import { Home } from '../pages/Home';
-import { Dashboard } from '../pages/Dashboard';
-import { ProtectedRoute } from '../components/ProtectedRoute';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import { AthletesList, AddAthlete, AthleteProfile } from '../pages/Athletes';
-import ConsentForm from '../pages/Consent';
-import AssessmentFlow from '../pages/Assessment/AssessmentFlow';
-import AssessmentResults from '../pages/Assessment/AssessmentResults';
-import BackupUpload from '../pages/Assessment/BackupUpload';
-import ReportPreview from '../pages/Reports/ReportPreview';
-import PublicReport from '../pages/Reports/PublicReport';
+import { RouteObject } from "react-router-dom";
+import { Layout } from "../components/Layout";
+import { Landing } from "../pages/Landing";
+import { Home } from "../pages/Home";
+import { Dashboard } from "../pages/Dashboard";
+import { ProtectedRoute } from "../components/ProtectedRoute";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import { AthletesList, AddAthlete, AthleteProfile } from "../pages/Athletes";
+import ConsentForm from "../pages/Consent";
+import AssessmentFlow from "../pages/Assessment/AssessmentFlow";
+import AssessmentResults from "../pages/Assessment/AssessmentResults";
+import BackupUpload from "../pages/Assessment/BackupUpload";
+import ReportPreview from "../pages/Reports/ReportPreview";
+import PublicReport from "../pages/Reports/PublicReport";
+import AICoach from "../pages/AICoach";
 
 // Route definitions for the application
 export const routes: RouteObject[] = [
   // Public landing page (no layout)
   {
-    path: '/',
+    path: "/",
     element: <Landing />,
   },
   // Auth routes (outside Layout - no sidebar/appbar)
   {
-    path: '/login',
+    path: "/login",
     element: <Login />,
   },
   {
-    path: '/register',
+    path: "/register",
     element: <Register />,
   },
   // Public consent route (no auth required)
   {
-    path: '/consent/:token',
+    path: "/consent/:token",
     element: <ConsentForm />,
   },
   // Public report view (no auth required)
   {
-    path: '/report/:reportId',
+    path: "/report/:reportId",
     element: <PublicReport />,
   },
   // App routes (inside Layout)
   {
-    path: '/dashboard',
+    path: "/dashboard",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -52,7 +53,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/athletes',
+    path: "/athletes",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -62,7 +63,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/athletes/new',
+    path: "/athletes/new",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -72,7 +73,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/athletes/:athleteId',
+    path: "/athletes/:athleteId",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -82,7 +83,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/athletes/:athleteId/report',
+    path: "/athletes/:athleteId/report",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -92,7 +93,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/assess/:athleteId',
+    path: "/assess/:athleteId",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -102,7 +103,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/assess/:athleteId/upload',
+    path: "/assess/:athleteId/upload",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -112,7 +113,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/assessments/:assessmentId',
+    path: "/assessments/:assessmentId",
     element: (
       <Layout>
         <ProtectedRoute>
@@ -122,11 +123,21 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/assessments',
+    path: "/assessments",
     element: (
       <Layout>
         <ProtectedRoute>
           <Home /> {/* Placeholder until FE-011 */}
+        </ProtectedRoute>
+      </Layout>
+    ),
+  },
+  {
+    path: "/ai-coach",
+    element: (
+      <Layout>
+        <ProtectedRoute>
+          <AICoach />
         </ProtectedRoute>
       </Layout>
     ),

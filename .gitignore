@@ -28,3 +28,6 @@ Thumbs.db
 .idea/
 *.swp
 client/.claude/settings.local.json
+
+#documentation
+/thoughts/

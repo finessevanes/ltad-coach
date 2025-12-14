@@ -25,5 +25,8 @@ aiohttp>=3.9.0
 # Anthropic API client for AI agents
 anthropic>=0.25.0
 
+# OpenAI API client for Chat Assistant
+openai>=1.0.0
+
 # NumPy for numerical operations (used by scoring utilities)
 numpy>=1.26.0
