@@ -19,13 +19,13 @@ def calculate_bilateral_comparison(
 
     Returns:
         Dictionary containing:
-            - duration_difference: Absolute difference in hold time (seconds)
-            - duration_difference_pct: Percentage difference (0-100)
+            - hold_time_difference: Absolute difference in hold time (seconds)
+            - hold_time_difference_pct: Percentage difference (0-100)
             - dominant_leg: 'left', 'right', or 'balanced'
-            - sway_difference: Absolute sway velocity difference (cm/s)
+            - sway_velocity_difference: Absolute sway velocity difference (cm/s)
             - sway_symmetry_score: 0 (asymmetric) to 1 (perfect symmetry)
             - arm_angle_difference: Average arm angle difference (degrees)
-            - corrections_difference: Signed difference in corrections count
+            - corrections_count_difference: Signed difference in corrections count
             - overall_symmetry_score: Weighted symmetry score (0-100)
             - symmetry_assessment: 'excellent', 'good', 'fair', or 'poor'
 
@@ -120,14 +120,16 @@ def calculate_bilateral_comparison(
         symmetry_assessment = "poor"
 
     # Return all metrics rounded to 1 decimal place
+    # NOTE: Field names match BilateralComparison Pydantic model (snake_case)
+    # Frontend converts to camelCase (holdTimeDifference, etc.) via axios interceptor
     return {
-        "duration_difference": round(duration_difference, 1),
-        "duration_difference_pct": round(duration_difference_pct, 1),
+        "hold_time_difference": round(duration_difference, 1),
+        "hold_time_difference_pct": round(duration_difference_pct, 1),
         "dominant_leg": dominant_leg,
-        "sway_difference": round(sway_difference, 1),
+        "sway_velocity_difference": round(sway_difference, 1),
         "sway_symmetry_score": round(sway_symmetry_score, 2),
         "arm_angle_difference": round(arm_angle_difference, 1),
-        "corrections_difference": corrections_difference,
+        "corrections_count_difference": corrections_difference,
         "overall_symmetry_score": round(overall_symmetry_score, 1),
         "symmetry_assessment": symmetry_assessment,
     }

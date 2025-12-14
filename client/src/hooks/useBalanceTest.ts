@@ -171,11 +171,7 @@ export function useBalanceTest(
           armAngleLeft: 0,
           armAngleRight: 0,
           armAsymmetryRatio: 1,
-          temporal: {
-            firstThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
-            middleThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
-            lastThird: { armAngleLeft: 0, armAngleRight: 0, swayVelocity: 0, correctionsCount: 0 },
-          },
+          segmentedMetrics: { segmentDuration: 1.0, segments: [] },
         };
         setTestResult(result);
         return;
@@ -195,9 +191,7 @@ export function useBalanceTest(
         armAngleLeft: metrics.armAngleLeft,
         armAngleRight: metrics.armAngleRight,
         armAsymmetryRatio: metrics.armAsymmetryRatio,
-        temporal: metrics.temporal,
-        // Enhanced temporal data for LLM
-        fiveSecondSegments: metrics.fiveSecondSegments,
+        segmentedMetrics: metrics.segmentedMetrics,
         events: metrics.events,
       };
 

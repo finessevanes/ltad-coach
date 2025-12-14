@@ -4,14 +4,14 @@ import { Box } from '@mui/material';
 import { RecordingStep } from './steps/RecordingStep';
 import { TransitionModal } from './components/TransitionModal';
 import { TwoLegUploadStep } from './components/TwoLegUploadStep';
-import { ClientMetrics } from '../../types/assessment';
+import { TestResult } from '../../types/balanceTest';
 
 type TwoLegPhase = 'left-leg-testing' | 'transition-modal' | 'right-leg-testing' | 'uploading';
 
 interface LegTestData {
   blob: Blob;
   duration: number;
-  result: ClientMetrics;
+  result: TestResult;  // Full test result including landmark history
 }
 
 export default function AssessmentFlow() {

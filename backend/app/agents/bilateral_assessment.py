@@ -140,8 +140,8 @@ def _format_bilateral_summary(
 
     # Bilateral comparison
     dominant_leg = bilateral_comparison.get("dominant_leg", "unknown")
-    duration_diff = bilateral_comparison.get("duration_difference", 0)
-    duration_diff_pct = bilateral_comparison.get("duration_difference_pct", 0)
+    duration_diff = bilateral_comparison.get("hold_time_difference", 0)
+    duration_diff_pct = bilateral_comparison.get("hold_time_difference_pct", 0)
     symmetry_score = bilateral_comparison.get("overall_symmetry_score", 0)
     symmetry_assessment = bilateral_comparison.get("symmetry_assessment", "unknown")
 
@@ -152,13 +152,19 @@ Sway Velocity: {left_sway:.2f} cm/s
 Corrections: {left_corrections}
 """
 
-    # Add temporal data if present
-    if "temporal" in left_leg_metrics:
-        temporal = left_leg_metrics["temporal"]
-        summary += f"""Temporal Analysis:
-  - First third: {temporal.get('first_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('first_third', {}).get('corrections_count', 'N/A')} corrections
-  - Middle third: {temporal.get('middle_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('middle_third', {}).get('corrections_count', 'N/A')} corrections
-  - Last third: {temporal.get('last_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('last_third', {}).get('corrections_count', 'N/A')} corrections
+    # Add segmented metrics if present
+    if "segmented_metrics" in left_leg_metrics:
+        segmented = left_leg_metrics["segmented_metrics"]
+        segments = segmented.get("segments", [])
+        if segments:
+            num_segs = len(segments)
+            first_third = segments[:num_segs//3]
+            last_third = segments[-num_segs//3:]
+            first_avg = sum(s["avg_velocity"] for s in first_third) / len(first_third) if first_third else 0
+            last_avg = sum(s["avg_velocity"] for s in last_third) / len(last_third) if last_third else 0
+            summary += f"""Temporal Pattern:
+  - First third: {first_avg:.2f} cm/s avg, {sum(s['corrections'] for s in first_third)} corrections
+  - Last third: {last_avg:.2f} cm/s avg, {sum(s['corrections'] for s in last_third)} corrections
 """
 
     # Add events if present
@@ -174,13 +180,19 @@ Sway Velocity: {right_sway:.2f} cm/s
 Corrections: {right_corrections}
 """
 
-    # Add temporal data for right leg
-    if "temporal" in right_leg_metrics:
-        temporal = right_leg_metrics["temporal"]
-        summary += f"""Temporal Analysis:
-  - First third: {temporal.get('first_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('first_third', {}).get('corrections_count', 'N/A')} corrections
-  - Middle third: {temporal.get('middle_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('middle_third', {}).get('corrections_count', 'N/A')} corrections
-  - Last third: {temporal.get('last_third_avg_sway', 'N/A')} cm/s sway, {temporal.get('last_third', {}).get('corrections_count', 'N/A')} corrections
+    # Add segmented metrics for right leg
+    if "segmented_metrics" in right_leg_metrics:
+        segmented = right_leg_metrics["segmented_metrics"]
+        segments = segmented.get("segments", [])
+        if segments:
+            num_segs = len(segments)
+            first_third = segments[:num_segs//3]
+            last_third = segments[-num_segs//3:]
+            first_avg = sum(s["avg_velocity"] for s in first_third) / len(first_third) if first_third else 0
+            last_avg = sum(s["avg_velocity"] for s in last_third) / len(last_third) if last_third else 0
+            summary += f"""Temporal Pattern:
+  - First third: {first_avg:.2f} cm/s avg, {sum(s['corrections'] for s in first_third)} corrections
+  - Last third: {last_avg:.2f} cm/s avg, {sum(s['corrections'] for s in last_third)} corrections
 """
 
     # Add events if present
@@ -196,13 +208,17 @@ Duration Difference: {duration_diff:.1f}s ({duration_diff_pct:.1f}%)
 Overall Symmetry Score: {symmetry_score:.1f}/100 ({symmetry_assessment})
 """
 
-    # Add 5-second segment summary if present
-    left_segments = left_leg_metrics.get("five_second_segments", [])
-    right_segments = right_leg_metrics.get("five_second_segments", [])
-    if left_segments and right_segments:
-        summary += f"\n=== TEMPORAL DETAIL ===\n"
-        summary += f"5-Second Segments Available: {len(left_segments)} for left, {len(right_segments)} for right\n"
-        summary += "(Use these to identify fatigue patterns and temporal asymmetry)\n"
+    # Add segment summary if present
+    left_segmented = left_leg_metrics.get("segmented_metrics")
+    right_segmented = right_leg_metrics.get("segmented_metrics")
+    if left_segmented and right_segmented:
+        left_segs = left_segmented.get("segments", [])
+        right_segs = right_segmented.get("segments", [])
+        if left_segs and right_segs:
+            summary += f"\n=== TEMPORAL DETAIL ===\n"
+            summary += f"Time Segments Available: {len(left_segs)} for left ({left_segmented.get('segment_duration', 1.0)}s each), "
+            summary += f"{len(right_segs)} for right ({right_segmented.get('segment_duration', 1.0)}s each)\n"
+            summary += "(Use these to identify fatigue patterns and temporal asymmetry)\n"
 
     return summary
 
@@ -232,7 +248,7 @@ def _generate_fallback_bilateral_feedback(
     right_score = right_leg_metrics.get("duration_score", 0)
 
     dominant_leg = bilateral_comparison.get("dominant_leg", "balanced")
-    duration_diff_pct = bilateral_comparison.get("duration_difference_pct", 0)
+    duration_diff_pct = bilateral_comparison.get("hold_time_difference_pct", 0)
     symmetry_score = bilateral_comparison.get("overall_symmetry_score", 0)
     symmetry_assessment = bilateral_comparison.get("symmetry_assessment", "unknown")
 

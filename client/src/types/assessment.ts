@@ -15,28 +15,7 @@ export interface RecordingState {
   duration: number;
 }
 
-import { FiveSecondSegment, BalanceEvent } from './balanceTest';
-
-/**
- * Metrics for a temporal segment (first/middle/last third of test)
- */
-export interface ClientSegmentMetrics {
-  armAngleLeft: number;      // degrees
-  armAngleRight: number;     // degrees
-  swayVelocity: number;      // cm/s
-  correctionsCount: number;
-  swayStdX?: number;         // cm (optional for backward compat)
-  swayStdY?: number;         // cm (optional for backward compat)
-}
-
-/**
- * Temporal breakdown of metrics
- */
-export interface ClientTemporalMetrics {
-  firstThird: ClientSegmentMetrics;
-  middleThird: ClientSegmentMetrics;
-  lastThird: ClientSegmentMetrics;
-}
+import { SegmentedMetrics, BalanceEvent } from './balanceTest';
 
 /**
  * Symmetry analysis comparing left and right leg performance.
@@ -66,11 +45,14 @@ export interface SymmetryAnalysis {
 /**
  * Container for dual-leg assessment metrics.
  * Includes full client metrics for both legs (with temporal data).
+ *
+ * NOTE: symmetryAnalysis is calculated by the backend and should NOT be sent by client.
+ * The backend recalculates bilateral comparison for accuracy.
  */
 export interface DualLegMetrics {
   leftLeg: ClientMetrics;           // Complete left leg test results
   rightLeg: ClientMetrics;          // Complete right leg test results
-  symmetryAnalysis: SymmetryAnalysis; // Client-calculated comparison
+  // symmetryAnalysis removed - backend calculates this
 }
 
 /**
@@ -91,10 +73,8 @@ export interface ClientMetrics {
   armAngleLeft: number;       // degrees from horizontal (0° = T-position)
   armAngleRight: number;      // degrees from horizontal (0° = T-position)
   armAsymmetryRatio: number;
-  // Temporal analysis
-  temporal: ClientTemporalMetrics;
-  // Enhanced temporal data for LLM (optional for backward compat)
-  fiveSecondSegments?: FiveSecondSegment[];
+  // Temporal breakdown with configurable segment duration (typically 1-second segments)
+  segmentedMetrics?: SegmentedMetrics;
   events?: BalanceEvent[];
 }
 
@@ -120,10 +100,8 @@ export interface AssessmentMetrics {
   armAsymmetryRatio: number;
   // LTAD Score (validated by Athletics Canada LTAD framework)
   durationScore: number;      // 1-5 LTAD scale
-  // Temporal analysis
-  temporal?: ClientTemporalMetrics;
-  // Enhanced temporal data for LLM
-  fiveSecondSegments?: FiveSecondSegment[];
+  // Temporal breakdown with configurable segment duration
+  segmentedMetrics?: SegmentedMetrics;
   events?: BalanceEvent[];
 }
 

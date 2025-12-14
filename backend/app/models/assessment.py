@@ -59,6 +59,24 @@ class FiveSecondSegment(BaseModel):
     sway_std_y: float = Field(..., description="Sway standard deviation Y (cm)")
 
 
+class TimeSegment(BaseModel):
+    """Metrics for a time segment with configurable duration (typically 1 second)."""
+    start_time: float = Field(..., description="Start time in seconds")
+    end_time: float = Field(..., description="End time in seconds")
+    avg_velocity: float = Field(..., description="Average sway velocity (cm/s)")
+    corrections: int = Field(..., description="Number of corrections")
+    arm_angle_left: float = Field(..., description="Average left arm angle (degrees)")
+    arm_angle_right: float = Field(..., description="Average right arm angle (degrees)")
+    sway_std_x: float = Field(..., description="Sway standard deviation X (cm)")
+    sway_std_y: float = Field(..., description="Sway standard deviation Y (cm)")
+
+
+class SegmentedMetrics(BaseModel):
+    """Temporal breakdown with configurable segment duration."""
+    segment_duration: float = Field(..., description="Duration of each segment in seconds (typically 1.0)")
+    segments: list[TimeSegment] = Field(..., description="Array of time segments covering full test duration")
+
+
 class BalanceEvent(BaseModel):
     """Significant events detected during balance test."""
     time: float = Field(..., description="Time in seconds into test")
@@ -71,13 +89,16 @@ class BilateralComparison(BaseModel):
     """
     Bilateral comparison metrics for dual-leg balance assessments.
     Quantifies symmetry and identifies dominant leg.
+
+    NOTE: Field names match frontend SymmetryAnalysis interface.
+    Backend uses snake_case, frontend converts to camelCase via axios interceptor.
     """
     # Duration comparison
-    duration_difference: float = Field(
+    hold_time_difference: float = Field(
         ...,
         description="Absolute difference in hold time (seconds): |left - right|"
     )
-    duration_difference_pct: float = Field(
+    hold_time_difference_pct: float = Field(
         ...,
         ge=0,
         le=100,
@@ -89,7 +110,7 @@ class BilateralComparison(BaseModel):
     )
 
     # Sway comparison
-    sway_difference: float = Field(
+    sway_velocity_difference: float = Field(
         ...,
         ge=0,
         description="Absolute difference in sway velocity (cm/s): |left - right|"
@@ -109,7 +130,7 @@ class BilateralComparison(BaseModel):
     )
 
     # Corrections comparison
-    corrections_difference: int = Field(
+    corrections_count_difference: int = Field(
         ...,
         description="Difference in corrections count: left - right (signed)"
     )
@@ -145,12 +166,16 @@ class ClientMetricsData(BaseModel):
     arm_angle_left: float = Field(..., description="Left arm angle from horizontal (degrees, 0° = T-position)")
     arm_angle_right: float = Field(..., description="Right arm angle from horizontal (degrees, 0° = T-position)")
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
-    # Temporal analysis
-    temporal: TemporalMetrics = Field(..., description="Temporal breakdown of metrics")
-    # Enhanced temporal data for LLM
+    # BACKWARD COMPAT: Legacy temporal fields (kept for old assessments)
+    temporal: Optional[TemporalMetrics] = Field(None, description="Legacy temporal breakdown (thirds)")
     five_second_segments: Optional[list[FiveSecondSegment]] = Field(
         None,
-        description="5-second segment breakdown for LLM temporal analysis"
+        description="Legacy 5-second segment breakdown"
+    )
+    # NEW: Unified temporal data with configurable segment duration
+    segmented_metrics: Optional[SegmentedMetrics] = Field(
+        None,
+        description="Time segments with configurable duration (typically 1-second)"
     )
     events: Optional[list[BalanceEvent]] = Field(
         None,
@@ -162,7 +187,12 @@ class DualLegMetrics(BaseModel):
     """
     Container for dual-leg assessment metrics.
     Includes full client metrics for both legs (with temporal data).
+
+    NOTE: Client may send symmetry_analysis, but backend ignores it and recalculates.
     """
+    class Config:
+        extra = "ignore"  # Ignore extra fields like symmetry_analysis from client
+
     left_leg: ClientMetricsData = Field(..., description="Left leg test metrics")
     right_leg: ClientMetricsData = Field(..., description="Right leg test metrics")
 
@@ -189,12 +219,16 @@ class MetricsData(BaseModel):
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
     # LTAD Score (validated by Athletics Canada LTAD framework)
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
-    # Temporal analysis
-    temporal: Optional[TemporalMetrics] = Field(None, description="Temporal breakdown of metrics")
-    # Enhanced temporal data for LLM
+    # BACKWARD COMPAT: Legacy temporal fields (kept for old assessments)
+    temporal: Optional[TemporalMetrics] = Field(None, description="Legacy temporal breakdown (thirds)")
     five_second_segments: Optional[list[FiveSecondSegment]] = Field(
         None,
-        description="5-second segment breakdown for LLM temporal analysis"
+        description="Legacy 5-second segment breakdown"
+    )
+    # NEW: Unified temporal data with configurable segment duration
+    segmented_metrics: Optional[SegmentedMetrics] = Field(
+        None,
+        description="Time segments with configurable duration (typically 1-second)"
     )
     events: Optional[list[BalanceEvent]] = Field(
         None,

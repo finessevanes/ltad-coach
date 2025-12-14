@@ -15,9 +15,8 @@
 
 import {
   TimestampedLandmarks,
-  SegmentMetrics,
-  TemporalMetrics,
-  FiveSecondSegment,
+  TimeSegment,
+  SegmentedMetrics,
   BalanceEvent,
 } from '../types/balanceTest';
 import { PoseLandmark } from '../types/mediapipe';
@@ -406,125 +405,28 @@ function calculateArmAngle(shoulder: PoseLandmark, wrist: PoseLandmark): number 
 }
 
 // ============================================================================
-// Temporal metrics (fatigue analysis)
+// Time Segment Calculation (for temporal analysis and visualization)
 // ============================================================================
 
 /**
- * Calculate metrics for a temporal segment of the test.
+ * Calculate metrics for time segments of configurable duration.
+ * Provides granular timeline data for temporal analysis and visualization.
+ *
+ * @param landmarkHistory - Full landmark history
+ * @param holdTime - Total test duration in seconds
+ * @param segmentDuration - Duration of each segment in seconds (default: 1.0)
+ * @returns SegmentedMetrics with array of time segments
  */
-function calculateSegmentMetrics(
+function calculateTimeSegments(
   landmarkHistory: TimestampedLandmarks[],
-  startIdx: number,
-  endIdx: number,
-  segmentDuration: number
-): SegmentMetrics {
-  const segment = landmarkHistory.slice(startIdx, endIdx);
-
-  if (segment.length === 0) {
-    return {
-      armAngleLeft: 0,
-      armAngleRight: 0,
-      swayVelocity: 0,
-      correctionsCount: 0,
-    };
+  holdTime: number,
+  segmentDuration: number = 1.0
+): SegmentedMetrics {
+  if (landmarkHistory.length === 0 || holdTime <= 0) {
+    return { segmentDuration, segments: [] };
   }
 
-  // Calculate arm angles for this segment
-  let totalArmAngleLeft = 0;
-  let totalArmAngleRight = 0;
-  let armCount = 0;
-
-  for (const frame of segment) {
-    const worldLandmarks = frame.worldLandmarks;
-    if (!worldLandmarks || worldLandmarks.length === 0) continue;
-
-    const leftShoulder = worldLandmarks[FILTERED_INDEX.LEFT_SHOULDER];
-    const leftWrist = worldLandmarks[FILTERED_INDEX.LEFT_WRIST];
-    const rightShoulder = worldLandmarks[FILTERED_INDEX.RIGHT_SHOULDER];
-    const rightWrist = worldLandmarks[FILTERED_INDEX.RIGHT_WRIST];
-
-    if (leftShoulder && leftWrist && rightShoulder && rightWrist) {
-      totalArmAngleLeft += calculateArmAngle(leftShoulder, leftWrist);
-      totalArmAngleRight += calculateArmAngle(rightShoulder, rightWrist);
-      armCount++;
-    }
-  }
-
-  const avgArmAngleLeft = armCount > 0 ? totalArmAngleLeft / armCount : 0;
-  const avgArmAngleRight = armCount > 0 ? totalArmAngleRight / armCount : 0;
-
-  // Calculate sway for this segment using smoothed normalized landmarks
-  // extractHipTrajectory now returns trajectory in CM (already scaled)
-  const trajectory = extractHipTrajectory(segment);
-  const pathLengthCm = calculatePathLength(trajectory);
-  const swayVelocityCmS = segmentDuration > 0 ? pathLengthCm / segmentDuration : 0;
-
-  // Count corrections in this segment (threshold in cm)
-  const correctionsCount = countCorrections(trajectory, CORRECTION_THRESHOLD_CM);
-
-  return {
-    armAngleLeft: Math.round(avgArmAngleLeft * 10) / 10,
-    armAngleRight: Math.round(avgArmAngleRight * 10) / 10,
-    swayVelocity: Math.round(swayVelocityCmS * 100) / 100,
-    correctionsCount,
-  };
-}
-
-/**
- * Calculate temporal metrics - break test into thirds for fatigue analysis.
- */
-function calculateTemporalMetrics(
-  landmarkHistory: TimestampedLandmarks[],
-  holdTime: number
-): TemporalMetrics {
-  const totalFrames = landmarkHistory.length;
-  const thirdSize = Math.floor(totalFrames / 3);
-  const segmentDuration = holdTime / 3;
-
-  const firstThird = calculateSegmentMetrics(
-    landmarkHistory,
-    0,
-    thirdSize,
-    segmentDuration
-  );
-
-  const middleThird = calculateSegmentMetrics(
-    landmarkHistory,
-    thirdSize,
-    thirdSize * 2,
-    segmentDuration
-  );
-
-  const lastThird = calculateSegmentMetrics(
-    landmarkHistory,
-    thirdSize * 2,
-    totalFrames,
-    segmentDuration
-  );
-
-  return {
-    firstThird,
-    middleThird,
-    lastThird,
-  };
-}
-
-// ============================================================================
-// Five-Second Segment Calculation (for LLM temporal analysis)
-// ============================================================================
-
-/**
- * Calculate metrics for 5-second segments of the test.
- * Provides granular timeline data so LLM can understand *when* things happened.
- */
-function calculateFiveSecondSegments(
-  landmarkHistory: TimestampedLandmarks[],
-  holdTime: number
-): FiveSecondSegment[] {
-  if (landmarkHistory.length === 0 || holdTime <= 0) return [];
-
-  const segments: FiveSecondSegment[] = [];
-  const segmentDuration = 5; // 5 seconds per segment
+  const segments: TimeSegment[] = [];
   const numSegments = Math.ceil(holdTime / segmentDuration);
   const totalFrames = landmarkHistory.length;
 
@@ -589,7 +491,10 @@ function calculateFiveSecondSegments(
     });
   }
 
-  return segments;
+  return {
+    segmentDuration,
+    segments,
+  };
 }
 
 // ============================================================================
@@ -848,9 +753,8 @@ export interface CalculatedMetrics {
   armAngleStdDevLeft: number;      // degrees
   armAngleStdDevRight: number;     // degrees
   timeArmsAboveHorizontal: number; // percentage (0-100)
-  temporal: TemporalMetrics;
-  // Enhanced temporal data for LLM
-  fiveSecondSegments: FiveSecondSegment[];
+  // Temporal breakdown with configurable segment duration
+  segmentedMetrics: SegmentedMetrics;
   events: BalanceEvent[];
 }
 
@@ -899,14 +803,14 @@ export function calculateMetrics(
   const swayPathLengthCm = calculatePathLength(hipTrajectory);
   const swayVelocityCmS = holdTime > 0 ? swayPathLengthCm / holdTime : 0;
 
-  // Calculate temporal metrics (fatigue analysis) - do this first so we can sum corrections
-  const temporal = calculateTemporalMetrics(landmarkHistory, holdTime);
+  // Calculate segmented metrics (1-second windows for temporal analysis)
+  const segmentedMetrics = calculateTimeSegments(landmarkHistory, holdTime, 1.0);
 
-  // Sum corrections from all segments for consistency with temporal breakdown
-  const correctionsCount =
-    temporal.firstThird.correctionsCount +
-    temporal.middleThird.correctionsCount +
-    temporal.lastThird.correctionsCount;
+  // Sum corrections from all segments
+  const correctionsCount = segmentedMetrics.segments.reduce(
+    (sum, seg) => sum + seg.corrections,
+    0
+  );
 
   // Calculate arm angles - collect all angles for new metrics
   const armAnglesLeftArray: number[] = [];
@@ -980,8 +884,7 @@ export function calculateMetrics(
       ? Math.abs(armAngleLeft) / Math.abs(armAngleRight)
       : 1.0;
 
-  // Calculate enhanced temporal data for LLM
-  const fiveSecondSegments = calculateFiveSecondSegments(landmarkHistory, holdTime);
+  // Detect balance events for coaching insights
   const events = detectAllEvents(landmarkHistory, holdTime);
 
   return {
@@ -998,8 +901,7 @@ export function calculateMetrics(
     armAngleStdDevLeft: Math.round(armAngleStdDevLeft * 10) / 10,
     armAngleStdDevRight: Math.round(armAngleStdDevRight * 10) / 10,
     timeArmsAboveHorizontal: Math.round(timeArmsAboveHorizontal * 10) / 10,
-    temporal,
-    fiveSecondSegments,
+    segmentedMetrics,
     events,
   };
 }

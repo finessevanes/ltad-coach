@@ -33,7 +33,7 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
     """Build metrics dictionary from client metrics and duration score.
 
     Converts Pydantic model to dict and adds server-calculated LTAD score.
-    Preserves all temporal data (5-second segments, events).
+    Handles both legacy (temporal + five_second_segments) and new (segmented_metrics) formats.
 
     Args:
         client_metrics: Client-side metrics from MediaPipe analysis
@@ -42,7 +42,7 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
     Returns:
         Dictionary with all metrics ready for storage
     """
-    return {
+    metrics_dict = {
         # Test result
         "success": client_metrics.success,
         "hold_time": client_metrics.hold_time,
@@ -59,12 +59,28 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
         "arm_asymmetry_ratio": client_metrics.arm_asymmetry_ratio,
         # LTAD Score (validated by Athletics Canada)
         "duration_score": duration_score,
-        # Temporal analysis
-        "temporal": client_metrics.temporal.model_dump() if client_metrics.temporal else None,
-        # Enhanced temporal data for LLM
-        "five_second_segments": [seg.model_dump() for seg in client_metrics.five_second_segments] if client_metrics.five_second_segments else None,
-        "events": [event.model_dump() for event in client_metrics.events] if client_metrics.events else None,
     }
+
+    # Handle temporal data - prefer new format, fallback to legacy
+    if client_metrics.segmented_metrics:
+        # NEW: Use segmented_metrics
+        metrics_dict["segmented_metrics"] = client_metrics.segmented_metrics.model_dump()
+        logger.info(f"Stored {len(client_metrics.segmented_metrics.segments)} segments "
+                   f"({client_metrics.segmented_metrics.segment_duration}s duration)")
+    else:
+        # LEGACY: Use old temporal + five_second_segments if present
+        if client_metrics.temporal:
+            metrics_dict["temporal"] = client_metrics.temporal.model_dump()
+            logger.warning("Using legacy temporal format (first/middle/last thirds)")
+        if client_metrics.five_second_segments:
+            metrics_dict["five_second_segments"] = [seg.model_dump() for seg in client_metrics.five_second_segments]
+            logger.warning("Using legacy five_second_segments format")
+
+    # Events (unchanged)
+    if client_metrics.events:
+        metrics_dict["events"] = [event.model_dump() for event in client_metrics.events]
+
+    return metrics_dict
 
 
 async def _process_single_leg_assessment(data: AssessmentCreate, coach_id: str, athlete) -> "Assessment":
@@ -174,8 +190,7 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
                 f"corrections={data.dual_leg_metrics.left_leg.corrections_count}")
     logger.info(f"Right leg metrics: hold_time={data.dual_leg_metrics.right_leg.hold_time}s, "
                 f"corrections={data.dual_leg_metrics.right_leg.corrections_count}")
-    logger.info(f"Symmetry analysis received: dominant_leg={data.dual_leg_metrics.symmetry_analysis.dominant_leg}, "
-                f"overall_score={data.dual_leg_metrics.symmetry_analysis.overall_symmetry_score}")
+    # Note: symmetry_analysis is calculated server-side, not sent by client
 
     # Calculate LTAD duration scores for both legs
     left_duration_score = get_duration_score(data.dual_leg_metrics.left_leg.hold_time)
@@ -189,12 +204,7 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
     # Calculate bilateral comparison
     from app.services.bilateral_comparison import calculate_bilateral_comparison
     bilateral_comparison = calculate_bilateral_comparison(left_metrics, right_metrics)
-    logger.info(f"Bilateral comparison calculated: {bilateral_comparison}")
-
-    # Log data being stored
-    logger.info(f"Storing dual-leg assessment with left_metrics keys: {list(left_metrics.keys())}")
-    logger.info(f"Storing dual-leg assessment with right_metrics keys: {list(right_metrics.keys())}")
-    logger.info(f"Storing bilateral_comparison keys: {list(bilateral_comparison.keys())}")
+    logger.info(f"Bilateral comparison calculated - symmetry score: {bilateral_comparison['overall_symmetry_score']}/100")
 
     # Create assessment in Firestore
     assessment_repo = AssessmentRepository()
@@ -212,19 +222,6 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
     )
 
     logger.info(f"Dual-leg assessment {assessment.id} created and completed immediately")
-
-    # Verify stored data
-    logger.info(f"Stored assessment {assessment.id} - leg_tested={assessment.leg_tested}")
-    logger.info(f"Stored assessment has left_leg_metrics: {bool(assessment.left_leg_metrics)}")
-    logger.info(f"Stored assessment has right_leg_metrics: {bool(assessment.right_leg_metrics)}")
-    logger.info(f"Stored assessment has bilateral_comparison: {bool(assessment.bilateral_comparison)}")
-
-    if assessment.left_leg_metrics:
-        logger.info(f"Left leg metrics keys in stored assessment: {list(assessment.left_leg_metrics.keys())}")
-    if assessment.right_leg_metrics:
-        logger.info(f"Right leg metrics keys in stored assessment: {list(assessment.right_leg_metrics.keys())}")
-    if assessment.bilateral_comparison:
-        logger.info(f"Bilateral comparison keys in stored assessment: {list(assessment.bilateral_comparison.keys())}")
 
     # Generate bilateral AI feedback (async, non-blocking)
     try:
@@ -436,6 +433,9 @@ async def get_assessment(
         status=assessment.status,
         created_at=assessment.created_at,
         metrics=assessment.metrics,
+        left_leg_metrics=assessment.left_leg_metrics,
+        right_leg_metrics=assessment.right_leg_metrics,
+        bilateral_comparison=assessment.bilateral_comparison,
         ai_coach_assessment=assessment.ai_coach_assessment,
         error_message=assessment.error_message,
     )

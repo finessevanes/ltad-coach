@@ -24,7 +24,7 @@ import { TestResult } from '../../../types/balanceTest';
 interface LegTestData {
   blob: Blob;
   duration: number;
-  result: ClientMetrics;  // Full test result including temporal data
+  result: TestResult;  // Full test result including landmark history
 }
 
 interface TwoLegUploadStepProps {
@@ -41,7 +41,7 @@ type UploadPhase = 'uploading-left' | 'uploading-right' | 'submitting' | 'comple
  * This prevents sending massive payloads (2.5MB → 50KB).
  *
  * TestResult includes landmarkHistory (all pose frames), but backend only needs
- * the calculated metrics, temporal breakdown, and events.
+ * the calculated metrics, segmented temporal breakdown, and events.
  */
 const convertToClientMetrics = (testResult: TestResult): ClientMetrics => ({
   success: testResult.success,
@@ -57,10 +57,8 @@ const convertToClientMetrics = (testResult: TestResult): ClientMetrics => ({
   armAngleLeft: testResult.armAngleLeft,
   armAngleRight: testResult.armAngleRight,
   armAsymmetryRatio: testResult.armAsymmetryRatio,
-  // Temporal analysis
-  temporal: testResult.temporal,
-  // Enhanced temporal data for LLM
-  fiveSecondSegments: testResult.fiveSecondSegments,
+  // Temporal breakdown with configurable segment duration
+  segmentedMetrics: testResult.segmentedMetrics,
   events: testResult.events,
 });
 
@@ -170,41 +168,44 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
       success: rightLegData.result.success,
     });
 
-    // Calculate symmetry from test results
-    const symmetryAnalysis = calculateSymmetry(
-      leftLegData.result,
-      rightLegData.result
-    );
-    console.log('[TwoLegUpload] Symmetry analysis calculated:', symmetryAnalysis);
-
     // Convert TestResult to ClientMetrics (strips landmarkHistory - reduces payload from 2.5MB to ~50KB)
     const leftClientMetrics = convertToClientMetrics(leftLegData.result);
     const rightClientMetrics = convertToClientMetrics(rightLegData.result);
 
+    // Calculate symmetry from converted metrics
+    const symmetryAnalysis = calculateSymmetry(
+      leftClientMetrics,
+      rightClientMetrics
+    );
+    console.log('[TwoLegUpload] Symmetry analysis calculated:', symmetryAnalysis);
+
     // Validate metrics before submitting
-    if (!leftClientMetrics.temporal) {
-      console.warn('[TwoLegUpload] Left leg missing temporal data');
+    if (!leftClientMetrics.segmentedMetrics) {
+      console.warn('[TwoLegUpload] Left leg missing segmented metrics data');
     }
-    if (!rightClientMetrics.temporal) {
-      console.warn('[TwoLegUpload] Right leg missing temporal data');
+    if (!rightClientMetrics.segmentedMetrics) {
+      console.warn('[TwoLegUpload] Right leg missing segmented metrics data');
     }
 
     console.log('[TwoLegUpload] Converted to ClientMetrics - payload now excludes landmarkHistory');
 
     // Build dual-leg metrics payload
+    // NOTE: symmetryAnalysis is calculated by backend - we only send raw metrics
     const dualLegMetrics: DualLegMetrics = {
       leftLeg: leftClientMetrics,
       rightLeg: rightClientMetrics,
-      symmetryAnalysis,
+      // symmetryAnalysis removed - backend calculates this
     };
 
     console.log('[TwoLegUpload] DualLegMetrics payload:', {
       leftLegKeys: Object.keys(dualLegMetrics.leftLeg),
       rightLegKeys: Object.keys(dualLegMetrics.rightLeg),
-      symmetryKeys: Object.keys(dualLegMetrics.symmetryAnalysis),
-      hasLeftTemporal: !!dualLegMetrics.leftLeg.temporal,
-      hasRightTemporal: !!dualLegMetrics.rightLeg.temporal,
+      hasLeftSegments: !!dualLegMetrics.leftLeg.segmentedMetrics,
+      hasRightSegments: !!dualLegMetrics.rightLeg.segmentedMetrics,
     });
+
+    // Log symmetry analysis for debugging (not sent to backend)
+    console.log('[TwoLegUpload] Client-calculated symmetry (for display only):', symmetryAnalysis);
 
     // Submit to backend (field names from FE-018)
     const payload = {

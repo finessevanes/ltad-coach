@@ -63,10 +63,8 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               armAngleLeft: testResult.armAngleLeft,
               armAngleRight: testResult.armAngleRight,
               armAsymmetryRatio: testResult.armAsymmetryRatio,
-              // Temporal analysis
-              temporal: testResult.temporal,
-              // Enhanced temporal data for LLM
-              fiveSecondSegments: testResult.fiveSecondSegments,
+              // Temporal breakdown with configurable segment duration
+              segmentedMetrics: testResult.segmentedMetrics,
               events: testResult.events,
             }
           : undefined;
