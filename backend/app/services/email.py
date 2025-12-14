@@ -3,6 +3,7 @@
 import logging
 import resend
 from app.config import get_settings
+from app.templates.report_email import get_report_email_html, get_report_email_subject
 
 logger = logging.getLogger(__name__)
 
@@ -236,3 +237,41 @@ def send_consent_declined(
     """
 
     return send_email(coach_email, subject, html)
+
+
+async def send_report_email(
+    parent_email: str,
+    athlete_name: str,
+    coach_name: str,
+    report_id: str,
+    pin: str
+) -> bool:
+    """Send parent report email with link and PIN.
+
+    Args:
+        parent_email: Parent's email address
+        athlete_name: Name of the athlete
+        coach_name: Name of the coach
+        report_id: Report ID for the URL
+        pin: 6-digit PIN for access
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    settings = get_settings()
+    report_url = f"{settings.frontend_url}/report/{report_id}"
+
+    html = get_report_email_html(
+        athlete_name=athlete_name,
+        coach_name=coach_name,
+        report_url=report_url,
+        pin=pin
+    )
+
+    subject = get_report_email_subject(athlete_name)
+
+    return send_email(
+        to=parent_email,
+        subject=subject,
+        html=html
+    )
