@@ -27,7 +27,6 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
 
 interface ReportHistoryItem {
   id: string;
-  athleteId: string;
   createdAt: string;
   sentAt?: string;
 }
@@ -38,7 +37,7 @@ interface Props {
   onReportResent: () => void;
 }
 
-export const ReportHistory: React.FC<Props> = ({ athleteId, reports, onReportResent }) => {
+export const ReportHistory: React.FC<Props> = ({ reports, onReportResent }) => {
   const { showSnackbar } = useSnackbar();
   const [resendDialogOpen, setResendDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportHistoryItem | null>(null);

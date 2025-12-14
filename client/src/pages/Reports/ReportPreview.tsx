@@ -34,7 +34,6 @@ export default function ReportPreviewPage() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sentPin, setSentPin] = useState<string | null>(null);
-  const [reportId, setReportId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPreview();
@@ -65,7 +64,6 @@ export default function ReportPreviewPage() {
     try {
       const result = await reportsApi.send(athleteId);
       setSentPin(result.pin);
-      setReportId(result.id);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to send report');
     } finally {
@@ -85,7 +83,6 @@ export default function ReportPreviewPage() {
     return (
       <SendSuccess
         pin={sentPin}
-        reportId={reportId!}
         athleteName={preview?.athleteName || ''}
         parentEmail={athlete?.parentEmail || ''}
         onDone={() => navigate(`/athletes/${athleteId}`)}

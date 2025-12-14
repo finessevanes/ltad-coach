@@ -16,7 +16,6 @@ import {
 
 interface SendSuccessProps {
   pin: string;
-  reportId: string;
   athleteName: string;
   parentEmail: string;
   onDone: () => void;
@@ -24,7 +23,6 @@ interface SendSuccessProps {
 
 export function SendSuccess({
   pin,
-  reportId,
   athleteName,
   parentEmail,
   onDone,
