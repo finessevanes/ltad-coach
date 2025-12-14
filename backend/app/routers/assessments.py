@@ -362,12 +362,13 @@ async def list_assessments(
     if has_more:
         assessments = assessments[:limit]
 
-    # Get athlete names for display (denormalized)
-    athlete_names = {}
-    for assessment in assessments:
-        if assessment.athlete_id not in athlete_names:
-            athlete = await athlete_repo.get(assessment.athlete_id)
-            athlete_names[assessment.athlete_id] = athlete.name if athlete else "Unknown"
+    # Get athlete names for display (denormalized) - batch fetch to avoid N+1
+    unique_athlete_ids = list(set(a.athlete_id for a in assessments))
+    athletes = await athlete_repo.batch_get(unique_athlete_ids)
+    athlete_names = {
+        athlete_id: (athlete.name if athlete else "Unknown")
+        for athlete_id, athlete in athletes.items()
+    }
 
     # Build response items
     items = [
