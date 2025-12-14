@@ -99,6 +99,12 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     resetTest,
   } = useBalanceTest(poseResult, legTested, { debug: true });
 
+  // Reset test when component mounts (critical for right leg in dual-leg mode)
+  useEffect(() => {
+    console.log('[RecordingStep] Component mounted/reset - legTested:', parentLegTested, 'autoStart:', autoStart);
+    resetTest();
+  }, []); // Empty deps = run once on mount
+
   // Create composite canvas for recording video + skeleton
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const compositeStreamRef = useRef<MediaStream | null>(null);

@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFirebaseUpload } from '../../../hooks/useFirebaseUpload';
 import assessmentsService from '../../../services/assessments';
 import { ClientMetrics, DualLegMetrics, SymmetryAnalysis } from '../../../types/assessment';
+import { TestResult } from '../../../types/balanceTest';
 
 interface LegTestData {
   blob: Blob;
@@ -34,6 +35,34 @@ interface TwoLegUploadStepProps {
 }
 
 type UploadPhase = 'uploading-left' | 'uploading-right' | 'submitting' | 'complete' | 'error';
+
+/**
+ * Convert TestResult to ClientMetrics (excludes landmarkHistory).
+ * This prevents sending massive payloads (2.5MB → 50KB).
+ *
+ * TestResult includes landmarkHistory (all pose frames), but backend only needs
+ * the calculated metrics, temporal breakdown, and events.
+ */
+const convertToClientMetrics = (testResult: TestResult): ClientMetrics => ({
+  success: testResult.success,
+  holdTime: testResult.holdTime,
+  failureReason: testResult.failureReason,
+  // Sway metrics (cm)
+  swayStdX: testResult.swayStdX,
+  swayStdY: testResult.swayStdY,
+  swayPathLength: testResult.swayPathLength,
+  swayVelocity: testResult.swayVelocity,
+  correctionsCount: testResult.correctionsCount,
+  // Arm metrics (degrees)
+  armAngleLeft: testResult.armAngleLeft,
+  armAngleRight: testResult.armAngleRight,
+  armAsymmetryRatio: testResult.armAsymmetryRatio,
+  // Temporal analysis
+  temporal: testResult.temporal,
+  // Enhanced temporal data for LLM
+  fiveSecondSegments: testResult.fiveSecondSegments,
+  events: testResult.events,
+});
 
 export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
   athleteId,
@@ -127,18 +156,55 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
     leftUploadResult: { url: string; path: string },
     rightUploadResult: { url: string; path: string }
   ) => {
+    console.log('[TwoLegUpload] Submitting dual-leg assessment');
+    console.log('[TwoLegUpload] Left leg data:', {
+      duration: leftLegData.duration,
+      holdTime: leftLegData.result.holdTime,
+      corrections: leftLegData.result.correctionsCount,
+      success: leftLegData.result.success,
+    });
+    console.log('[TwoLegUpload] Right leg data:', {
+      duration: rightLegData.duration,
+      holdTime: rightLegData.result.holdTime,
+      corrections: rightLegData.result.correctionsCount,
+      success: rightLegData.result.success,
+    });
+
     // Calculate symmetry from test results
     const symmetryAnalysis = calculateSymmetry(
       leftLegData.result,
       rightLegData.result
     );
+    console.log('[TwoLegUpload] Symmetry analysis calculated:', symmetryAnalysis);
+
+    // Convert TestResult to ClientMetrics (strips landmarkHistory - reduces payload from 2.5MB to ~50KB)
+    const leftClientMetrics = convertToClientMetrics(leftLegData.result);
+    const rightClientMetrics = convertToClientMetrics(rightLegData.result);
+
+    // Validate metrics before submitting
+    if (!leftClientMetrics.temporal) {
+      console.warn('[TwoLegUpload] Left leg missing temporal data');
+    }
+    if (!rightClientMetrics.temporal) {
+      console.warn('[TwoLegUpload] Right leg missing temporal data');
+    }
+
+    console.log('[TwoLegUpload] Converted to ClientMetrics - payload now excludes landmarkHistory');
 
     // Build dual-leg metrics payload
     const dualLegMetrics: DualLegMetrics = {
-      leftLeg: leftLegData.result,
-      rightLeg: rightLegData.result,
+      leftLeg: leftClientMetrics,
+      rightLeg: rightClientMetrics,
       symmetryAnalysis,
     };
+
+    console.log('[TwoLegUpload] DualLegMetrics payload:', {
+      leftLegKeys: Object.keys(dualLegMetrics.leftLeg),
+      rightLegKeys: Object.keys(dualLegMetrics.rightLeg),
+      symmetryKeys: Object.keys(dualLegMetrics.symmetryAnalysis),
+      hasLeftTemporal: !!dualLegMetrics.leftLeg.temporal,
+      hasRightTemporal: !!dualLegMetrics.rightLeg.temporal,
+    });
 
     // Submit to backend (field names from FE-018)
     const payload = {
@@ -158,37 +224,71 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
       dualLegMetrics,
     };
 
-    const response = await assessmentsService.analyzeVideo(payload);
-    setPhase('complete');
+    console.log('[TwoLegUpload] Full payload to backend:', {
+      athleteId: payload.athleteId,
+      testType: payload.testType,
+      legTested: payload.legTested,
+      hasLeftVideo: !!payload.leftVideoUrl,
+      hasRightVideo: !!payload.rightVideoUrl,
+      leftDuration: payload.leftDuration,
+      rightDuration: payload.rightDuration,
+      hasDualLegMetrics: !!payload.dualLegMetrics,
+    });
 
-    // Navigate to results or call onComplete callback
-    if (onComplete) {
-      onComplete(response.id);
-    } else {
-      navigate(`/assessments/${response.id}`);
+    try {
+      const response = await assessmentsService.analyzeVideo(payload);
+      console.log('[TwoLegUpload] Backend response:', response);
+      setPhase('complete');
+
+      // Navigate to results or call onComplete callback
+      if (onComplete) {
+        onComplete(response.id);
+      } else {
+        navigate(`/assessments/${response.id}`);
+      }
+    } catch (err: any) {
+      console.error('[TwoLegUpload] Backend submission failed:', err);
+      console.error('[TwoLegUpload] Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      throw err; // Re-throw to be caught by outer try-catch
     }
   };
 
   const uploadBothVideos = async () => {
+    console.log('[TwoLegUpload] Starting upload process for athlete:', athleteId);
+    console.log('[TwoLegUpload] Left leg blob size:', leftLegData.blob.size, 'bytes');
+    console.log('[TwoLegUpload] Right leg blob size:', rightLegData.blob.size, 'bytes');
+
     try {
       // Step 1: Upload left leg video
+      console.log('[TwoLegUpload] Phase: uploading-left');
       setPhase('uploading-left');
       setLeftProgress(0);
       const leftResult = await uploadLeft(leftLegData.blob, athleteId);
+      console.log('[TwoLegUpload] Left video uploaded:', leftResult);
       setLeftProgress(100);
 
       // Step 2: Upload right leg video
+      console.log('[TwoLegUpload] Phase: uploading-right');
       setPhase('uploading-right');
       setRightProgress(0);
       const rightResult = await uploadRight(rightLegData.blob, athleteId);
+      console.log('[TwoLegUpload] Right video uploaded:', rightResult);
       setRightProgress(100);
 
       // Step 3: Calculate symmetry and submit
+      console.log('[TwoLegUpload] Phase: submitting');
       setPhase('submitting');
       await submitDualLegAssessment(leftResult, rightResult);
 
     } catch (err: any) {
-      setError(err.message || 'Upload failed');
+      console.error('[TwoLegUpload] Upload process failed:', err);
+      const errorMessage = err.response?.data?.detail || err.message || 'Upload failed';
+      console.error('[TwoLegUpload] User-facing error:', errorMessage);
+      setError(errorMessage);
       setPhase('error');
     }
   };

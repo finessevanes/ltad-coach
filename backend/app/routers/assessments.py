@@ -152,22 +152,35 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
         HTTPException 400: Missing required dual-leg fields
         HTTPException 500: Processing or storage error
     """
+    logger.info(f"Processing dual-leg assessment for athlete {athlete.id} ({athlete.name})")
+
     # Validate dual-leg fields
     if not data.dual_leg_metrics:
+        logger.error(f"Missing dual_leg_metrics for athlete {athlete.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="dual_leg_metrics required when leg_tested is 'both'"
         )
 
     if not data.right_video_url:
+        logger.error(f"Missing right_video_url for athlete {athlete.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="right_video_url required when leg_tested is 'both'"
         )
 
+    # Log received metrics
+    logger.info(f"Left leg metrics: hold_time={data.dual_leg_metrics.left_leg.hold_time}s, "
+                f"corrections={data.dual_leg_metrics.left_leg.corrections_count}")
+    logger.info(f"Right leg metrics: hold_time={data.dual_leg_metrics.right_leg.hold_time}s, "
+                f"corrections={data.dual_leg_metrics.right_leg.corrections_count}")
+    logger.info(f"Symmetry analysis received: dominant_leg={data.dual_leg_metrics.symmetry_analysis.dominant_leg}, "
+                f"overall_score={data.dual_leg_metrics.symmetry_analysis.overall_symmetry_score}")
+
     # Calculate LTAD duration scores for both legs
     left_duration_score = get_duration_score(data.dual_leg_metrics.left_leg.hold_time)
     right_duration_score = get_duration_score(data.dual_leg_metrics.right_leg.hold_time)
+    logger.info(f"LTAD scores calculated: left={left_duration_score}, right={right_duration_score}")
 
     # Build metrics dictionaries (includes temporal data)
     left_metrics = _build_metrics_dict(data.dual_leg_metrics.left_leg, left_duration_score)
@@ -176,6 +189,12 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
     # Calculate bilateral comparison
     from app.services.bilateral_comparison import calculate_bilateral_comparison
     bilateral_comparison = calculate_bilateral_comparison(left_metrics, right_metrics)
+    logger.info(f"Bilateral comparison calculated: {bilateral_comparison}")
+
+    # Log data being stored
+    logger.info(f"Storing dual-leg assessment with left_metrics keys: {list(left_metrics.keys())}")
+    logger.info(f"Storing dual-leg assessment with right_metrics keys: {list(right_metrics.keys())}")
+    logger.info(f"Storing bilateral_comparison keys: {list(bilateral_comparison.keys())}")
 
     # Create assessment in Firestore
     assessment_repo = AssessmentRepository()
@@ -194,18 +213,39 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
 
     logger.info(f"Dual-leg assessment {assessment.id} created and completed immediately")
 
+    # Verify stored data
+    logger.info(f"Stored assessment {assessment.id} - leg_tested={assessment.leg_tested}")
+    logger.info(f"Stored assessment has left_leg_metrics: {bool(assessment.left_leg_metrics)}")
+    logger.info(f"Stored assessment has right_leg_metrics: {bool(assessment.right_leg_metrics)}")
+    logger.info(f"Stored assessment has bilateral_comparison: {bool(assessment.bilateral_comparison)}")
+
+    if assessment.left_leg_metrics:
+        logger.info(f"Left leg metrics keys in stored assessment: {list(assessment.left_leg_metrics.keys())}")
+    if assessment.right_leg_metrics:
+        logger.info(f"Right leg metrics keys in stored assessment: {list(assessment.right_leg_metrics.keys())}")
+    if assessment.bilateral_comparison:
+        logger.info(f"Bilateral comparison keys in stored assessment: {list(assessment.bilateral_comparison.keys())}")
+
     # Generate bilateral AI feedback (async, non-blocking)
     try:
+        logger.info(f"Generating bilateral AI feedback for assessment {assessment.id}")
         orchestrator = get_orchestrator()
+
+        # Prepare metrics dict for orchestrator
+        metrics_for_orchestrator = {
+            "left_leg_metrics": left_metrics,
+            "right_leg_metrics": right_metrics,
+            "bilateral_comparison": bilateral_comparison,
+        }
+        logger.info(f"Calling orchestrator with metrics containing {len(left_metrics)} left metrics, "
+                    f"{len(right_metrics)} right metrics, {len(bilateral_comparison)} comparison metrics")
 
         ai_assessment = await orchestrator.generate_feedback(
             request_type="bilateral_assessment",
             athlete_id=athlete.id,
             athlete_name=athlete.name,
             athlete_age=athlete.age,
-            left_leg_metrics=left_metrics,
-            right_leg_metrics=right_metrics,
-            bilateral_comparison=bilateral_comparison,
+            metrics=metrics_for_orchestrator,
         )
 
         # Update assessment with AI feedback
@@ -215,6 +255,7 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
     except Exception as e:
         # Log error but don't block response
         logger.error(f"Failed to generate bilateral AI feedback for {assessment.id}: {e}", exc_info=True)
+        logger.error(f"Error details - Type: {type(e).__name__}, Args: {e.args}")
         # Assessment still valid without AI feedback
 
     return assessment

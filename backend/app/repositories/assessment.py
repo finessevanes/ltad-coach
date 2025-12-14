@@ -154,6 +154,14 @@ class AssessmentRepository(BaseRepository[Assessment]):
             >>> assert assessment.leg_tested == "both"
             >>> assert assessment.status == AssessmentStatus.COMPLETED
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"Creating dual-leg assessment for athlete {athlete_id}")
+        logger.info(f"Left metrics keys: {list(left_leg_metrics.keys())}")
+        logger.info(f"Right metrics keys: {list(right_leg_metrics.keys())}")
+        logger.info(f"Bilateral comparison keys: {list(bilateral_comparison.keys())}")
+
         data = {
             "coach_id": coach_id,
             "athlete_id": athlete_id,
@@ -176,8 +184,19 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "error_message": None,
         }
 
+        logger.info(f"Data dict keys before storage: {list(data.keys())}")
+        logger.info(f"Data has left_leg_metrics: {bool(data.get('left_leg_metrics'))}")
+        logger.info(f"Data has right_leg_metrics: {bool(data.get('right_leg_metrics'))}")
+        logger.info(f"Data has bilateral_comparison: {bool(data.get('bilateral_comparison'))}")
+
         assessment_id = await self.create(data)
+        logger.info(f"Assessment created with ID: {assessment_id}")
+
         assessment = await self.get(assessment_id)
+        logger.info(f"Assessment retrieved - has left_leg_metrics: {bool(assessment.left_leg_metrics)}")
+        logger.info(f"Assessment retrieved - has right_leg_metrics: {bool(assessment.right_leg_metrics)}")
+        logger.info(f"Assessment retrieved - has bilateral_comparison: {bool(assessment.bilateral_comparison)}")
+
         return assessment
 
     async def update_with_results(
