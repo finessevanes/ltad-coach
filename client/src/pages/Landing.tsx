@@ -83,7 +83,7 @@ export function Landing() {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => navigate('/register')}
+                onClick={() => window.open('https://calendly.com/naniskinner', '_blank')}
                 sx={{
                   bgcolor: '#2563EB',
                   color: 'white',
@@ -102,7 +102,7 @@ export function Landing() {
                   },
                 }}
               >
-                Start Free Trial →
+                Book a Demo →
               </Button>
             </Box>
           </Box>
@@ -534,7 +534,7 @@ export function Landing() {
           </Typography>
           <Button
             variant="contained"
-            onClick={() => navigate('/register')}
+            onClick={() => window.open('https://calendly.com/naniskinner', '_blank')}
             sx={{
               bgcolor: '#2563EB',
               color: 'white',
@@ -550,7 +550,7 @@ export function Landing() {
               },
             }}
           >
-            Start Free Trial →
+            Book a Demo →
           </Button>
         </Box>
       </Container>

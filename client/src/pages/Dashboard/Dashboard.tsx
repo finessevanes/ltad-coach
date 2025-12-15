@@ -1,28 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Container, Box, Typography, Grid } from '@mui/material';
-import { QuickStatsCards } from './components/QuickStatsCards';
-import { RecentAssessments } from './components/RecentAssessments';
-import { PendingConsentAlerts } from './components/PendingConsentAlerts';
-import { AthleteQuickSelector } from './components/AthleteQuickSelector';
-import { AIInsightsCard } from './components/AIInsightsCard';
+import { Box, Grid } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { DashboardHeader } from './components/DashboardHeader';
+import { QuickActionCards } from './components/QuickActionCards';
+import { AthletesPanel } from './components/AthletesPanel';
+import { RecentAssessmentsPanel } from './components/RecentAssessmentsPanel';
+import { AthletePickerModal } from './components/AthletePickerModal';
 import athletesService from '../../services/athletes';
 import { dashboardApi } from '../../services/dashboardApi';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
 /**
- * Dashboard component
- * Main overview page showing:
- * - Quick stats (total athletes, pending consents, recent tests, avg score)
- * - Recent assessments feed
- * - Pending consent alerts
- * - Athlete quick selector
- * - AI insights
+ * Dashboard component - Redesigned layout
+ * Features:
+ * - Header with greeting, athlete selector, and AI quick-access
+ * - Quick action cards (New Assessment, Pending Consents, Upcoming Event)
+ * - Two-column layout with Athletes panel and Recent Assessments
  */
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
+  const [showAthletePickerModal, setShowAthletePickerModal] = useState(false);
   const { showSnackbar } = useSnackbar();
 
   // Dashboard data state
@@ -64,26 +66,8 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // Calculate quick stats (fallback if API not available)
-  const totalAthletes = dashboardData?.stats?.totalAthletes || athletes.length;
-  const pendingConsents = dashboardData?.stats?.pendingConsent ||
-    athletes.filter((a) => a.consentStatus === 'pending').length;
-  const declinedConsents = athletes.filter((a) => a.consentStatus === 'declined').length;
-  const recentTests = dashboardData?.stats?.totalAssessments || 0;
-  const avgBalanceScore = 0; // TODO: Calculate from assessments if needed
-
   // Use API data if available, otherwise fallback to empty array
   const recentAssessments = dashboardData?.recentAssessments || [];
-
-  // AI insights from API or fallback message
-  const aiInsights = dashboardData?.aiInsights
-    ? [{ type: 'alert' as const, message: dashboardData.aiInsights }]
-    : athletes.length > 0
-      ? [{
-          type: 'alert' as const,
-          message: `You have ${totalAthletes} athletes in your roster. Start conducting assessments to get personalized AI insights!`,
-        }]
-      : [];
 
   // Handle resend consent
   const handleResendConsent = async (athleteId: string) => {
@@ -106,67 +90,62 @@ export function Dashboard() {
     (a) => a.consentStatus === 'pending' || a.consentStatus === 'declined'
   );
 
+  // Handle starting assessment
+  const handleStartAssessment = () => {
+    if (selectedAthlete) {
+      // Navigate directly to assessment if athlete is selected
+      navigate(`/assess/${selectedAthlete.id}`);
+    } else {
+      // Show athlete picker modal
+      setShowAthletePickerModal(true);
+    }
+  };
+
+  // Handle athlete selection from modal
+  const handleAthleteSelected = (athlete: Athlete) => {
+    setSelectedAthlete(athlete);
+    navigate(`/assess/${athlete.id}`);
+  };
+
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Page Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Overview of your athlete roster and recent activity
-        </Typography>
-      </Box>
+    <Box sx={{ py: 3, px: { xs: 2, sm: 4 } }}>
+      {/* Dashboard Header */}
+      <DashboardHeader
+        athletes={athletes}
+        selectedAthlete={selectedAthlete}
+        onAthleteSelect={setSelectedAthlete}
+      />
 
-      {/* Quick Stats */}
-      <Box sx={{ mb: 4 }}>
-        <QuickStatsCards
-          totalAthletes={totalAthletes}
-          pendingConsents={pendingConsents + declinedConsents}
-          recentTests={recentTests}
-          avgBalanceScore={avgBalanceScore}
-          loading={loading}
-        />
-      </Box>
+      {/* Quick Action Cards */}
+      <QuickActionCards
+        pendingAthletes={athletesNeedingConsent}
+        onResendConsent={handleResendConsent}
+        onStartAssessment={handleStartAssessment}
+      />
 
-      {/* Main Content Grid */}
+      {/* Two Column Layout */}
       <Grid container spacing={3}>
-        {/* Left Column - Athlete Selector */}
+        {/* Left Column - Athletes Panel */}
         <Grid item xs={12} md={4}>
-          <AthleteQuickSelector
-            athletes={athletes}
+          <AthletesPanel athletes={athletes} />
+        </Grid>
+
+        {/* Right Column - Recent Assessments */}
+        <Grid item xs={12} md={8}>
+          <RecentAssessmentsPanel
+            assessments={recentAssessments}
+            loading={loading}
           />
         </Grid>
-
-        {/* Right Column - Activity & Alerts */}
-        <Grid item xs={12} md={8}>
-          <Grid container spacing={3}>
-            {/* Pending Consent Alerts */}
-            {athletesNeedingConsent.length > 0 && (
-              <Grid item xs={12}>
-                <PendingConsentAlerts
-                  athletes={athletesNeedingConsent}
-                  onResendConsent={handleResendConsent}
-                  loading={loading}
-                />
-              </Grid>
-            )}
-
-            {/* Recent Assessments */}
-            <Grid item xs={12}>
-              <RecentAssessments
-                assessments={recentAssessments}
-                loading={loading}
-              />
-            </Grid>
-
-            {/* AI Insights */}
-            <Grid item xs={12}>
-              <AIInsightsCard insights={aiInsights} loading={loading} />
-            </Grid>
-          </Grid>
-        </Grid>
       </Grid>
-    </Container>
+
+      {/* Athlete Picker Modal */}
+      <AthletePickerModal
+        open={showAthletePickerModal}
+        onClose={() => setShowAthletePickerModal(false)}
+        athletes={athletes}
+        onSelect={handleAthleteSelected}
+      />
+    </Box>
   );
 }

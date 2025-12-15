@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Container, Box, Typography, Paper, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChatMessage } from './components/ChatMessage';
@@ -12,7 +13,14 @@ import chatService from '../../services/chat';
 import athletesService from '../../services/athletes';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
+// Type for navigation state from Dashboard
+interface NavigationState {
+  initialQuery?: string;
+  athleteId?: string;
+}
+
 export function AICoach() {
+  const location = useLocation();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
@@ -22,6 +30,7 @@ export function AICoach() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const streamingContentRef = useRef<string>('');
+  const initialQueryProcessed = useRef(false);
 
   // Cleanup on unmount - abort any ongoing stream
   useEffect(() => {
@@ -50,6 +59,30 @@ export function AICoach() {
     };
     fetchAthletes();
   }, []);
+
+  // Handle initial query from Dashboard navigation
+  useEffect(() => {
+    const state = location.state as NavigationState | null;
+
+    // Only process once and when athletes are loaded
+    if (state?.initialQuery && !loading && !initialQueryProcessed.current) {
+      initialQueryProcessed.current = true;
+
+      // Find and select athlete if athleteId provided
+      if (state.athleteId) {
+        const athlete = athletes.find((a) => a.id === state.athleteId);
+        if (athlete) {
+          setSelectedAthlete(athlete);
+        }
+      }
+
+      // Send the initial query
+      handleSend(state.initialQuery, state.athleteId);
+
+      // Clear location state to prevent re-triggering on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, loading, athletes]);
 
   const handleSend = async (content: string, athleteId?: string) => {
     // Add user message
