@@ -182,13 +182,18 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     onDeviceSelect(deviceId);
   };
 
-  // Start Test button - enter testing phase and start recording
+  // Start Test button - enter testing phase (recording will start when holding begins)
   const handleStartTest = useCallback(() => {
-    if (!isPersonDetected) return;
     setPhase('testing');
-    startRecording();
     startTest();
-  }, [isPersonDetected, startRecording, startTest]);
+  }, [startTest]);
+
+  // Start recording when test transitions to 'holding' (after 1-second position hold)
+  useEffect(() => {
+    if (testState === 'holding') {
+      startRecording();
+    }
+  }, [testState, startRecording]);
 
   // Stop recording when test completes or fails
   useEffect(() => {
@@ -248,13 +253,12 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     // Small delay to ensure stable pose
     const autoStartTimer = setTimeout(() => {
       if (isPersonDetected && testState === 'idle') {
-        startRecording();
-        startTest();
+        startTest(); // Recording will start automatically when test enters 'holding' state
       }
     }, 1000); // 1 second delay for pose stabilization
 
     return () => clearTimeout(autoStartTimer);
-  }, [autoStart, phase, isPersonDetected, testState, startRecording, startTest]);
+  }, [autoStart, phase, isPersonDetected, testState, startTest]);
 
   const isTestActive = testState === 'ready' || testState === 'holding';
   const isTestEnded = testState === 'completed' || testState === 'failed';

@@ -16,6 +16,8 @@ import {
   CloudUpload as CloudUploadIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { deleteObject, ref } from 'firebase/storage';
+import { storage } from '../../../firebase/config';
 import { useFirebaseUpload } from '../../../hooks/useFirebaseUpload';
 import assessmentsService from '../../../services/assessments';
 import { ClientMetrics, DualLegMetrics, SymmetryAnalysis } from '../../../types/assessment';
@@ -77,6 +79,49 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
   const [leftProgress, setLeftProgress] = useState(0);
   const [rightProgress, setRightProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Track uploaded videos for potential cleanup on failure
+  const [uploadedVideos, setUploadedVideos] = useState<{
+    leftResult?: { url: string; path: string };
+    rightResult?: { url: string; path: string };
+  }>({});
+
+  /**
+   * Clean up uploaded videos from Firebase Storage.
+   * Called when upload/submission fails to prevent orphaned files.
+   */
+  const cleanupUploadedVideos = async (
+    videos: typeof uploadedVideos
+  ): Promise<void> => {
+    const cleanupPromises: Promise<void>[] = [];
+
+    if (videos.leftResult) {
+      console.log('[TwoLegUpload] Cleaning up left video:', videos.leftResult.path);
+      const leftRef = ref(storage, videos.leftResult.path);
+      cleanupPromises.push(
+        deleteObject(leftRef).catch((err) => {
+          console.warn('[TwoLegUpload] Failed to delete left video:', err);
+        })
+      );
+    }
+
+    if (videos.rightResult) {
+      console.log('[TwoLegUpload] Cleaning up right video:', videos.rightResult.path);
+      const rightRef = ref(storage, videos.rightResult.path);
+      cleanupPromises.push(
+        deleteObject(rightRef).catch((err) => {
+          console.warn('[TwoLegUpload] Failed to delete right video:', err);
+        })
+      );
+    }
+
+    try {
+      await Promise.all(cleanupPromises);
+      console.log('[TwoLegUpload] Cleanup completed successfully');
+    } catch (err) {
+      console.warn('[TwoLegUpload] Cleanup failed:', err);
+    }
+  };
 
   /**
    * Calculate symmetry analysis from left and right leg test results.
@@ -279,6 +324,11 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
     console.log('[TwoLegUpload] Left leg blob size:', leftLegData.blob.size, 'bytes');
     console.log('[TwoLegUpload] Right leg blob size:', rightLegData.blob.size, 'bytes');
 
+    const uploadState: {
+      leftResult?: { url: string; path: string };
+      rightResult?: { url: string; path: string };
+    } = {};
+
     try {
       // Step 1: Upload left leg video
       console.log('[TwoLegUpload] Phase: uploading-left');
@@ -287,6 +337,8 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
       const leftResult = await uploadLeft(leftLegData.blob, athleteId);
       console.log('[TwoLegUpload] Left video uploaded:', leftResult);
       setLeftProgress(100);
+      uploadState.leftResult = leftResult;
+      setUploadedVideos({ ...uploadState });
 
       // Step 2: Upload right leg video
       console.log('[TwoLegUpload] Phase: uploading-right');
@@ -295,16 +347,26 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
       const rightResult = await uploadRight(rightLegData.blob, athleteId);
       console.log('[TwoLegUpload] Right video uploaded:', rightResult);
       setRightProgress(100);
+      uploadState.rightResult = rightResult;
+      setUploadedVideos({ ...uploadState });
 
       // Step 3: Calculate symmetry and submit
       console.log('[TwoLegUpload] Phase: submitting');
       setPhase('submitting');
       await submitDualLegAssessment(leftResult, rightResult);
 
+      // Clear uploaded videos on successful submission
+      setUploadedVideos({});
+
     } catch (err: any) {
       console.error('[TwoLegUpload] Upload process failed:', err);
       const errorMessage = err.response?.data?.detail || err.message || 'Upload failed';
       console.error('[TwoLegUpload] User-facing error:', errorMessage);
+
+      // Clean up any successfully uploaded videos
+      console.log('[TwoLegUpload] Initiating cleanup of uploaded videos');
+      await cleanupUploadedVideos(uploadState);
+
       setError(errorMessage);
       setPhase('error');
     }
@@ -314,6 +376,21 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
   useEffect(() => {
     uploadBothVideos();
   }, []);
+
+  // Cleanup on unmount: delete uploaded videos if component unmounts before completion
+  useEffect(() => {
+    return () => {
+      if (
+        uploadedVideos.leftResult ||
+        uploadedVideos.rightResult
+      ) {
+        console.log('[TwoLegUpload] Component unmounting - cleaning up uploaded videos');
+        cleanupUploadedVideos(uploadedVideos).catch((err) => {
+          console.warn('[TwoLegUpload] Unmount cleanup failed:', err);
+        });
+      }
+    };
+  }, [uploadedVideos]);
 
   return (
     <Box

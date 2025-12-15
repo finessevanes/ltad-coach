@@ -32,7 +32,7 @@ export function uploadVideo(
   file: Blob | File,
   athleteId: string,
   onProgress: (progress: UploadProgress) => void
-): { promise: Promise<UploadResult>; cancel: () => void } {
+): { promise: Promise<UploadResult>; uploadTask: any; cancel: () => void } {
   const timestamp = Date.now();
   const extension = file instanceof File ? file.name.split('.').pop() : 'webm';
   const path = `assessments/${athleteId}/${timestamp}.${extension}`;
@@ -75,7 +75,7 @@ export function uploadVideo(
     );
   });
 
-  return { promise, cancel: () => uploadTask.cancel() };
+  return { promise, uploadTask, cancel: () => uploadTask.cancel() };
 }
 
 /**
