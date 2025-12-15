@@ -64,11 +64,11 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose, co
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header with CoachLens branding */}
+      {/* Header with Coach Lens branding */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {!collapsed && (
           <Typography variant="h6" noWrap sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
-            CoachLens
+            Coach Lens
           </Typography>
         )}
         <IconButton onClick={onToggleCollapse} size="small">
