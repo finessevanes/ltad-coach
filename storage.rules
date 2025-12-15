@@ -2,10 +2,11 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Assessment videos - authenticated users can read/write
+    // Assessment videos - authenticated users can read/write/delete
     match /assessments/{athleteId}/{filename} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
+      allow delete: if request.auth != null;
     }
 
     // Raw keypoints JSON files - only server can write
