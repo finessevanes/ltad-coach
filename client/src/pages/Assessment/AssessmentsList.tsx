@@ -11,10 +11,30 @@ import {
   Chip,
   CircularProgress,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import assessmentsService from '../../services/assessments';
+
+// Assessment type card data
+interface AssessmentType {
+  id: string;
+  name: string;
+  image: string;
+  isActive: boolean;
+}
+
+const assessmentTypes: AssessmentType[] = [
+  { id: 'balance', name: 'Balance Test', image: '/balance-test.jpg', isActive: true },
+  { id: 'pull-up', name: 'Pull Up', image: '/pull-up.jpg', isActive: false },
+  { id: 'push-up', name: 'Push Up', image: '/push-up.jpg', isActive: false },
+  { id: 'squat', name: 'Squat', image: '/squat.jpg', isActive: false },
+];
 
 interface AssessmentListItem {
   id: string;
@@ -30,6 +50,7 @@ interface AssessmentListItem {
 export default function AssessmentsList() {
   const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
 
@@ -57,6 +78,14 @@ export default function AssessmentsList() {
   const handleAthleteClick = (e: React.MouseEvent, athleteId: string) => {
     e.stopPropagation();
     navigate(`/athletes/${athleteId}`);
+  };
+
+  const handleAssessmentTypeClick = (type: AssessmentType) => {
+    if (type.isActive) {
+      navigate('/athletes');
+    } else {
+      setComingSoonModalOpen(true);
+    }
   };
 
   const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
@@ -124,9 +153,95 @@ export default function AssessmentsList() {
       {/* Page Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          All Assessments
+          Assessments
         </Typography>
         <Typography variant="body1" color="text.secondary">
+          Select an assessment type to get started
+        </Typography>
+      </Box>
+
+      {/* Assessment Types Grid */}
+      <Box sx={{ mb: 5 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+          Assessment Types
+        </Typography>
+        <Grid container spacing={2}>
+          {assessmentTypes.map((type) => (
+            <Grid item xs={6} sm={4} md={3} key={type.id}>
+              <Card
+                onClick={() => handleAssessmentTypeClick(type)}
+                sx={{
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {/* 3:4 Aspect Ratio Image Container */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    paddingTop: '133.33%',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={type.image}
+                    alt={type.name}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+
+                  {/* Coming Soon Ribbon */}
+                  {!type.isActive && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 20,
+                        right: -35,
+                        backgroundColor: 'warning.main',
+                        color: 'white',
+                        padding: '4px 40px',
+                        transform: 'rotate(45deg)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        boxShadow: 2,
+                      }}
+                    >
+                      Coming Soon
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Card Label */}
+                <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {type.name}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* Completed Assessments Section */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Completed Assessments
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
           {assessments.length} assessment{assessments.length !== 1 ? 's' : ''} total
         </Typography>
       </Box>
@@ -200,6 +315,30 @@ export default function AssessmentsList() {
           </Grid>
         ))}
       </Grid>
+
+      {/* Coming Soon Modal */}
+      <Dialog
+        open={comingSoonModalOpen}
+        onClose={() => setComingSoonModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Coming Soon!</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This assessment is coming soon! We're working hard to bring you more
+            assessment types.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setComingSoonModalOpen(false)}
+            variant="contained"
+          >
+            Got it
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
