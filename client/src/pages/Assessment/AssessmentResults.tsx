@@ -40,48 +40,19 @@ export default function AssessmentResults() {
   useEffect(() => {
     async function fetchData() {
       if (!assessmentId) {
-        console.error('[AssessmentResults] No assessment ID provided');
         setError('No assessment ID provided');
         setLoading(false);
         return;
       }
 
-      console.log('[AssessmentResults] Fetching assessment:', assessmentId);
-
       try {
         const assessmentData = await assessmentsService.getById(assessmentId);
-        console.log('[AssessmentResults] Assessment fetched:', {
-          id: assessmentData.id,
-          legTested: assessmentData.legTested,
-          hasMetrics: !!assessmentData.metrics,
-          hasLeftLegMetrics: !!assessmentData.leftLegMetrics,
-          hasRightLegMetrics: !!assessmentData.rightLegMetrics,
-          hasBilateralComparison: !!assessmentData.bilateralComparison,
-          status: assessmentData.status,
-        });
-
-        // Log detailed structure for bilateral assessments
-        if (assessmentData.legTested === 'both') {
-          console.log('[AssessmentResults] Bilateral assessment data structure:', {
-            leftLegMetricsKeys: assessmentData.leftLegMetrics ? Object.keys(assessmentData.leftLegMetrics) : 'null',
-            rightLegMetricsKeys: assessmentData.rightLegMetrics ? Object.keys(assessmentData.rightLegMetrics) : 'null',
-            bilateralComparisonKeys: assessmentData.bilateralComparison ? Object.keys(assessmentData.bilateralComparison) : 'null',
-          });
-        }
-
         setAssessment(assessmentData);
 
         // Fetch athlete info
         const athleteData = await athletesService.getById(assessmentData.athleteId);
-        console.log('[AssessmentResults] Athlete fetched:', athleteData.name);
         setAthlete(athleteData);
       } catch (err: any) {
-        console.error('[AssessmentResults] Failed to fetch data:', err);
-        console.error('[AssessmentResults] Error details:', {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
         setError(err.message || 'Failed to load assessment');
       } finally {
         setLoading(false);
@@ -131,25 +102,9 @@ export default function AssessmentResults() {
     assessment.bilateralComparison
   );
 
-  console.log('[AssessmentResults] Bilateral check:', {
-    isBilateralAssessment,
-    hasBilateralData,
-    hasLeftLegMetrics: !!assessment.leftLegMetrics,
-    hasRightLegMetrics: !!assessment.rightLegMetrics,
-    hasBilateralComparison: !!assessment.bilateralComparison,
-  });
-
   // Render bilateral view
   if (isBilateralAssessment) {
     if (!hasBilateralData) {
-      console.error('[AssessmentResults] Bilateral assessment missing required data:', {
-        assessmentId: assessment.id,
-        legTested: assessment.legTested,
-        leftLegMetrics: assessment.leftLegMetrics ? 'present' : 'MISSING',
-        rightLegMetrics: assessment.rightLegMetrics ? 'present' : 'MISSING',
-        bilateralComparison: assessment.bilateralComparison ? 'present' : 'MISSING',
-        allKeys: Object.keys(assessment),
-      });
 
       return (
         <Container maxWidth="md" sx={{ mt: 4 }}>

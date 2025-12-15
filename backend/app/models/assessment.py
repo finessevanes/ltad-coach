@@ -327,9 +327,15 @@ class AssessmentResponse(BaseModel):
     created_at: datetime
 
     # Single-leg fields
+    video_url: Optional[str] = None
+    video_path: Optional[str] = None
     metrics: Optional[MetricsData] = None
 
     # Dual-leg fields (NEW)
+    left_leg_video_url: Optional[str] = None
+    left_leg_video_path: Optional[str] = None
+    right_leg_video_url: Optional[str] = None
+    right_leg_video_path: Optional[str] = None
     left_leg_metrics: Optional[MetricsData] = None
     right_leg_metrics: Optional[MetricsData] = None
     bilateral_comparison: Optional[BilateralComparison] = None

@@ -455,10 +455,21 @@ async def get_assessment(
         leg_tested=assessment.leg_tested,
         status=assessment.status,
         created_at=assessment.created_at,
+        # Single-leg video fields
+        video_url=assessment.video_url,
+        video_path=assessment.video_path,
+        # Single-leg metrics
         metrics=assessment.metrics,
+        # Dual-leg video fields
+        left_leg_video_url=assessment.left_leg_video_url,
+        left_leg_video_path=assessment.left_leg_video_path,
+        right_leg_video_url=assessment.right_leg_video_url,
+        right_leg_video_path=assessment.right_leg_video_path,
+        # Dual-leg metrics
         left_leg_metrics=assessment.left_leg_metrics,
         right_leg_metrics=assessment.right_leg_metrics,
         bilateral_comparison=assessment.bilateral_comparison,
+        # Common fields
         ai_coach_assessment=assessment.ai_coach_assessment,
         error_message=assessment.error_message,
     )
