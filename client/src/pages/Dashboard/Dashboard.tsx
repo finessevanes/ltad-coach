@@ -34,20 +34,24 @@ export function Dashboard() {
       try {
         setLoading(true);
 
-        // TODO: Once BE-015 is implemented, use dashboardApi.getData()
-        // For now, fall back to fetching athletes directly
+        // Fetch dashboard data from API and athletes list
         try {
-          const data = await dashboardApi.getData();
-          setDashboardData(data.data);
-          setAthletes(data.data.athletes || []);
-        } catch (apiErr: any) {
-          // Fallback: Backend endpoint not ready, use current approach
-          // Suppress 404 error since it's expected until BE-015 is implemented
-          if (apiErr.response?.status !== 404) {
-            console.warn('Dashboard API error:', apiErr);
-          }
-          const athletesData = await athletesService.getAll();
+          const [dashboardResponse, athletesData] = await Promise.all([
+            dashboardApi.getData(),
+            athletesService.getAll(),
+          ]);
+          setDashboardData(dashboardResponse);
           setAthletes(athletesData);
+        } catch (apiErr: any) {
+          // Fallback: If dashboard API fails, still try to fetch athletes
+          console.warn('Dashboard API error:', apiErr);
+          try {
+            const athletesData = await athletesService.getAll();
+            setAthletes(athletesData);
+          } catch {
+            // Both failed, show error
+            throw apiErr;
+          }
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -65,8 +69,8 @@ export function Dashboard() {
   const pendingConsents = dashboardData?.stats?.pendingConsent ||
     athletes.filter((a) => a.consentStatus === 'pending').length;
   const declinedConsents = athletes.filter((a) => a.consentStatus === 'declined').length;
-  const recentTests = dashboardData?.stats?.assessmentsThisWeek || 0;
-  const avgBalanceScore = dashboardData?.stats?.averageScore || 0;
+  const recentTests = dashboardData?.stats?.totalAssessments || 0;
+  const avgBalanceScore = 0; // TODO: Calculate from assessments if needed
 
   // Use API data if available, otherwise fallback to empty array
   const recentAssessments = dashboardData?.recentAssessments || [];

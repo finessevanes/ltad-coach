@@ -24,7 +24,7 @@ class RecentAssessmentItem(BaseModel):
     created_at: datetime = Field(..., description="Assessment creation timestamp")
 
     # Optional metrics - may be None if processing or failed
-    hold_time: Optional[float] = Field(None, description="Balance hold time in seconds")
+    duration_seconds: Optional[float] = Field(None, description="Test duration in seconds")
     duration_score: Optional[int] = Field(None, description="LTAD duration score (1-5)")
     sway_velocity: Optional[float] = Field(None, description="Average sway velocity")
 

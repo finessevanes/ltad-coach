@@ -7,25 +7,46 @@ import { api } from './api';
 
 export interface DashboardStats {
   totalAthletes: number;
+  activeAthletes: number;
   pendingConsent: number;
-  assessmentsThisWeek: number;
-  averageScore: number;
+  totalAssessments: number;
+}
+
+export interface RecentAssessmentItem {
+  id: string;
+  athleteId: string;
+  athleteName: string;
+  testType: string;
+  legTested: string;
+  status: string;
+  createdAt: string;
+  durationSeconds?: number;
+  durationScore?: number;
+  swayVelocity?: number;
+}
+
+export interface PendingAthleteItem {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  parentEmail: string;
+  createdAt: string;
 }
 
 export interface DashboardData {
-  athletes: any[];
   stats: DashboardStats;
-  recentAssessments: any[];
-  aiInsights?: string;
+  recentAssessments: RecentAssessmentItem[];
+  pendingAthletes: PendingAthleteItem[];
 }
 
 export const dashboardApi = {
   /**
    * Get aggregated dashboard data
-   * @returns Dashboard data including athletes, stats, recent assessments, and AI insights
+   * @returns Dashboard data including stats, recent assessments, and pending athletes
    */
-  async getData() {
-    const response = await api.get<{ data: DashboardData }>('/dashboard');
+  async getData(): Promise<DashboardData> {
+    const response = await api.get<DashboardData>('/dashboard');
     return response.data;
   },
 };

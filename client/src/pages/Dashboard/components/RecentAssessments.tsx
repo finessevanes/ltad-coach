@@ -112,7 +112,7 @@ export const RecentAssessments: React.FC<RecentAssessmentsProps> = ({
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body1" fontWeight={600}>
+                        <Typography variant="body1" component="span" fontWeight={600}>
                           {assessment.athleteName}
                         </Typography>
                         <Chip
@@ -123,26 +123,28 @@ export const RecentAssessments: React.FC<RecentAssessmentsProps> = ({
                         />
                       </Box>
                     }
+                    primaryTypographyProps={{ component: 'div' }}
                     secondary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Typography variant="body2" color="text.secondary">
+                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Typography variant="body2" component="span" color="text.secondary">
                           One-Leg Balance
                         </Typography>
                         {assessment.durationSeconds !== undefined && (
                           <>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" component="span" color="text.secondary">
                               •
                             </Typography>
-                            <Typography variant="body2" fontWeight={600} color="primary.main">
+                            <Typography variant="body2" component="span" fontWeight={600} color="primary.main">
                               {assessment.durationSeconds.toFixed(1)}s
                             </Typography>
                           </>
                         )}
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" component="span" color="text.secondary">
                           • {formatDate(assessment.createdAt)}
                         </Typography>
                       </Box>
                     }
+                    secondaryTypographyProps={{ component: 'div' }}
                   />
                 </ListItem>
               </Box>
