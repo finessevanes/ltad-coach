@@ -19,7 +19,6 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
-  stabilityScore?: number;
 }
 
 interface ProgressChartProps {
@@ -36,7 +35,6 @@ export function ProgressChart({ assessments }: ProgressChartProps) {
         day: 'numeric',
       }),
       duration: a.durationSeconds || 0,
-      stability: a.stabilityScore || 0,
     }));
 
   return (
@@ -46,41 +44,23 @@ export function ProgressChart({ assessments }: ProgressChartProps) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
           <YAxis
-            yAxisId="duration"
             domain={[0, 30]}
             label={{ value: 'Duration (s)', angle: -90, position: 'insideLeft' }}
           />
-          <YAxis
-            yAxisId="stability"
-            orientation="right"
-            domain={[0, 100]}
-            label={{ value: 'Stability', angle: 90, position: 'insideRight' }}
-          />
           <Tooltip />
           <ReferenceLine
-            yAxisId="duration"
             y={20}
             stroke="#4caf50"
             strokeDasharray="5 5"
             label="Target"
           />
           <Line
-            yAxisId="duration"
             type="monotone"
             dataKey="duration"
             stroke="#1976d2"
             strokeWidth={2}
             dot={{ r: 4 }}
             name="Duration (s)"
-          />
-          <Line
-            yAxisId="stability"
-            type="monotone"
-            dataKey="stability"
-            stroke="#9c27b0"
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            name="Stability"
           />
         </LineChart>
       </ResponsiveContainer>

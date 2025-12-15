@@ -126,13 +126,18 @@ def _identify_focus_areas(metrics: Dict[str, Any], athlete_age: int) -> list[str
     if corrections > 5:
         focus_areas.append(f"Frequent corrections ({corrections} events) - improve proprioception")
 
-    # Temporal analysis
-    temporal = metrics.get("temporal")
-    if temporal:
-        first_third = temporal.get("first_third_avg_sway", 0)
-        last_third = temporal.get("last_third_avg_sway", 0)
-        if last_third > first_third * 1.5:
-            focus_areas.append("Performance declines in last third - build endurance")
+    # Fatigue analysis using segmented metrics
+    segmented = metrics.get("segmented_metrics")
+    if segmented and segmented.get("segments"):
+        segments = segmented["segments"]
+        if len(segments) >= 3:
+            # Compare first third vs last third
+            first_third_count = len(segments) // 3
+            first_third_avg = sum(s["avg_velocity"] for s in segments[:first_third_count]) / first_third_count
+            last_third_avg = sum(s["avg_velocity"] for s in segments[-first_third_count:]) / first_third_count
+            if last_third_avg > first_third_avg * 1.3:
+                increase_pct = ((last_third_avg / first_third_avg - 1) * 100)
+                focus_areas.append(f"Fatigue detected - sway increased {increase_pct:.0f}% in final third")
 
     # If no specific issues found
     if not focus_areas:
@@ -185,13 +190,19 @@ def _format_metrics_for_prompt(
         f"- Arm Angles: Left={arm_left:.1f}°, Right={arm_right:.1f}° (Asymmetry: {arm_asymmetry:.1f}°)",
     ]
 
-    # Add temporal if available
-    temporal = metrics.get("temporal")
-    if temporal:
-        first_third = temporal.get("first_third_avg_sway", 0)
-        middle_third = temporal.get("middle_third_avg_sway", 0)
-        last_third = temporal.get("last_third_avg_sway", 0)
-        lines.append(f"- Temporal Sway: First={first_third:.2f}, Middle={middle_third:.2f}, Last={last_third:.2f} cm/s")
+    # Add segmented metrics summary if available
+    segmented = metrics.get("segmented_metrics")
+    if segmented and segmented.get("segments"):
+        segments = segmented["segments"]
+        num_segments = len(segments)
+        avg_velocity = sum(s["avg_velocity"] for s in segments) / num_segments if num_segments > 0 else 0
+        max_velocity = max((s["avg_velocity"] for s in segments), default=0)
+        lines.append(f"- Temporal Analysis: {num_segments} segments, avg velocity={avg_velocity:.2f} cm/s, max={max_velocity:.2f} cm/s")
+
+        # Highlight high-velocity segments
+        high_velocity_segments = [i for i, s in enumerate(segments) if s["avg_velocity"] > sway_velocity * 1.5]
+        if high_velocity_segments:
+            lines.append(f"- High Sway Periods: segments {', '.join(str(i+1) for i in high_velocity_segments[:3])}")
 
     return "\n".join(lines)
 

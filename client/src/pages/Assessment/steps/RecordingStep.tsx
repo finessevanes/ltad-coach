@@ -41,6 +41,8 @@ interface RecordingStepProps {
   legTested: LegTested;
   onRecordingComplete: (blob: Blob, duration: number, testResult?: TestResult) => void;
   onBack: () => void;
+  autoStart?: boolean;         // Skip setup, go straight to testing
+  instructionText?: string;    // Custom instruction banner
 }
 
 export const RecordingStep: React.FC<RecordingStepProps> = ({
@@ -49,8 +51,12 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
   legTested: parentLegTested,
   onRecordingComplete,
   onBack,
+  autoStart = false,
+  instructionText,
 }) => {
-  const [phase, setPhase] = useState<RecordingPhase>('setup');
+  const [phase, setPhase] = useState<RecordingPhase>(
+    autoStart ? 'testing' : 'setup'
+  );
   const [compositeStream, setCompositeStream] = useState<MediaStream | null>(null);
   const [showPositioningTips, setShowPositioningTips] = useState(false);
 
@@ -92,6 +98,12 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     startTest,
     resetTest,
   } = useBalanceTest(poseResult, legTested, { debug: true });
+
+  // Reset test when component mounts (critical for right leg in dual-leg mode)
+  useEffect(() => {
+    console.log('[RecordingStep] Component mounted/reset - legTested:', parentLegTested, 'autoStart:', autoStart);
+    resetTest();
+  }, []); // Empty deps = run once on mount
 
   // Create composite canvas for recording video + skeleton
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -226,11 +238,43 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     }
   }, [isPersonDetected]);
 
+  // Auto-start test when person is detected (only in autoStart mode)
+  useEffect(() => {
+    if (!autoStart) return; // Only in autoStart mode
+    if (phase !== 'testing') return; // Only in testing phase
+    if (!isPersonDetected) return; // Wait for person
+    if (testState !== 'idle') return; // Don't interrupt ongoing test
+
+    // Small delay to ensure stable pose
+    const autoStartTimer = setTimeout(() => {
+      if (isPersonDetected && testState === 'idle') {
+        startRecording();
+        startTest();
+      }
+    }, 1000); // 1 second delay for pose stabilization
+
+    return () => clearTimeout(autoStartTimer);
+  }, [autoStart, phase, isPersonDetected, testState, startRecording, startTest]);
+
   const isTestActive = testState === 'ready' || testState === 'holding';
   const isTestEnded = testState === 'completed' || testState === 'failed';
 
   return (
     <Box>
+      {/* Instruction Banner */}
+      {instructionText && !isTestEnded && (
+        <Alert
+          severity="info"
+          sx={{
+            mb: 2,
+            fontSize: '1.1rem',
+            fontWeight: 'medium',
+          }}
+        >
+          {instructionText}
+        </Alert>
+      )}
+
       {/* Header - only show in setup phase */}
       {phase === 'setup' && (
         <Box mb={2}>

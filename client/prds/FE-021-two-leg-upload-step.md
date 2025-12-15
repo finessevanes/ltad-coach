@@ -1,6 +1,6 @@
 ---
 id: FE-021
-status: 🔵 READY FOR DEVELOPMENT
+status: ✅ COMPLETE
 depends_on: [FE-018]
 blocks: [FE-022]
 ---

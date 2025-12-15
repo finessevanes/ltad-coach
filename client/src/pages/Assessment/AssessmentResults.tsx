@@ -26,6 +26,7 @@ import assessmentsService from '../../services/assessments';
 import athletesService from '../../services/athletes';
 import { Assessment } from '../../types/assessment';
 import { Athlete } from '../../types/athlete';
+import { TwoLegResultsView } from './components/TwoLegResultsView';
 
 export default function AssessmentResults() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
@@ -39,19 +40,48 @@ export default function AssessmentResults() {
   useEffect(() => {
     async function fetchData() {
       if (!assessmentId) {
+        console.error('[AssessmentResults] No assessment ID provided');
         setError('No assessment ID provided');
         setLoading(false);
         return;
       }
 
+      console.log('[AssessmentResults] Fetching assessment:', assessmentId);
+
       try {
         const assessmentData = await assessmentsService.getById(assessmentId);
+        console.log('[AssessmentResults] Assessment fetched:', {
+          id: assessmentData.id,
+          legTested: assessmentData.legTested,
+          hasMetrics: !!assessmentData.metrics,
+          hasLeftLegMetrics: !!assessmentData.leftLegMetrics,
+          hasRightLegMetrics: !!assessmentData.rightLegMetrics,
+          hasBilateralComparison: !!assessmentData.bilateralComparison,
+          status: assessmentData.status,
+        });
+
+        // Log detailed structure for bilateral assessments
+        if (assessmentData.legTested === 'both') {
+          console.log('[AssessmentResults] Bilateral assessment data structure:', {
+            leftLegMetricsKeys: assessmentData.leftLegMetrics ? Object.keys(assessmentData.leftLegMetrics) : 'null',
+            rightLegMetricsKeys: assessmentData.rightLegMetrics ? Object.keys(assessmentData.rightLegMetrics) : 'null',
+            bilateralComparisonKeys: assessmentData.bilateralComparison ? Object.keys(assessmentData.bilateralComparison) : 'null',
+          });
+        }
+
         setAssessment(assessmentData);
 
         // Fetch athlete info
         const athleteData = await athletesService.getById(assessmentData.athleteId);
+        console.log('[AssessmentResults] Athlete fetched:', athleteData.name);
         setAthlete(athleteData);
       } catch (err: any) {
+        console.error('[AssessmentResults] Failed to fetch data:', err);
+        console.error('[AssessmentResults] Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
         setError(err.message || 'Failed to load assessment');
       } finally {
         setLoading(false);
@@ -85,6 +115,72 @@ export default function AssessmentResults() {
     );
   }
 
+  // Routing logic: bilateral vs single-leg
+  if (!athlete) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">Athlete not found</Alert>
+      </Container>
+    );
+  }
+
+  const isBilateralAssessment = assessment.legTested === 'both';
+  const hasBilateralData = Boolean(
+    assessment.leftLegMetrics &&
+    assessment.rightLegMetrics &&
+    assessment.bilateralComparison
+  );
+
+  console.log('[AssessmentResults] Bilateral check:', {
+    isBilateralAssessment,
+    hasBilateralData,
+    hasLeftLegMetrics: !!assessment.leftLegMetrics,
+    hasRightLegMetrics: !!assessment.rightLegMetrics,
+    hasBilateralComparison: !!assessment.bilateralComparison,
+  });
+
+  // Render bilateral view
+  if (isBilateralAssessment) {
+    if (!hasBilateralData) {
+      console.error('[AssessmentResults] Bilateral assessment missing required data:', {
+        assessmentId: assessment.id,
+        legTested: assessment.legTested,
+        leftLegMetrics: assessment.leftLegMetrics ? 'present' : 'MISSING',
+        rightLegMetrics: assessment.rightLegMetrics ? 'present' : 'MISSING',
+        bilateralComparison: assessment.bilateralComparison ? 'present' : 'MISSING',
+        allKeys: Object.keys(assessment),
+      });
+
+      return (
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Alert severity="error">
+            <Typography variant="subtitle2" gutterBottom>
+              This assessment is marked as bilateral but is missing comparison data.
+            </Typography>
+            <Typography variant="body2" component="div" sx={{ mt: 1, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+              Debug info (Assessment ID: {assessment.id}):<br />
+              - Left leg metrics: {assessment.leftLegMetrics ? '✓ Present' : '✗ MISSING'}<br />
+              - Right leg metrics: {assessment.rightLegMetrics ? '✓ Present' : '✗ MISSING'}<br />
+              - Bilateral comparison: {assessment.bilateralComparison ? '✓ Present' : '✗ MISSING'}<br />
+              <br />
+              Please check the browser console for detailed logs and contact support.
+            </Typography>
+          </Alert>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/athletes')}
+            sx={{ mt: 2 }}
+          >
+            Back to Athletes
+          </Button>
+        </Container>
+      );
+    }
+
+    return <TwoLegResultsView assessment={assessment} athlete={athlete} />;
+  }
+
+  // Render single-leg view (existing code below)
   // Use metrics (from backend) - all in real-world units (cm, degrees)
   const { metrics } = assessment;
 
@@ -276,101 +372,7 @@ export default function AssessmentResults() {
         </Paper>
       )}
 
-      {/* Temporal Analysis (Fatigue Pattern) */}
-      {metrics?.temporal && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Temporal Analysis (Fatigue Pattern)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Metrics broken down by test segment to identify fatigue patterns
-          </Typography>
-
-          <TableContainer>
-            <Table size="small">
-              <TableBody>
-                <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Segment</strong></TableCell>
-                  <TableCell align="center"><strong>Arm Left</strong></TableCell>
-                  <TableCell align="center"><strong>Arm Right</strong></TableCell>
-                  <TableCell align="center"><strong>Sway Velocity</strong></TableCell>
-                  <TableCell align="center"><strong>Corrections</strong></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>First Third (0-33%)</TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.firstThird.armAngleLeft, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.firstThird.armAngleRight, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.firstThird.swayVelocity, 2)} cm/s
-                  </TableCell>
-                  <TableCell align="center">
-                    {metrics.temporal.firstThird.correctionsCount}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Middle Third (33-66%)</TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.middleThird.armAngleLeft, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.middleThird.armAngleRight, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.middleThird.swayVelocity, 2)} cm/s
-                  </TableCell>
-                  <TableCell align="center">
-                    {metrics.temporal.middleThird.correctionsCount}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Last Third (66-100%)</TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.lastThird.armAngleLeft, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.lastThird.armAngleRight, 1)}°
-                  </TableCell>
-                  <TableCell align="center">
-                    {formatNum(metrics.temporal.lastThird.swayVelocity, 2)} cm/s
-                  </TableCell>
-                  <TableCell align="center">
-                    {metrics.temporal.lastThird.correctionsCount}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* Fatigue Pattern Analysis */}
-          {(() => {
-            const temporal = metrics.temporal;
-            const armDrop = temporal.lastThird.armAngleLeft - temporal.firstThird.armAngleLeft;
-            const swayIncrease = temporal.lastThird.swayVelocity - temporal.firstThird.swayVelocity;
-            const showFatigue = armDrop > 5 || swayIncrease > 0.5;
-
-            return showFatigue ? (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Pattern Detected:</Typography>
-                <Typography variant="body2">
-                  {armDrop > 5 && `Arms dropped ${formatNum(armDrop, 1)}° from start to end. `}
-                  {swayIncrease > 0.5 && `Sway velocity increased by ${formatNum(swayIncrease, 2)} cm/s. `}
-                  This suggests progressive fatigue during the test.
-                </Typography>
-              </Alert>
-            ) : (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  Consistent performance throughout the test - no significant fatigue pattern detected.
-                </Typography>
-              </Alert>
-            );
-          })()}
-        </Paper>
-      )}
+      {/* TODO: Temporal Analysis (Fatigue Pattern) - Re-implement with segmentedMetrics timeline visualization */}
 
       {/* AI Coach Assessment */}
       {assessment.aiCoachAssessment && (
