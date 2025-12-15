@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { RecordingStep } from './steps/RecordingStep';
 import { TransitionModal } from './components/TransitionModal';
-import { TwoLegUploadStep } from './components/TwoLegUploadStep';
+import { FinalReviewModal } from './components/FinalReviewModal';
+import { DualLegUploadView } from './components/DualLegUploadView';
 import { TestResult } from '../../types/balanceTest';
 
-type TwoLegPhase = 'left-leg-testing' | 'transition-modal' | 'right-leg-testing' | 'uploading';
+type TwoLegPhase = 'left-leg-testing' | 'transition-modal' | 'right-leg-testing' | 'final-review' | 'uploading';
 
 interface LegTestData {
   blob: Blob;
@@ -27,6 +28,10 @@ export default function AssessmentFlow() {
 
   // Modal visibility
   const [showTransitionModal, setShowTransitionModal] = useState(false);
+  const [showFinalReviewModal, setShowFinalReviewModal] = useState(false);
+
+  // Camera selection persistence
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
   // Navigate back if no athleteId
   if (!athleteId) {
@@ -62,12 +67,40 @@ export default function AssessmentFlow() {
   };
 
   /**
-   * Right leg test complete - proceed to upload
+   * Right leg test complete - show final review modal
    */
   const handleRightLegComplete = (blob: Blob, duration: number, testResult?: any) => {
     if (!testResult) return;
     setRightLegData({ blob, duration, result: testResult });
+    setShowFinalReviewModal(true);
+    setPhase('final-review');
+  };
+
+  /**
+   * User clicks "Upload & Continue" in final review modal
+   */
+  const handleContinueToUpload = () => {
+    setShowFinalReviewModal(false);
     setPhase('uploading');
+  };
+
+  /**
+   * User clicks "Reshoot Left" in final review modal
+   */
+  const handleReshootLeftFromFinal = () => {
+    setShowFinalReviewModal(false);
+    setLeftLegData(null);
+    setRightLegData(null); // Clear both since we're reshuffling
+    setPhase('left-leg-testing');
+  };
+
+  /**
+   * User clicks "Reshoot Right" in final review modal
+   */
+  const handleReshootRightFromFinal = () => {
+    setShowFinalReviewModal(false);
+    setRightLegData(null); // Clear right leg only, keep left
+    setPhase('right-leg-testing');
   };
 
   /**
@@ -83,8 +116,8 @@ export default function AssessmentFlow() {
       {phase === 'left-leg-testing' && (
         <RecordingStep
           athleteId={athleteId}
-          selectedDevice={null}
-          onDeviceSelect={() => {}}
+          selectedDevice={selectedCameraId}
+          onDeviceSelect={setSelectedCameraId}
           testType="one_leg_balance"
           legTested="left"
           autoStart={false}
@@ -108,8 +141,8 @@ export default function AssessmentFlow() {
       {phase === 'right-leg-testing' && (
         <RecordingStep
           athleteId={athleteId}
-          selectedDevice={null}
-          onDeviceSelect={() => {}}
+          selectedDevice={selectedCameraId}
+          onDeviceSelect={setSelectedCameraId}
           testType="one_leg_balance"
           legTested="right"
           autoStart={true}
@@ -119,9 +152,19 @@ export default function AssessmentFlow() {
         />
       )}
 
+      {/* Phase 3.5: Final Review Modal */}
+      <FinalReviewModal
+        open={showFinalReviewModal}
+        leftLegResult={leftLegData?.result || null}
+        rightLegResult={rightLegData?.result || null}
+        onContinueToUpload={handleContinueToUpload}
+        onReshootLeft={handleReshootLeftFromFinal}
+        onReshootRight={handleReshootRightFromFinal}
+      />
+
       {/* Phase 4: Upload Both Videos */}
       {phase === 'uploading' && leftLegData && rightLegData && (
-        <TwoLegUploadStep
+        <DualLegUploadView
           athleteId={athleteId}
           leftLegData={leftLegData}
           rightLegData={rightLegData}

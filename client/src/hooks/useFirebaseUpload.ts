@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadVideo, UploadProgress, UploadResult } from '../services/upload';
+import { UploadTask } from 'firebase/storage';
 
 interface UseFirebaseUploadResult {
   upload: (file: Blob | File, athleteId: string) => Promise<UploadResult>;
@@ -13,37 +14,65 @@ export function useFirebaseUpload(): UseFirebaseUploadResult {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cancelFn, setCancelFn] = useState<(() => void) | null>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+  const isMountedRef = useRef(true);
 
-  const upload = async (file: Blob | File, athleteId: string): Promise<UploadResult> => {
+  // Memoize upload function to prevent recreating on every render
+  const upload = useCallback(async (file: Blob | File, athleteId: string): Promise<UploadResult> => {
     setUploading(true);
     setError(null);
     setProgress(null);
 
-    const { promise, cancel } = uploadVideo(file, athleteId, (prog) => {
-      setProgress(prog);
+    const { promise, uploadTask } = uploadVideo(file, athleteId, (prog) => {
+      // Only update progress if component is still mounted
+      if (isMountedRef.current) {
+        setProgress(prog);
+      }
     });
 
-    setCancelFn(() => cancel);
+    // Store task reference directly (not in closure)
+    uploadTaskRef.current = uploadTask;
 
     try {
       const result = await promise;
-      setUploading(false);
+      if (isMountedRef.current) {
+        setUploading(false);
+      }
+      uploadTaskRef.current = null;
       return result;
     } catch (err: any) {
-      setError(err.message || 'Upload failed');
-      setUploading(false);
+      if (isMountedRef.current) {
+        setError(err.message || 'Upload failed');
+        setUploading(false);
+      }
+      uploadTaskRef.current = null;
       throw err;
     }
-  };
+  }, []);
 
-  const cancel = () => {
-    if (cancelFn) {
-      cancelFn();
-      setUploading(false);
-      setProgress(null);
+  // Memoize cancel function
+  const cancel = useCallback(() => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+      if (isMountedRef.current) {
+        setUploading(false);
+        setProgress(null);
+      }
     }
-  };
+  }, []);
+
+  // Track mount status for preventing state updates after unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      // Don't cancel uploads on unmount - let them complete in background
+      // This prevents cancellation during React StrictMode's test unmount/remount
+      // Parent can call cancel() manually if needed
+    };
+  }, []);
 
   return {
     upload,
