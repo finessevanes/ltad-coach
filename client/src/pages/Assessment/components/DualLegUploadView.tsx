@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -47,6 +47,7 @@ export const DualLegUploadView: React.FC<DualLegUploadViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const { submit } = useAssessmentSubmission();
+  const hasStartedRef = useRef(false);
 
   // Orchestrate upload workflow
   const { phase, leftProgress, rightProgress, error, assessmentId, start, retry } = useDualLegUpload({
@@ -57,12 +58,17 @@ export const DualLegUploadView: React.FC<DualLegUploadViewProps> = ({
       submit(athleteId, leftLegData, rightLegData, leftResult, rightResult),
   });
 
-  // Auto-start upload on mount
+  // Auto-start upload on mount (protect against StrictMode double-mount)
   useEffect(() => {
-    start().catch((err) => {
-      console.warn('[DualLegUploadView] Start failed:', err);
-    });
-  }, []);
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true;
+      start().catch((err) => {
+        console.warn('[DualLegUploadView] Start failed:', err);
+        hasStartedRef.current = false; // Allow retry on error
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, ignore start dependency
 
   // Handle completion - navigate or call callback with assessment ID
   useEffect(() => {
@@ -163,7 +169,14 @@ export const DualLegUploadView: React.FC<DualLegUploadViewProps> = ({
                 severity="error"
                 icon={<ErrorIcon />}
                 action={
-                  <Button color="inherit" size="small" onClick={retry}>
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      hasStartedRef.current = false;
+                      retry();
+                    }}
+                  >
                     Retry
                   </Button>
                 }

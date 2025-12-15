@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useFirebaseUpload } from './useFirebaseUpload';
 
 export interface LegTestData {
@@ -57,7 +57,8 @@ export function useDualLegUpload(props: UseDualLegUploadProps): UseDualLegUpload
   const [error, setError] = useState<string | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
-  const executeUpload = async () => {
+  // Memoize the upload execution function to prevent recreating on every render
+  const executeUpload = useCallback(async () => {
     console.log('[useDualLegUpload] Starting upload process for athlete:', athleteId);
     console.log('[useDualLegUpload] Left leg blob size:', leftLegData.blob.size, 'bytes');
     console.log('[useDualLegUpload] Right leg blob size:', rightLegData.blob.size, 'bytes');
@@ -100,25 +101,27 @@ export function useDualLegUpload(props: UseDualLegUploadProps): UseDualLegUpload
       setPhase('error');
       throw err;
     }
-  };
+  }, [athleteId, leftLegData, rightLegData, uploadLeft, uploadRight, onSubmitAssessment]);
 
-  const start = async () => {
+  // Memoize start function
+  const start = useCallback(async () => {
     // Reset state before starting
     setLeftProgress(0);
     setRightProgress(0);
     setError(null);
     setAssessmentId(null);
     return executeUpload();
-  };
+  }, [executeUpload]);
 
-  const retry = async () => {
+  // Memoize retry function
+  const retry = useCallback(async () => {
     // Reset state before retrying
     setLeftProgress(0);
     setRightProgress(0);
     setError(null);
     setAssessmentId(null);
     return executeUpload();
-  };
+  }, [executeUpload]);
 
   return {
     phase,

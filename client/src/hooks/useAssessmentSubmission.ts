@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { ClientMetrics, DualLegMetrics, SymmetryAnalysis } from '../types/assessment';
 import { TestResult } from '../types/balanceTest';
 import assessmentsService from '../services/assessments';
@@ -135,7 +136,7 @@ export function useAssessmentSubmission(): UseAssessmentSubmissionResult {
   // No state management needed - this is a pure submission function wrapper
   // Submitting state and error handling managed by parent component via useDualLegUpload
 
-  const submit = async (
+  const submit = useCallback(async (
     athleteId: string,
     leftLegData: LegTestData,
     rightLegData: LegTestData,
@@ -250,7 +251,7 @@ export function useAssessmentSubmission(): UseAssessmentSubmissionResult {
       });
       throw err;
     }
-  };
+  }, []); // No dependencies - pure function
 
   return {
     submit,
