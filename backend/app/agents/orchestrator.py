@@ -25,6 +25,7 @@ class AgentOrchestrator:
         athlete_id: str,
         athlete_name: str,
         athlete_age: int,
+        athlete_gender: Optional[str] = None,
         leg_tested: Optional[str] = None,
         metrics: Optional[Dict[str, Any]] = None,
         current_assessment_id: Optional[str] = None,
@@ -36,6 +37,7 @@ class AgentOrchestrator:
             athlete_id: Athlete ID for history lookup
             athlete_name: Athlete name for context
             athlete_age: Athlete age for LTAD context
+            athlete_gender: Athlete gender (male/female) for pronoun usage
             leg_tested: Leg tested (required for assessment_feedback)
             metrics: Assessment metrics (required for assessment_feedback and progress reports)
             current_assessment_id: Optional current assessment ID to exclude from history
@@ -97,6 +99,7 @@ class AgentOrchestrator:
                 feedback = await generate_bilateral_assessment_feedback(
                     athlete_name=athlete_name,
                     athlete_age=athlete_age,
+                    athlete_gender=athlete_gender,
                     left_leg_metrics=left_leg_metrics,
                     right_leg_metrics=right_leg_metrics,
                     bilateral_comparison=bilateral_comparison,

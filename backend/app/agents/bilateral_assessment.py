@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 async def generate_bilateral_assessment_feedback(
     athlete_name: str,
     athlete_age: int,
+    athlete_gender: str,
     left_leg_metrics: Dict[str, Any],
     right_leg_metrics: Dict[str, Any],
     bilateral_comparison: Dict[str, Any],
@@ -29,6 +30,7 @@ async def generate_bilateral_assessment_feedback(
     Args:
         athlete_name: Name of the athlete
         athlete_age: Age in years (for LTAD context)
+        athlete_gender: Gender (male/female) for pronoun usage
         left_leg_metrics: Dictionary with left leg metrics (includes temporal data)
         right_leg_metrics: Dictionary with right leg metrics (includes temporal data)
         bilateral_comparison: Dictionary with symmetry analysis from bilateral_comparison service
@@ -43,6 +45,7 @@ async def generate_bilateral_assessment_feedback(
         >>> feedback = await generate_bilateral_assessment_feedback(
         ...     athlete_name="Sarah",
         ...     athlete_age=10,
+        ...     athlete_gender="female",
         ...     left_leg_metrics={"hold_time": 25.3, "duration_score": 4, ...},
         ...     right_leg_metrics={"hold_time": 23.8, "duration_score": 4, ...},
         ...     bilateral_comparison={"overall_symmetry_score": 82.0, ...}
@@ -53,6 +56,13 @@ async def generate_bilateral_assessment_feedback(
     try:
         settings = get_settings()
         client = get_anthropic_client()
+
+        # Map gender to pronouns
+        pronoun_map = {
+            "male": {"subject": "he", "object": "him", "possessive": "his"},
+            "female": {"subject": "she", "object": "her", "possessive": "her"},
+        }
+        pronouns = pronoun_map.get(athlete_gender.lower(), {"subject": "they", "object": "them", "possessive": "their"})
 
         # Format bilateral summary for prompt
         bilateral_summary = _format_bilateral_summary(
@@ -78,6 +88,7 @@ Requirements:
 - Flag significant imbalances (>20% difference) explicitly
 - Use coach-friendly language (no jargon)
 - Format as markdown with section headers
+- Use pronouns ({pronouns['subject']}/{pronouns['object']}/{pronouns['possessive']}) naturally instead of repeating "{athlete_name}" throughout the feedback
 """
 
         messages = [
@@ -103,6 +114,7 @@ Requirements:
         return _generate_fallback_bilateral_feedback(
             athlete_name=athlete_name,
             athlete_age=athlete_age,
+            athlete_gender=athlete_gender,
             left_leg_metrics=left_leg_metrics,
             right_leg_metrics=right_leg_metrics,
             bilateral_comparison=bilateral_comparison,
@@ -226,6 +238,7 @@ Overall Symmetry Score: {symmetry_score:.1f}/100 ({symmetry_assessment})
 def _generate_fallback_bilateral_feedback(
     athlete_name: str,
     athlete_age: int,
+    athlete_gender: str,
     left_leg_metrics: Dict[str, Any],
     right_leg_metrics: Dict[str, Any],
     bilateral_comparison: Dict[str, Any],
@@ -235,6 +248,7 @@ def _generate_fallback_bilateral_feedback(
     Args:
         athlete_name: Athlete's name
         athlete_age: Athlete's age
+        athlete_gender: Athlete's gender (for pronoun usage)
         left_leg_metrics: Left leg metrics
         right_leg_metrics: Right leg metrics
         bilateral_comparison: Bilateral comparison results

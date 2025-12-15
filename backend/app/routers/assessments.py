@@ -265,6 +265,7 @@ async def _process_dual_leg_assessment(data: AssessmentCreate, coach_id: str, at
             athlete_id=athlete.id,
             athlete_name=athlete.name,
             athlete_age=athlete.age,
+            athlete_gender=athlete.gender,
             metrics=metrics_for_orchestrator,
         )
 
