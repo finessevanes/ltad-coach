@@ -18,7 +18,6 @@ import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -34,7 +33,6 @@ const menuItems = [
   { text: 'Athletes', icon: <PeopleIcon />, path: '/athletes' },
   { text: 'Assessments', icon: <AssessmentIcon />, path: '/assessments' },
   { text: 'AI Coach', icon: <SmartToyIcon />, path: '/ai-coach' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: SidebarProps) {
