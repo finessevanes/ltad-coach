@@ -105,7 +105,7 @@ export function DashboardHeader({
             </Box>
           </li>
         )}
-        sx={{ mb: 2, maxWidth: 600 }}
+        sx={{ mb: 2 }}
       />
 
       {/* AI Input Field */}
@@ -121,7 +121,6 @@ export function DashboardHeader({
           borderRadius: 3,
           border: '1px solid',
           borderColor: 'grey.200',
-          maxWidth: 600,
         }}
       >
         <TextField
