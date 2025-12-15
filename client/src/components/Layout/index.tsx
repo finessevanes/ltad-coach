@@ -12,18 +12,12 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleToggleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
-
-  const drawerWidth = collapsed ? COLLAPSED_DRAWER_WIDTH : DRAWER_WIDTH;
-
+  // Main content uses collapsed width for margin (sidebar expands on hover, overlaying content)
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       <Sidebar
@@ -31,18 +25,16 @@ export function Layout({ children }: LayoutProps) {
         collapsedWidth={COLLAPSED_DRAWER_WIDTH}
         mobileOpen={mobileOpen}
         onClose={handleDrawerToggle}
-        collapsed={collapsed}
-        onToggleCollapse={handleToggleCollapse}
       />
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${COLLAPSED_DRAWER_WIDTH}px` },
+          width: { sm: `calc(100% - ${COLLAPSED_DRAWER_WIDTH}px)` },
           overflow: 'auto',
           minHeight: 0,
-          transition: 'width 0.2s ease-in-out',
         }}
       >
         {children || <Outlet />}

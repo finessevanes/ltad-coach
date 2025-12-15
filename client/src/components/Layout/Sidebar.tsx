@@ -9,7 +9,6 @@ import {
   Divider,
   Box,
   Typography,
-  IconButton,
   Avatar,
   Menu,
   MenuItem,
@@ -19,8 +18,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -29,8 +27,6 @@ interface SidebarProps {
   collapsedWidth: number;
   mobileOpen?: boolean;
   onClose?: () => void;
-  collapsed: boolean;
-  onToggleCollapse: () => void;
 }
 
 const menuItems = [
@@ -38,13 +34,18 @@ const menuItems = [
   { text: 'Athletes', icon: <PeopleIcon />, path: '/athletes' },
   { text: 'Assessments', icon: <AssessmentIcon />, path: '/assessments' },
   { text: 'AI Coach', icon: <SmartToyIcon />, path: '/ai-coach' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
-export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose, collapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [hovered, setHovered] = useState(false);
+
+  // Use hovered state to determine collapsed display
+  const collapsed = !hovered;
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -65,15 +66,12 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose, co
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header with Coach Lens branding */}
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', minHeight: 56 }}>
         {!collapsed && (
           <Typography variant="h6" noWrap sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
             Coach Lens
           </Typography>
         )}
-        <IconButton onClick={onToggleCollapse} size="small">
-          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
       </Box>
       <Divider />
 
@@ -192,15 +190,18 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose, co
         {drawerContent}
       </Drawer>
 
-      {/* Desktop drawer */}
+      {/* Desktop drawer - hover to expand */}
       <Drawer
         variant="permanent"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         sx={{
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            transition: 'width 0.2s ease-in-out',
+            transition: 'width 0.3s ease-in-out',
+            overflowX: 'hidden',
           },
         }}
         open
