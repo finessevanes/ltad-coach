@@ -47,7 +47,6 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
-  stabilityScore?: number;
 }
 
 export default function AthleteProfile() {

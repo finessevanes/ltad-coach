@@ -356,7 +356,6 @@ class AssessmentListItem(BaseModel):
     created_at: datetime
     status: AssessmentStatus
     duration_seconds: Optional[float] = Field(None, description="Test duration in seconds")
-    stability_score: Optional[float] = Field(None, description="Overall stability score (0-100)")
 
 
 class AssessmentListResponse(BaseModel):

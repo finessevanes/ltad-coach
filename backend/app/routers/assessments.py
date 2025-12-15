@@ -29,6 +29,29 @@ router = APIRouter(prefix="/assessments", tags=["assessments"])
 logger = logging.getLogger(__name__)
 
 
+def _get_duration_seconds(assessment) -> Optional[float]:
+    """Extract hold_time for dual-leg assessments.
+
+    Args:
+        assessment: Assessment instance from database
+
+    Returns:
+        Average hold time of both legs, or None if data unavailable
+    """
+    # Dual-leg: use average of both legs
+    left_time = assessment.left_leg_metrics.hold_time if assessment.left_leg_metrics else None
+    right_time = assessment.right_leg_metrics.hold_time if assessment.right_leg_metrics else None
+
+    if left_time is not None and right_time is not None:
+        return (left_time + right_time) / 2
+    elif left_time is not None:
+        return left_time
+    elif right_time is not None:
+        return right_time
+    else:
+        return None
+
+
 def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
     """Build metrics dictionary from client metrics and duration score.
 
@@ -376,8 +399,7 @@ async def get_assessments_for_athlete(
             leg_tested=a.leg_tested,
             created_at=a.created_at,
             status=a.status,
-            duration_seconds=a.metrics.hold_time if a.metrics else None,
-            stability_score=None,  # TODO: Calculate if needed
+            duration_seconds=_get_duration_seconds(a),
         )
         for a in assessments
     ]
@@ -561,8 +583,7 @@ async def list_assessments(
             leg_tested=a.leg_tested,
             created_at=a.created_at,
             status=a.status,
-            duration_seconds=a.metrics.hold_time if a.metrics else None,
-            stability_score=None,  # TODO: Calculate if needed
+            duration_seconds=_get_duration_seconds(a),
         )
         for a in assessments
     ]
