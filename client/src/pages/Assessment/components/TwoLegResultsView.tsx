@@ -22,6 +22,7 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { Assessment } from '../../../types/assessment';
 import { Athlete } from '../../../types/athlete';
+import { VideoPlayer } from '../../../components/VideoPlayer';
 
 interface TwoLegResultsViewProps {
   assessment: Assessment;
@@ -192,10 +193,10 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
                   Standing on Left Leg (Right foot raised)
                 </Typography>
                 {assessment.leftLegVideoUrl ? (
-                  <video
-                    src={assessment.leftLegVideoUrl}
-                    controls
-                    style={{ width: '100%', maxHeight: '400px', borderRadius: '8px' }}
+                  <VideoPlayer
+                    videoUrl={assessment.leftLegVideoUrl}
+                    videoId={`${assessment.id}-left`}
+                    label="Left Leg Support"
                   />
                 ) : (
                   <Alert severity="info">Video not available</Alert>
@@ -206,10 +207,10 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
                   Standing on Right Leg (Left foot raised)
                 </Typography>
                 {assessment.rightLegVideoUrl ? (
-                  <video
-                    src={assessment.rightLegVideoUrl}
-                    controls
-                    style={{ width: '100%', maxHeight: '400px', borderRadius: '8px' }}
+                  <VideoPlayer
+                    videoUrl={assessment.rightLegVideoUrl}
+                    videoId={`${assessment.id}-right`}
+                    label="Right Leg Support"
                   />
                 ) : (
                   <Alert severity="info">Video not available</Alert>

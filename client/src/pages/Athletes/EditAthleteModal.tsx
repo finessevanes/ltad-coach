@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   TextField,
   Button,
@@ -15,17 +16,20 @@ import {
   Radio,
   FormHelperText,
 } from '@mui/material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { athleteSchema, AthleteFormData } from '../../utils/validation';
 import athletesService from '../../services/athletes';
 import { Athlete } from '../../types/athlete';
+import { useSnackbar } from '../../contexts/SnackbarContext';
 
 interface EditAthleteModalProps {
   open: boolean;
   athlete: Athlete | null;
   onClose: () => void;
   onSuccess: () => void;
+  onDelete?: () => void;
 }
 
 export const EditAthleteModal: React.FC<EditAthleteModalProps> = ({
@@ -33,9 +37,12 @@ export const EditAthleteModal: React.FC<EditAthleteModalProps> = ({
   athlete,
   onClose,
   onSuccess,
+  onDelete,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const {
     register,
@@ -87,6 +94,21 @@ export const EditAthleteModal: React.FC<EditAthleteModalProps> = ({
     if (!loading) {
       setError('');
       onClose();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!athlete) return;
+    try {
+      await athletesService.delete(athlete.id);
+      showSnackbar('Athlete deleted successfully', 'success');
+      setDeleteDialogOpen(false);
+      onClose();
+      onDelete?.();
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { message?: string })?.message || 'Failed to delete athlete';
+      showSnackbar(errorMessage, 'error');
     }
   };
 
@@ -166,6 +188,15 @@ export const EditAthleteModal: React.FC<EditAthleteModalProps> = ({
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(true)}
+            color="error"
+            startIcon={<DeleteIcon />}
+            disabled={loading}
+            sx={{ mr: 'auto' }}
+          >
+            Delete
+          </Button>
           <Button onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
@@ -174,6 +205,23 @@ export const EditAthleteModal: React.FC<EditAthleteModalProps> = ({
           </Button>
         </DialogActions>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Athlete?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to remove {athlete?.name} from your roster?
+            This will also delete all their assessment history. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };
