@@ -30,13 +30,12 @@ class VideoCache {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[video-cache] Failed to open IndexedDB:', request.error);
+        console.error('Failed to open IndexedDB:', request.error);
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[video-cache] IndexedDB initialized');
         resolve();
       };
 
@@ -48,7 +47,6 @@ class VideoCache {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'videoId' });
           store.createIndex('url', 'url', { unique: false });
           store.createIndex('timestamp', 'timestamp', { unique: false });
-          console.log('[video-cache] Object store created');
         }
       };
     });
@@ -73,7 +71,6 @@ class VideoCache {
           const cached = request.result as CachedVideo | undefined;
 
           if (!cached) {
-            console.log(`[video-cache] Cache miss for ${videoId}`);
             resolve(null);
             return;
           }
@@ -81,23 +78,21 @@ class VideoCache {
           // Check expiry
           const age = Date.now() - cached.timestamp;
           if (age > CACHE_EXPIRY_MS) {
-            console.log(`[video-cache] Cache expired for ${videoId} (age: ${Math.round(age / 1000 / 60 / 60)}h)`);
             this.delete(videoId); // Clean up expired entry
             resolve(null);
             return;
           }
 
-          console.log(`[video-cache] Cache hit for ${videoId} (${(cached.blob.size / 1024 / 1024).toFixed(2)}MB, age: ${Math.round(age / 1000 / 60)}min)`);
           resolve(cached.blob);
         };
 
         request.onerror = () => {
-          console.error(`[video-cache] Failed to get ${videoId}:`, request.error);
+          console.error('Failed to get cached video:', request.error);
           reject(request.error);
         };
       });
     } catch (error) {
-      console.error('[video-cache] Get failed:', error);
+      console.error('Get cached video failed:', error);
       return null;
     }
   }
@@ -109,7 +104,6 @@ class VideoCache {
     try {
       await this.init();
       if (!this.db) {
-        console.warn('[video-cache] DB not initialized, skipping cache');
         return;
       }
 
@@ -127,17 +121,16 @@ class VideoCache {
         const request = store.put(cached);
 
         request.onsuccess = () => {
-          console.log(`[video-cache] Cached ${videoId} (${(blob.size / 1024 / 1024).toFixed(2)}MB)`);
           resolve();
         };
 
         request.onerror = () => {
-          console.error(`[video-cache] Failed to cache ${videoId}:`, request.error);
+          console.error('Failed to cache video:', request.error);
           reject(request.error);
         };
       });
     } catch (error) {
-      console.error('[video-cache] Set failed:', error);
+      console.error('Set cached video failed:', error);
     }
   }
 
@@ -155,17 +148,16 @@ class VideoCache {
         const request = store.delete(videoId);
 
         request.onsuccess = () => {
-          console.log(`[video-cache] Deleted ${videoId}`);
           resolve();
         };
 
         request.onerror = () => {
-          console.error(`[video-cache] Failed to delete ${videoId}:`, request.error);
+          console.error('Failed to delete cached video:', request.error);
           reject(request.error);
         };
       });
     } catch (error) {
-      console.error('[video-cache] Delete failed:', error);
+      console.error('Delete cached video failed:', error);
     }
   }
 
@@ -183,17 +175,16 @@ class VideoCache {
         const request = store.clear();
 
         request.onsuccess = () => {
-          console.log('[video-cache] Cache cleared');
           resolve();
         };
 
         request.onerror = () => {
-          console.error('[video-cache] Failed to clear cache:', request.error);
+          console.error('Failed to clear cache:', request.error);
           reject(request.error);
         };
       });
     } catch (error) {
-      console.error('[video-cache] Clear failed:', error);
+      console.error('Clear cache failed:', error);
     }
   }
 
@@ -224,7 +215,7 @@ class VideoCache {
         };
       });
     } catch (error) {
-      console.error('[video-cache] Stats failed:', error);
+      console.error('Get cache stats failed:', error);
       return { count: 0, totalSize: 0 };
     }
   }
@@ -254,7 +245,6 @@ class VideoCache {
             }
           });
 
-          console.log(`[video-cache] Cleaned up ${deletedCount} expired entries`);
           resolve(deletedCount);
         };
 
@@ -263,7 +253,7 @@ class VideoCache {
         };
       });
     } catch (error) {
-      console.error('[video-cache] Cleanup failed:', error);
+      console.error('Cleanup expired cache failed:', error);
       return 0;
     }
   }
@@ -287,7 +277,6 @@ export async function fetchVideoWithCache(
   }
 
   // Cache miss - fetch from network
-  console.log(`[video-cache] Fetching ${videoId} from network...`);
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -298,7 +287,7 @@ export async function fetchVideoWithCache(
 
   // Cache for next time (fire-and-forget)
   videoCache.set(videoId, url, blob).catch((err) => {
-    console.warn('[video-cache] Failed to cache video:', err);
+    console.warn('Failed to cache video:', err);
   });
 
   return URL.createObjectURL(blob);
