@@ -22,6 +22,7 @@ interface TransitionModalProps {
     holdTime: number;
     failureReason?: string;
   } | null;
+  completedLeg: 'left' | 'right';
   onContinue: () => void;
   onReshootLeft: () => void;
 }
@@ -29,6 +30,7 @@ interface TransitionModalProps {
 export const TransitionModal: React.FC<TransitionModalProps> = ({
   open,
   leftLegResult,
+  completedLeg,
   onContinue,
   onReshootLeft,
 }) => {
@@ -37,6 +39,11 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
   }
 
   const { success, holdTime, failureReason } = leftLegResult;
+
+  // Determine which leg comes next (opposite of completed leg)
+  const nextLeg = completedLeg === 'left' ? 'right' : 'left';
+  const completedLegName = completedLeg === 'left' ? 'Left' : 'Right';
+  const nextLegName = nextLeg === 'left' ? 'Left' : 'Right';
 
   return (
     <Dialog
@@ -54,7 +61,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="h5" component="span">
-            Left Leg Test Complete
+            {completedLegName} Leg Test Complete
           </Typography>
           {success ? (
             <CheckCircleIcon color="success" fontSize="large" />
@@ -109,10 +116,10 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
             }}
           >
             <Typography variant="body1" fontWeight="medium">
-              Ready to test the right leg?
+              Ready to test the {nextLegName.toLowerCase()} leg?
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              You can reshoot the left leg if needed, or continue to the right leg test.
+              You can reshoot the {completedLegName.toLowerCase()} leg if needed, or continue to the {nextLegName.toLowerCase()} leg test.
             </Typography>
           </Box>
         </Stack>
@@ -125,7 +132,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           color="secondary"
           size="large"
         >
-          Reshoot Left Leg
+          Reshoot {completedLegName} Leg
         </Button>
         <Button
           onClick={onContinue}
@@ -134,7 +141,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           size="large"
           autoFocus
         >
-          Continue to Right Leg
+          Continue to {nextLegName} Leg
         </Button>
       </DialogActions>
     </Dialog>

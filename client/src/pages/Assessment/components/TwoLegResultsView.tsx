@@ -99,7 +99,10 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
           <Card>
             <CardContent>
               <Typography variant="h6" color="primary" gutterBottom>
-                Left Leg
+                Standing on Left Leg
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                (Right foot raised)
               </Typography>
               <Typography variant="h3">{leftLegMetrics.holdTime.toFixed(1)}s</Typography>
               <Chip
@@ -155,7 +158,10 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
           <Card>
             <CardContent>
               <Typography variant="h6" color="secondary" gutterBottom>
-                Right Leg
+                Standing on Right Leg
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                (Left foot raised)
               </Typography>
               <Typography variant="h3">{rightLegMetrics.holdTime.toFixed(1)}s</Typography>
               <Chip
@@ -183,7 +189,7 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="primary" gutterBottom>
-                  Left Leg Test
+                  Standing on Left Leg (Right foot raised)
                 </Typography>
                 {assessment.leftLegVideoUrl ? (
                   <video
@@ -197,7 +203,7 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="secondary" gutterBottom>
-                  Right Leg Test
+                  Standing on Right Leg (Left foot raised)
                 </Typography>
                 {assessment.rightLegVideoUrl ? (
                   <video
@@ -225,8 +231,8 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               <TableHead>
                 <TableRow>
                   <TableCell>Metric</TableCell>
-                  <TableCell align="right">Left Leg</TableCell>
-                  <TableCell align="right">Right Leg</TableCell>
+                  <TableCell align="right">Left Support<br/><Typography variant="caption">(Right raised)</Typography></TableCell>
+                  <TableCell align="right">Right Support<br/><Typography variant="caption">(Left raised)</Typography></TableCell>
                   <TableCell align="right">Difference</TableCell>
                 </TableRow>
               </TableHead>

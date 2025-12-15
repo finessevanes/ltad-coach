@@ -79,7 +79,7 @@ export default function AssessmentFlow() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      {/* Phase 1: Left Leg Testing */}
+      {/* Phase 1: Left Leg Testing (raise left foot, stand on right) */}
       {phase === 'left-leg-testing' && (
         <RecordingStep
           athleteId={athleteId}
@@ -88,20 +88,23 @@ export default function AssessmentFlow() {
           testType="one_leg_balance"
           legTested="left"
           autoStart={false}
+          instructionText="RAISE LEFT FOOT (Stand on right leg)"
           onRecordingComplete={handleLeftLegComplete}
           onBack={() => navigate(`/athletes/${athleteId}`)}
         />
       )}
 
       {/* Phase 2: Transition Modal */}
+      {/* First test raises LEFT foot, so RIGHT leg was tested */}
       <TransitionModal
         open={showTransitionModal}
         leftLegResult={leftLegData?.result || null}
+        completedLeg="right"
         onContinue={handleContinueToRightLeg}
         onReshootLeft={handleReshootLeftLeg}
       />
 
-      {/* Phase 3: Right Leg Testing */}
+      {/* Phase 3: Right Leg Testing (raise right foot, stand on left) */}
       {phase === 'right-leg-testing' && (
         <RecordingStep
           athleteId={athleteId}
@@ -110,7 +113,7 @@ export default function AssessmentFlow() {
           testType="one_leg_balance"
           legTested="right"
           autoStart={true}
-          instructionText="Testing RIGHT leg"
+          instructionText="RAISE RIGHT FOOT (Stand on left leg)"
           onRecordingComplete={handleRightLegComplete}
           onBack={() => navigate(`/athletes/${athleteId}`)}
         />

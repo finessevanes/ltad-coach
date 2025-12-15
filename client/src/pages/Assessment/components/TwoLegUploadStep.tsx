@@ -155,13 +155,13 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
     rightUploadResult: { url: string; path: string }
   ) => {
     console.log('[TwoLegUpload] Submitting dual-leg assessment');
-    console.log('[TwoLegUpload] Left leg data:', {
+    console.log('[TwoLegUpload] Left leg data (raised LEFT foot = RIGHT leg support):', {
       duration: leftLegData.duration,
       holdTime: leftLegData.result.holdTime,
       corrections: leftLegData.result.correctionsCount,
       success: leftLegData.result.success,
     });
-    console.log('[TwoLegUpload] Right leg data:', {
+    console.log('[TwoLegUpload] Right leg data (raised RIGHT foot = LEFT leg support):', {
       duration: rightLegData.duration,
       holdTime: rightLegData.result.holdTime,
       corrections: rightLegData.result.correctionsCount,
@@ -189,12 +189,26 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
 
     console.log('[TwoLegUpload] Converted to ClientMetrics - payload now excludes landmarkHistory');
 
-    // Build dual-leg metrics payload
-    // NOTE: symmetryAnalysis is calculated by backend - we only send raw metrics
+    /**
+     * CRITICAL FIX: Swap metric labels to reflect SUPPORT leg (the leg being tested)
+     * ============================================================================
+     * Convention:
+     * - "leftLeg" metrics = athlete raised RIGHT foot (left leg was support/tested)
+     * - "rightLeg" metrics = athlete raised LEFT foot (right leg was support/tested)
+     *
+     * Data flow:
+     * 1. Test 1: User raises LEFT foot → leftClientMetrics contains data from RIGHT support leg
+     * 2. Test 2: User raises RIGHT foot → rightClientMetrics contains data from LEFT support leg
+     * 3. We swap labels here so database and AI receive support-leg-based labels
+     *
+     * This ensures:
+     * - Database stores metrics labeled by support leg (correct)
+     * - AI receives "Left Leg: X seconds" where left leg actually held for X seconds
+     * - Display in TwoLegResultsView.tsx will use direct metrics (no compensation needed)
+     */
     const dualLegMetrics: DualLegMetrics = {
-      leftLeg: leftClientMetrics,
-      rightLeg: rightClientMetrics,
-      // symmetryAnalysis removed - backend calculates this
+      leftLeg: rightClientMetrics,   // RIGHT foot raised = LEFT leg tested (support)
+      rightLeg: leftClientMetrics,   // LEFT foot raised = RIGHT leg tested (support)
     };
 
     console.log('[TwoLegUpload] DualLegMetrics payload:', {
@@ -208,19 +222,21 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
     console.log('[TwoLegUpload] Client-calculated symmetry (for display only):', symmetryAnalysis);
 
     // Submit to backend (field names from FE-018)
+    // SWAP: leftLegData captured raising LEFT foot (testing RIGHT leg)
+    // So leftLegData video should be labeled as right leg video
     const payload = {
       athleteId,
       testType: 'one_leg_balance' as const,
       legTested: 'both' as const,
 
-      // Consistent left/right naming
-      leftVideoUrl: leftUploadResult.url,
-      leftVideoPath: leftUploadResult.path,
-      leftDuration: leftLegData.duration,
+      // SWAPPED: Videos now match support leg convention
+      leftVideoUrl: rightUploadResult.url,   // RIGHT foot raised = LEFT leg support
+      leftVideoPath: rightUploadResult.path,
+      leftDuration: rightLegData.duration,
 
-      rightVideoUrl: rightUploadResult.url,
-      rightVideoPath: rightUploadResult.path,
-      rightDuration: rightLegData.duration,
+      rightVideoUrl: leftUploadResult.url,   // LEFT foot raised = RIGHT leg support
+      rightVideoPath: leftUploadResult.path,
+      rightDuration: leftLegData.duration,
 
       dualLegMetrics,
     };
