@@ -324,7 +324,10 @@ export const TwoLegUploadStep: React.FC<TwoLegUploadStepProps> = ({
     console.log('[TwoLegUpload] Left leg blob size:', leftLegData.blob.size, 'bytes');
     console.log('[TwoLegUpload] Right leg blob size:', rightLegData.blob.size, 'bytes');
 
-    const uploadState = {};
+    const uploadState: {
+      leftResult?: { url: string; path: string };
+      rightResult?: { url: string; path: string };
+    } = {};
 
     try {
       // Step 1: Upload left leg video

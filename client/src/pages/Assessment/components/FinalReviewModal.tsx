@@ -207,14 +207,14 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
         <Button
           onClick={onReshootLeft}
           variant="outlined"
-          fullWidth={{ xs: true, sm: false }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Reshoot Left
         </Button>
         <Button
           onClick={onReshootRight}
           variant="outlined"
-          fullWidth={{ xs: true, sm: false }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Reshoot Right
         </Button>
@@ -222,7 +222,7 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
           onClick={onContinueToUpload}
           variant="contained"
           autoFocus
-          fullWidth={{ xs: true, sm: false }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Upload & Continue
         </Button>
