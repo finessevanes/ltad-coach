@@ -19,6 +19,7 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
  * - Athlete quick selector
  * - AI insights
  */
+
 export function Dashboard() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);

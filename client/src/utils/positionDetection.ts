@@ -36,12 +36,15 @@ export function checkBalancePosition(
   const ankleHeightDiff = standingAnkle.y - raisedAnkle.y;
   const footIsRaised = ankleHeightDiff >= MIN_FOOT_RAISE_THRESHOLD;
 
+  // Create clear messaging about which foot to raise
+  const standingLeg = legTested === 'left' ? 'right' : 'left';
+
   checks.push({
     name: 'footRaised',
     passed: footIsRaised,
     message: footIsRaised
-      ? `${legTested} foot raised`
-      : `Raise your ${legTested} foot higher`,
+      ? `Standing on ${standingLeg} leg ✓`
+      : `Raise your ${legTested} foot (stand on ${standingLeg} leg)`,
   });
 
   // Check 2: Body is roughly upright (shoulders level)

@@ -19,7 +19,6 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
-  stabilityScore?: number;
 }
 
 interface AssessmentHistoryProps {
@@ -64,7 +63,6 @@ export function AssessmentHistory({ assessments, onAssessmentClick }: Assessment
             <TableCell>Leg</TableCell>
             <TableCell>Duration</TableCell>
             <TableCell>Score</TableCell>
-            <TableCell>Stability</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -100,11 +98,6 @@ export function AssessmentHistory({ assessments, onAssessmentClick }: Assessment
                       color={SCORE_COLORS[score]}
                     />
                   )}
-                </TableCell>
-                <TableCell>
-                  {assessment.stabilityScore
-                    ? `${assessment.stabilityScore.toFixed(0)}/100`
-                    : '-'}
                 </TableCell>
               </TableRow>
             );

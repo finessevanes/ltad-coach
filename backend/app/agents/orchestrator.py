@@ -13,7 +13,7 @@ from app.repositories.assessment import AssessmentRepository
 
 logger = logging.getLogger(__name__)
 
-RequestType = Literal["assessment_feedback", "parent_report", "progress_trends"]
+RequestType = Literal["assessment_feedback", "bilateral_assessment", "parent_report", "progress_trends"]
 
 
 class AgentOrchestrator:
@@ -25,6 +25,7 @@ class AgentOrchestrator:
         athlete_id: str,
         athlete_name: str,
         athlete_age: int,
+        athlete_gender: Optional[str] = None,
         leg_tested: Optional[str] = None,
         metrics: Optional[Dict[str, Any]] = None,
         current_assessment_id: Optional[str] = None,
@@ -36,6 +37,7 @@ class AgentOrchestrator:
             athlete_id: Athlete ID for history lookup
             athlete_name: Athlete name for context
             athlete_age: Athlete age for LTAD context
+            athlete_gender: Athlete gender (male/female) for pronoun usage
             leg_tested: Leg tested (required for assessment_feedback)
             metrics: Assessment metrics (required for assessment_feedback and progress reports)
             current_assessment_id: Optional current assessment ID to exclude from history
@@ -59,6 +61,54 @@ class AgentOrchestrator:
                 leg_tested=leg_tested,
                 metrics=metrics,
             )
+
+        elif request_type == "bilateral_assessment":
+            # Bilateral assessment feedback
+            logger.info(f"Generating bilateral assessment feedback for {athlete_name}")
+
+            if not metrics:
+                logger.error(f"No metrics provided for bilateral assessment (athlete: {athlete_name})")
+                raise ValueError("metrics required for bilateral_assessment")
+
+            logger.info(f"Bilateral assessment metrics keys: {list(metrics.keys())}")
+
+            # Extract left and right leg metrics from metrics dict
+            left_leg_metrics = metrics.get("left_leg_metrics", {})
+            right_leg_metrics = metrics.get("right_leg_metrics", {})
+            bilateral_comparison = metrics.get("bilateral_comparison", {})
+
+            logger.info(f"Extracted data - Left metrics: {len(left_leg_metrics)} keys, "
+                       f"Right metrics: {len(right_leg_metrics)} keys, "
+                       f"Comparison: {len(bilateral_comparison)} keys")
+
+            if not left_leg_metrics or not right_leg_metrics or not bilateral_comparison:
+                logger.error(f"Missing bilateral data for {athlete_name}: "
+                            f"left={bool(left_leg_metrics)}, right={bool(right_leg_metrics)}, "
+                            f"comparison={bool(bilateral_comparison)}")
+                logger.error(f"Metrics structure received: {metrics}")
+                raise ValueError("bilateral_assessment requires left_leg_metrics, right_leg_metrics, and bilateral_comparison")
+
+            logger.info(f"Calling bilateral assessment agent for {athlete_name}")
+            logger.info(f"Left leg hold time: {left_leg_metrics.get('hold_time')}s")
+            logger.info(f"Right leg hold time: {right_leg_metrics.get('hold_time')}s")
+            logger.info(f"Dominant leg: {bilateral_comparison.get('dominant_leg')}")
+
+            from app.agents.bilateral_assessment import generate_bilateral_assessment_feedback
+
+            try:
+                feedback = await generate_bilateral_assessment_feedback(
+                    athlete_name=athlete_name,
+                    athlete_age=athlete_age,
+                    athlete_gender=athlete_gender,
+                    left_leg_metrics=left_leg_metrics,
+                    right_leg_metrics=right_leg_metrics,
+                    bilateral_comparison=bilateral_comparison,
+                )
+                logger.info(f"Bilateral assessment feedback generated successfully ({len(feedback)} chars)")
+                return feedback
+            except Exception as e:
+                logger.error(f"Bilateral assessment agent failed: {e}", exc_info=True)
+                raise
 
         elif request_type in ("parent_report", "progress_trends"):
             # Progress report with compressed history

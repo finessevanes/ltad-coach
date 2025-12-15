@@ -1,6 +1,6 @@
 ---
 id: BE-017
-status: 🔵 READY FOR DEVELOPMENT
+status: ✅ COMPLETE
 depends_on: [BE-016]
 blocks: [BE-018, BE-019, BE-020]
 ---

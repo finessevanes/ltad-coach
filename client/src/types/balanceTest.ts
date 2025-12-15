@@ -21,33 +21,10 @@ export interface TimestampedLandmarks {
 }
 
 /**
- * Metrics for a temporal segment (first/middle/last third of test)
+ * Metrics for a time segment with configurable duration (typically 1 second).
+ * Provides granular timeline data for temporal analysis and visualization.
  */
-export interface SegmentMetrics {
-  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
-  armAngleLeft: number;
-  /** Arm angle from horizontal in degrees. 0° = perfect T-position, positive = dropped */
-  armAngleRight: number;
-  /** Sway velocity in cm/s */
-  swayVelocity: number;
-  /** Number of balance corrections in this segment */
-  correctionsCount: number;
-}
-
-/**
- * Temporal analysis - metrics broken down by time segments
- */
-export interface TemporalMetrics {
-  firstThird: SegmentMetrics;
-  middleThird: SegmentMetrics;
-  lastThird: SegmentMetrics;
-}
-
-/**
- * Metrics for a 5-second segment of the test (for LLM temporal analysis).
- * Provides granular timeline data so LLM can understand *when* things happened.
- */
-export interface FiveSecondSegment {
+export interface TimeSegment {
   startTime: number;      // seconds
   endTime: number;        // seconds
   avgVelocity: number;    // cm/s
@@ -56,6 +33,17 @@ export interface FiveSecondSegment {
   armAngleRight: number;  // degrees (average)
   swayStdX: number;       // cm
   swayStdY: number;       // cm
+}
+
+/**
+ * Temporal breakdown with configurable segment duration.
+ * For 30s test with 1s segments, contains 30 TimeSegment objects.
+ */
+export interface SegmentedMetrics {
+  /** Duration of each segment in seconds (typically 1.0) */
+  segmentDuration: number;
+  /** Array of time segments covering full test duration */
+  segments: TimeSegment[];
 }
 
 /**
@@ -96,10 +84,8 @@ export interface TestResult {
   armAngleRight: number;
   /** Left/Right arm angle ratio */
   armAsymmetryRatio: number;
-  /** Temporal breakdown of metrics (fatigue analysis) */
-  temporal: TemporalMetrics;
-  /** 5-second segment breakdown for LLM temporal analysis */
-  fiveSecondSegments?: FiveSecondSegment[];
+  /** Temporal breakdown with configurable segment duration (typically 1-second segments) */
+  segmentedMetrics?: SegmentedMetrics;
   /** Significant balance events detected during test */
   events?: BalanceEvent[];
 }
