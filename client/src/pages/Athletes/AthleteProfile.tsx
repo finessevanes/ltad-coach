@@ -255,6 +255,7 @@ export default function AthleteProfile() {
         athlete={athlete}
         onClose={() => setEditModalOpen(false)}
         onSuccess={handleAthleteUpdated}
+        onDelete={() => navigate('/athletes')}
       />
 
       {/* Delete Confirmation */}

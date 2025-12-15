@@ -240,6 +240,7 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
         athlete={selectedAthlete}
         onClose={handleCloseEditModal}
         onSuccess={handleEditSuccess}
+        onDelete={onAthleteUpdated}
       />
     </>
   );

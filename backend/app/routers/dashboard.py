@@ -1,5 +1,6 @@
 """Dashboard API endpoint."""
 
+from typing import Optional
 from fastapi import APIRouter, Depends
 from app.middleware.auth import get_current_user
 from app.models.user import User
@@ -14,6 +15,32 @@ from app.repositories.athlete import AthleteRepository
 from app.repositories.assessment import AssessmentRepository
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+
+def _get_duration_seconds(assessment) -> Optional[float]:
+    """Extract hold_time from single-leg or dual-leg assessments.
+
+    Args:
+        assessment: Assessment instance from database
+
+    Returns:
+        Hold time in seconds, or average of both legs for dual-leg assessments
+    """
+    # Single-leg assessment
+    if assessment.metrics and assessment.metrics.hold_time is not None:
+        return assessment.metrics.hold_time
+
+    # Dual-leg assessment: average of both legs
+    left_time = assessment.left_leg_metrics.hold_time if assessment.left_leg_metrics else None
+    right_time = assessment.right_leg_metrics.hold_time if assessment.right_leg_metrics else None
+
+    if left_time is not None and right_time is not None:
+        return (left_time + right_time) / 2
+    elif left_time is not None:
+        return left_time
+    elif right_time is not None:
+        return right_time
+    return None
 
 
 @router.get("", response_model=DashboardResponse)
@@ -61,7 +88,7 @@ async def get_dashboard(
             leg_tested=assessment.leg_tested.value,
             status=assessment.status.value,
             created_at=assessment.created_at,
-            hold_time=assessment.metrics.hold_time if assessment.metrics else None,
+            duration_seconds=_get_duration_seconds(assessment),
             duration_score=assessment.metrics.duration_score if assessment.metrics else None,
             sway_velocity=assessment.metrics.sway_velocity if assessment.metrics else None,
         )
