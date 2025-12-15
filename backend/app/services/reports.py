@@ -65,13 +65,27 @@ async def generate_report_content(
         logger.error(f"No assessments found for athlete {athlete_id}")
         raise ValueError("No assessments found")
 
-    # Get latest metrics
+    # Get latest metrics (handle both single-leg and dual-leg assessments)
     latest = assessments[0]
-    current_metrics = latest.metrics.model_dump() if latest.metrics else None
 
-    if not current_metrics:
-        logger.error(f"Latest assessment {latest.id} has no metrics")
-        raise ValueError("Latest assessment has no metrics")
+    # For dual-leg assessments, combine metrics from both legs
+    if latest.leg_tested.value == "both":
+        if not latest.left_leg_metrics or not latest.right_leg_metrics:
+            logger.error(f"Dual-leg assessment {latest.id} missing leg metrics")
+            raise ValueError("Latest assessment has no metrics")
+
+        # Use left leg as primary, include bilateral comparison if available
+        current_metrics = latest.left_leg_metrics.model_dump()
+        current_metrics["right_leg"] = latest.right_leg_metrics.model_dump()
+        if latest.bilateral_comparison:
+            current_metrics["bilateral_comparison"] = latest.bilateral_comparison.model_dump()
+    else:
+        # Single-leg assessment
+        current_metrics = latest.metrics.model_dump() if latest.metrics else None
+
+        if not current_metrics:
+            logger.error(f"Latest assessment {latest.id} has no metrics")
+            raise ValueError("Latest assessment has no metrics")
 
     # Get compressed history via orchestrator
     logger.info(f"Generating report for athlete {athlete.name} (ID: {athlete_id})")
@@ -91,10 +105,11 @@ async def generate_report_content(
         assessment_count=routing["assessment_count"],
     )
 
-    # Calculate latest score
+    # Calculate latest score (use hold_time for both single and dual-leg)
     latest_score = None
-    if current_metrics.get("duration_seconds"):
-        latest_score = get_duration_score(current_metrics["duration_seconds"])
+    hold_time = current_metrics.get("hold_time")
+    if hold_time:
+        latest_score = get_duration_score(hold_time)
 
     metadata = {
         "assessment_count": routing["assessment_count"],
