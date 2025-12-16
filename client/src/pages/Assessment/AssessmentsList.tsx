@@ -9,7 +9,7 @@ import {
   CardActionArea,
   Grid,
   Chip,
-  CircularProgress,
+  Skeleton,
   Button,
   Dialog,
   DialogTitle,
@@ -55,15 +55,20 @@ export default function AssessmentsList() {
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
+    console.log('[AssessmentsList] Component mounted, initializing fetch');
+
     const fetchAssessments = async () => {
       try {
+        console.log('[AssessmentsList] Fetch started, loading=true');
         setLoading(true);
         const data = await assessmentsService.getAll(50);
+        console.log('[AssessmentsList] Fetch success, received', data.length, 'assessments');
         setAssessments(data);
       } catch (error) {
-        console.error('Failed to fetch assessments:', error);
+        console.error('[AssessmentsList] Fetch error:', error);
         showSnackbar('Failed to load assessments', 'error');
       } finally {
+        console.log('[AssessmentsList] Fetch completed, loading=false');
         setLoading(false);
       }
     };
@@ -112,19 +117,107 @@ export default function AssessmentsList() {
     }).format(date);
   };
 
+  console.log('[AssessmentsList] Render - loading:', loading, 'assessments count:', assessments.length);
+
   // Loading state
   if (loading) {
+    console.log('[AssessmentsList] Rendering loading state');
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
+        {/* Page Header Skeleton */}
+        <Box sx={{ mb: 4 }}>
+          <Skeleton variant="text" height={42} width="200px" sx={{ mb: 1 }} />
+          <Skeleton variant="text" height={24} width="350px" />
         </Box>
+
+        {/* Assessment Types Grid Skeleton */}
+        <Box sx={{ mb: 5 }}>
+          <Skeleton variant="text" height={32} width="220px" sx={{ mb: 2 }} />
+          <Grid container spacing={2}>
+            {[1, 2, 3, 4].map((item) => (
+              <Grid item xs={6} sm={4} md={3} key={item}>
+                <Card>
+                  {/* 3:4 Aspect Ratio Image Skeleton */}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      paddingTop: '133.33%', // 3:4 aspect ratio
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Skeleton
+                      variant="rectangular"
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </Box>
+                  {/* Card Label Skeleton */}
+                  <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
+                    <Skeleton variant="text" height={24} width="80%" sx={{ mx: 'auto' }} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* Completed Assessments Section Skeleton */}
+        <Box sx={{ mb: 2 }}>
+          <Skeleton variant="text" height={32} width="280px" sx={{ mb: 1 }} />
+          <Skeleton variant="text" height={20} width="180px" />
+        </Box>
+
+        {/* Assessments Grid Skeleton */}
+        <Grid container spacing={2}>
+          {[1, 2, 3, 4, 5].map((item) => (
+            <Grid item xs={12} key={item}>
+              <Card>
+                <CardContent>
+                  <Grid container spacing={2} alignItems="center">
+                    {/* Athlete Name Skeleton */}
+                    <Grid item xs={12} sm={3}>
+                      <Skeleton variant="text" height={24} width="150px" />
+                    </Grid>
+
+                    {/* Test Details Skeleton */}
+                    <Grid item xs={12} sm={3}>
+                      <Skeleton variant="text" height={20} width="140px" sx={{ mb: 0.5 }} />
+                      <Skeleton variant="text" height={16} width="80px" />
+                    </Grid>
+
+                    {/* Duration Skeleton */}
+                    <Grid item xs={12} sm={2}>
+                      <Skeleton variant="text" height={20} width="50px" sx={{ mb: 0.5 }} />
+                      <Skeleton variant="text" height={16} width="70px" />
+                    </Grid>
+
+                    {/* Date Skeleton */}
+                    <Grid item xs={12} sm={2}>
+                      <Skeleton variant="text" height={20} width="120px" />
+                    </Grid>
+
+                    {/* Status Chip Skeleton */}
+                    <Grid item xs={12} sm={2}>
+                      <Skeleton variant="rounded" height={24} width="90px" />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Container>
     );
   }
 
   // Empty state
   if (assessments.length === 0) {
+    console.log('[AssessmentsList] Rendering empty state');
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -148,6 +241,7 @@ export default function AssessmentsList() {
   }
 
   // Main content
+  console.log('[AssessmentsList] Rendering main content with', assessments.length, 'assessments');
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Page Header */}
