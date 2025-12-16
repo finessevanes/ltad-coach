@@ -79,17 +79,36 @@ export function RecentAssessmentsPanel({
         }}
       >
         <CardContent sx={{ p: 3 }}>
-          <Skeleton variant="text" width={200} height={32} />
-          <Box sx={{ mt: 3 }}>
-            {[1, 2, 3].map((i) => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                height={60}
-                sx={{ mb: 2, borderRadius: 2 }}
-              />
-            ))}
+          {/* Header Skeleton */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Skeleton variant="text" width={180} height={32} />
+            <Skeleton variant="rectangular" width={90} height={28} sx={{ borderRadius: 2 }} />
           </Box>
+
+          {/* Assessment List Skeleton */}
+          <List sx={{ p: 0 }}>
+            {[1, 2, 3].map((i) => (
+              <Box key={i}>
+                {i > 1 && <Divider sx={{ my: 1 }} />}
+                <ListItem sx={{ px: 1, py: 1.5 }}>
+                  <ListItemAvatar>
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton variant="text" width={120} height={24} />
+                        <Skeleton variant="rectangular" width={80} height={20} sx={{ borderRadius: 2 }} />
+                      </Box>
+                    }
+                    secondary={
+                      <Skeleton variant="text" width="80%" height={20} sx={{ mt: 0.5 }} />
+                    }
+                  />
+                </ListItem>
+              </Box>
+            ))}
+          </List>
         </CardContent>
       </Card>
     );

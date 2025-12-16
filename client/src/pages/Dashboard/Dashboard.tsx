@@ -114,6 +114,7 @@ export function Dashboard() {
         athletes={athletes}
         selectedAthlete={selectedAthlete}
         onAthleteSelect={setSelectedAthlete}
+        loading={loading}
       />
 
       {/* Quick Action Cards */}
@@ -121,13 +122,14 @@ export function Dashboard() {
         pendingAthletes={athletesNeedingConsent}
         onResendConsent={handleResendConsent}
         onStartAssessment={handleStartAssessment}
+        loading={loading}
       />
 
       {/* Two Column Layout */}
       <Grid container spacing={3}>
         {/* Left Column - Athletes Panel */}
         <Grid item xs={12} md={4}>
-          <AthletesPanel athletes={athletes} />
+          <AthletesPanel athletes={athletes} loading={loading} />
         </Grid>
 
         {/* Right Column - Recent Assessments */}

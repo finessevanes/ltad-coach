@@ -6,6 +6,8 @@ import { theme } from './theme';
 import { routes } from './routes';
 import { AuthProvider } from './contexts/AuthContext';
 import { SnackbarProvider } from './contexts/SnackbarContext';
+import { LoadingProvider } from './contexts/LoadingContext';
+import { GlobalLoadingBar } from './components/GlobalLoadingBar';
 import { videoCache } from './utils/videoCache';
 
 // Create router instance
@@ -29,11 +31,14 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <SnackbarProvider>
-          <RouterProvider router={router} />
-        </SnackbarProvider>
-      </AuthProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <SnackbarProvider>
+            <GlobalLoadingBar />
+            <RouterProvider router={router} />
+          </SnackbarProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </ThemeProvider>
   );
 }
