@@ -91,6 +91,9 @@ export function PublicReport() {
         athleteName={report.athleteName}
         content={report.reportContent}
         createdAt={report.createdAt}
+        graphData={report.graphData}
+        progressSnapshot={report.progressSnapshot}
+        milestones={report.milestones}
       />
     );
   }

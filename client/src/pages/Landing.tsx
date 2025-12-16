@@ -1,4 +1,4 @@
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -408,29 +408,49 @@ export function Landing() {
       {/* Divider */}
       <Box sx={{ borderTop: '1px solid #E5E5E5', my: 20 }} />
 
-      {/* First Image - Full Width */}
+      {/* LTAD Framework Diagram */}
       <Container maxWidth="lg" sx={{ mb: 24 }}>
-        <Box
+        <Card
           sx={{
-            width: '100%',
-            height: { xs: '350px', md: '550px' },
-            bgcolor: '#F5F5F5',
             borderRadius: '24px',
             overflow: 'hidden',
-            position: 'relative',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
           }}
         >
-          <Box
-            component="img"
-            src="/running-athletes.png"
-            alt="Young athletes running"
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        </Box>
+          <CardContent sx={{ p: 0 }}>
+            <Box
+              sx={{
+                width: '100%',
+                bgcolor: '#FAFAFA',
+                p: { xs: 2, md: 4 },
+              }}
+            >
+              <Box
+                component="img"
+                src="/profression-diagram.png"
+                alt="Long-Term Athletic Development Framework showing the Five S's: Skill, Speed, Suppleness, Stamina, and Strength across developmental stages"
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+            <Box sx={{ p: 3, bgcolor: 'white' }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: '14px', md: '16px' },
+                  color: '#6B6B6B',
+                  fontFamily: 'Jost, sans-serif',
+                  lineHeight: 1.6,
+                  textAlign: 'center',
+                }}
+              >
+                This diagram maps the athlete's journey across seven developmental stages, clearly showing the shifting 'windows of opportunity' to maximize the five core athletic capacities: Skill, Speed, Suppleness, Stamina, and Strength.
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
       </Container>
 
       {/* Testimonial Section with Image */}

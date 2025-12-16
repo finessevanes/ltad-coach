@@ -86,6 +86,10 @@ async def generate_report(
         assessment_count=metadata["assessment_count"],
         latest_score=metadata["latest_score"],
         assessment_ids=metadata["assessment_ids"],
+        # New fields for enhanced parent reports
+        graph_data=metadata.get("graph_data", []),
+        progress_snapshot=metadata.get("progress_snapshot"),
+        milestones=metadata.get("milestones", []),
     )
 
 
@@ -143,6 +147,10 @@ async def send_report(
         assessment_ids=data.assessment_ids,
         pin=pin,
         sent_at=datetime.now(timezone.utc),  # Mark as sent immediately
+        # New fields for enhanced parent reports
+        graph_data=[gd.model_dump() for gd in data.graph_data] if data.graph_data else [],
+        progress_snapshot=data.progress_snapshot.model_dump() if data.progress_snapshot else None,
+        milestones=[m.model_dump() for m in data.milestones] if data.milestones else [],
     )
 
     logger.info(f"Created report {report.id} for {athlete.name} (ID: {athlete_id})")
@@ -294,6 +302,10 @@ async def verify_and_view_report(
         athlete_name=athlete.name if athlete else "Unknown",
         report_content=report.report_content,
         created_at=report.created_at,
+        # New fields for enhanced parent reports
+        graph_data=report.graph_data,
+        progress_snapshot=report.progress_snapshot,
+        milestones=report.milestones,
     )
 
 
