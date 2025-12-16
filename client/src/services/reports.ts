@@ -1,11 +1,37 @@
 import { api } from './api';
 
+// New types for enhanced parent reports
+export interface ReportGraphDataPoint {
+  date: string;      // "Dec 15"
+  duration: number;  // hold time in seconds
+}
+
+export interface ProgressSnapshot {
+  startedDate: string;
+  startedDuration: number;
+  startedScore: number;
+  currentDate: string;
+  currentDuration: number;
+  currentScore: number;
+}
+
+export interface Milestone {
+  type: 'twenty_seconds' | 'improvement';
+  message: string;
+}
+
 export interface ReportPreview {
+  reportId: string | null;  // null until sent
   athleteId: string;
   athleteName: string;
   content: string;
   assessmentCount: number;
   latestScore?: number;
+  assessmentIds: string[];  // Needed for send request
+  // New fields for enhanced parent reports
+  graphData: ReportGraphDataPoint[];
+  progressSnapshot: ProgressSnapshot | null;
+  milestones: Milestone[];
 }
 
 export interface ReportSendResponse {
@@ -30,6 +56,10 @@ export interface ReportView {
   athleteName: string;
   reportContent: string;
   createdAt: string;
+  // New fields for enhanced parent reports
+  graphData: ReportGraphDataPoint[];
+  progressSnapshot: ProgressSnapshot | null;
+  milestones: Milestone[];
 }
 
 export interface ReportListItem {
@@ -49,8 +79,20 @@ export const reportsApi = {
     return response.data;  // Already transformed by interceptor
   },
 
-  send: async (athleteId: string): Promise<ReportSendResponse> => {
-    const response = await api.post(`/reports/${athleteId}/send`);
+  send: async (
+    athleteId: string,
+    data: {
+      content: string;
+      assessmentIds: string[];
+      assessmentCount: number;
+      latestScore?: number;
+      // New fields for enhanced parent reports
+      graphData: ReportGraphDataPoint[];
+      progressSnapshot: ProgressSnapshot | null;
+      milestones: Milestone[];
+    }
+  ): Promise<ReportSendResponse> => {
+    const response = await api.post(`/reports/${athleteId}/send`, data);
     return response.data;  // Already transformed by interceptor
   },
 

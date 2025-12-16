@@ -13,6 +13,7 @@ from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.models.report import (
     ReportPreview,
+    ReportSendRequest,
     ReportSendResponse,
     ReportVerifyRequest,
     ReportViewResponse,
@@ -33,18 +34,22 @@ async def generate_report(
     athlete_id: str,
     user: User = Depends(get_current_user)
 ):
-    """Generate parent report preview without storing.
+    """Generate parent report preview (not stored until sent).
 
     This endpoint generates a preview of the AI-powered parent report
-    that the coach can review before sending. The report is NOT stored
-    or sent at this stage.
+    WITHOUT storing it in Firestore. The content stays in the frontend
+    until the coach clicks Send, avoiding the need for complex Firestore
+    queries and indexes.
+
+    Regenerating the preview is fine - coaches likely want fresh content
+    anyway if they navigate away and come back.
 
     Args:
         athlete_id: Athlete ID
         user: Current authenticated user (coach)
 
     Returns:
-        ReportPreview with content and metadata
+        ReportPreview with content and metadata (report_id=None)
 
     Raises:
         404: Athlete not found or coach doesn't own athlete
@@ -61,6 +66,7 @@ async def generate_report(
             detail="Athlete not found"
         )
 
+    # Generate content (don't store)
     try:
         content, metadata = await generate_report_content(user.id, athlete_id)
     except ValueError as e:
@@ -73,32 +79,41 @@ async def generate_report(
     logger.info(f"Generated report preview for {athlete.name} (ID: {athlete_id})")
 
     return ReportPreview(
+        report_id=None,  # Not stored yet
         athlete_id=athlete_id,
         athlete_name=athlete.name,
         content=content,
         assessment_count=metadata["assessment_count"],
         latest_score=metadata["latest_score"],
+        assessment_ids=metadata["assessment_ids"],
+        # New fields for enhanced parent reports
+        graph_data=metadata.get("graph_data", []),
+        progress_snapshot=metadata.get("progress_snapshot"),
+        milestones=metadata.get("milestones", []),
     )
 
 
 @router.post("/{athlete_id}/send", response_model=ReportSendResponse)
 async def send_report(
     athlete_id: str,
+    data: ReportSendRequest,
     user: User = Depends(get_current_user)
 ):
-    """Generate report, store with PIN, and prepare for sending.
+    """Store report and send to parent.
 
     This endpoint:
-    1. Generates the AI report content
-    2. Creates a secure 6-digit PIN
-    3. Stores the report in Firestore with hashed PIN
-    4. Returns the PIN to the coach (shown only once)
+    1. Receives report content from frontend (from preview)
+    2. Generates PIN
+    3. Stores report in Firestore with sent_at timestamp
+    4. Sends email to parent with PIN
+    5. Returns the PIN to the coach (shown only once)
 
-    Note: Email sending is handled separately in BE-014.
-    For now, this just creates the report and returns the PIN.
+    The report content comes from the frontend to guarantee WYSIWYG
+    (what coach saw in preview IS what parent gets). No regeneration.
 
     Args:
         athlete_id: Athlete ID
+        data: Report content and metadata from frontend
         user: Current authenticated user (coach)
 
     Returns:
@@ -106,8 +121,9 @@ async def send_report(
 
     Raises:
         404: Athlete not found or coach doesn't own athlete
-        400: No assessments found or other validation error
     """
+    from datetime import datetime, timezone
+
     athlete_repo = AthleteRepository()
     report_repo = ReportRepository()
 
@@ -120,26 +136,24 @@ async def send_report(
             detail="Athlete not found"
         )
 
-    try:
-        content, metadata = await generate_report_content(user.id, athlete_id)
-    except ValueError as e:
-        logger.error(f"Failed to generate report for {athlete_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-    # Generate PIN and create report
+    # Generate PIN
     pin = generate_pin()
+
+    # Store report (sent immediately)
     report = await report_repo.create_report(
         coach_id=user.id,
         athlete_id=athlete_id,
-        content=content,
-        assessment_ids=metadata["assessment_ids"],
+        content=data.content,
+        assessment_ids=data.assessment_ids,
         pin=pin,
+        sent_at=datetime.now(timezone.utc),  # Mark as sent immediately
+        # New fields for enhanced parent reports
+        graph_data=[gd.model_dump() for gd in data.graph_data] if data.graph_data else [],
+        progress_snapshot=data.progress_snapshot.model_dump() if data.progress_snapshot else None,
+        milestones=[m.model_dump() for m in data.milestones] if data.milestones else [],
     )
 
-    logger.info(f"Created report {report.id} for {athlete.name} with PIN")
+    logger.info(f"Created report {report.id} for {athlete.name} (ID: {athlete_id})")
 
     # Send email to parent
     email_sent = await send_report_email(
@@ -150,11 +164,10 @@ async def send_report(
         pin=pin,
     )
 
-    if email_sent:
-        await report_repo.mark_sent(report.id)
-        logger.info(f"Report {report.id} email sent to {athlete.parent_email}")
-    else:
+    if not email_sent:
         logger.warning(f"Failed to send report {report.id} email to {athlete.parent_email}")
+
+    logger.info(f"Report {report.id} email sent to {athlete.parent_email}")
 
     return ReportSendResponse(
         id=report.id,
@@ -289,6 +302,10 @@ async def verify_and_view_report(
         athlete_name=athlete.name if athlete else "Unknown",
         report_content=report.report_content,
         created_at=report.created_at,
+        # New fields for enhanced parent reports
+        graph_data=report.graph_data,
+        progress_snapshot=report.progress_snapshot,
+        milestones=report.milestones,
     )
 
 

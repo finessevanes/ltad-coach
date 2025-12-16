@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import {
   Box,
   TextField,
@@ -17,6 +17,8 @@ interface Props {
   athletes: Athlete[];
   selectedAthlete: Athlete | null;
   onAthleteSelect: (athlete: Athlete | null) => void;
+  suggestedPrompt?: string;
+  onSuggestedPromptConsumed?: () => void;
 }
 
 export function ChatInput({
@@ -25,8 +27,22 @@ export function ChatInput({
   athletes,
   selectedAthlete,
   onAthleteSelect,
+  suggestedPrompt,
+  onSuggestedPromptConsumed,
 }: Props) {
   const [message, setMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (suggestedPrompt) {
+      setMessage(suggestedPrompt);
+      onSuggestedPromptConsumed?.();
+      // Focus and move cursor to end of text
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [suggestedPrompt, onSuggestedPromptConsumed]);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
@@ -99,6 +115,7 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder="Ask about exercises, balance training, or an athlete's progress..."
           disabled={disabled}
+          inputRef={inputRef}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,

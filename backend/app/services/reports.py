@@ -3,18 +3,147 @@
 import random
 import string
 import logging
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List, Optional
 
 from app.agents.orchestrator import AgentOrchestrator
 from app.agents.progress import generate_progress_report
 from app.repositories.athlete import AthleteRepository
 from app.repositories.assessment import AssessmentRepository
+from app.repositories.user import UserRepository
 from app.services.metrics import get_duration_score
+from app.models.report import ReportGraphDataPoint, ProgressSnapshot, MilestoneInfo
+from app.models.assessment import Assessment
 
 logger = logging.getLogger(__name__)
 
 # Singleton orchestrator instance
 orchestrator = AgentOrchestrator()
+
+
+def _get_assessment_hold_time(assessment: Assessment) -> float:
+    """Extract hold time from assessment, handling both single-leg and dual-leg."""
+    if assessment.leg_tested.value == "both":
+        # For dual-leg, use left leg as primary (matches current report logic)
+        if assessment.left_leg_metrics:
+            return assessment.left_leg_metrics.hold_time
+        return 0.0
+    else:
+        if assessment.metrics:
+            return assessment.metrics.hold_time
+        return 0.0
+
+
+def _get_assessment_score(assessment: Assessment) -> int:
+    """Extract duration score from assessment, handling both single-leg and dual-leg."""
+    if assessment.leg_tested.value == "both":
+        if assessment.left_leg_metrics:
+            return assessment.left_leg_metrics.duration_score
+        return 1
+    else:
+        if assessment.metrics:
+            return assessment.metrics.duration_score
+        return 1
+
+
+def _compute_graph_data(assessments: List[Assessment]) -> List[ReportGraphDataPoint]:
+    """Transform assessments into chart-ready data points.
+
+    Args:
+        assessments: List of assessments (most recent first from repository)
+
+    Returns:
+        List of graph data points sorted chronologically (oldest first)
+    """
+    # Sort chronologically (oldest first) for graph display
+    sorted_assessments = sorted(assessments, key=lambda a: a.created_at)
+
+    return [
+        ReportGraphDataPoint(
+            date=a.created_at.strftime("%b %d"),
+            duration=_get_assessment_hold_time(a)
+        )
+        for a in sorted_assessments
+    ]
+
+
+def _compute_progress_snapshot(assessments: List[Assessment]) -> Optional[ProgressSnapshot]:
+    """Compare first vs latest assessment in report.
+
+    Args:
+        assessments: List of assessments (most recent first from repository)
+
+    Returns:
+        ProgressSnapshot comparing first and latest, or None if <1 assessment
+    """
+    if not assessments:
+        return None
+
+    # Sort chronologically to get first and last
+    sorted_assessments = sorted(assessments, key=lambda a: a.created_at)
+    first = sorted_assessments[0]
+    latest = sorted_assessments[-1]
+
+    return ProgressSnapshot(
+        started_date=first.created_at.strftime("%b %d"),
+        started_duration=_get_assessment_hold_time(first),
+        started_score=_get_assessment_score(first),
+        current_date=latest.created_at.strftime("%b %d"),
+        current_duration=_get_assessment_hold_time(latest),
+        current_score=_get_assessment_score(latest),
+    )
+
+
+def _compute_milestones(assessments: List[Assessment], athlete_name: str) -> List[MilestoneInfo]:
+    """Check for milestone achievements within the report's assessments.
+
+    Milestones:
+    1. First time holding 20+ seconds (the target line on the graph)
+    2. First assessment showing improvement over the previous
+
+    Args:
+        assessments: List of assessments (most recent first from repository)
+        athlete_name: Athlete's name for milestone messages
+
+    Returns:
+        List of milestone achievements (may be empty)
+    """
+    milestones = []
+
+    if not assessments:
+        return milestones
+
+    # Sort chronologically for sequential analysis
+    sorted_assessments = sorted(assessments, key=lambda a: a.created_at)
+
+    # Milestone 1: First time holding 20+ seconds
+    for i, assessment in enumerate(sorted_assessments):
+        hold_time = _get_assessment_hold_time(assessment)
+        if hold_time >= 20:
+            # Check if this is first time hitting 20+ (no prior assessment hit 20+)
+            prior_max = max(
+                (_get_assessment_hold_time(prev) for prev in sorted_assessments[:i]),
+                default=0
+            )
+            if prior_max < 20:
+                milestones.append(MilestoneInfo(
+                    type="twenty_seconds",
+                    message=f"{athlete_name} held their balance for 20+ seconds for the first time!"
+                ))
+            break  # Only check until first 20+ hold
+
+    # Milestone 2: First improvement over previous assessment
+    if len(sorted_assessments) >= 2:
+        for i in range(1, len(sorted_assessments)):
+            curr_time = _get_assessment_hold_time(sorted_assessments[i])
+            prev_time = _get_assessment_hold_time(sorted_assessments[i - 1])
+            if curr_time > prev_time:
+                milestones.append(MilestoneInfo(
+                    type="improvement",
+                    message=f"{athlete_name} showed improvement over their previous assessment!"
+                ))
+                break  # Only report first improvement
+
+    return milestones
 
 
 def generate_pin() -> str:
@@ -52,6 +181,7 @@ async def generate_report_content(
     """
     athlete_repo = AthleteRepository()
     assessment_repo = AssessmentRepository()
+    user_repo = UserRepository()
 
     # Get athlete
     athlete = await athlete_repo.get(athlete_id)
@@ -59,19 +189,37 @@ async def generate_report_content(
         logger.error(f"Athlete {athlete_id} not found")
         raise ValueError("Athlete not found")
 
+    # Get coach name
+    coach = await user_repo.get(coach_id)
+    coach_name = coach.name if coach else "Your Coach"
+
     # Get assessments
     assessments = await assessment_repo.get_by_athlete(athlete_id, limit=12)
     if not assessments:
         logger.error(f"No assessments found for athlete {athlete_id}")
         raise ValueError("No assessments found")
 
-    # Get latest metrics
+    # Get latest metrics (handle both single-leg and dual-leg assessments)
     latest = assessments[0]
-    current_metrics = latest.metrics.model_dump() if latest.metrics else None
 
-    if not current_metrics:
-        logger.error(f"Latest assessment {latest.id} has no metrics")
-        raise ValueError("Latest assessment has no metrics")
+    # For dual-leg assessments, combine metrics from both legs
+    if latest.leg_tested.value == "both":
+        if not latest.left_leg_metrics or not latest.right_leg_metrics:
+            logger.error(f"Dual-leg assessment {latest.id} missing leg metrics")
+            raise ValueError("Latest assessment has no metrics")
+
+        # Use left leg as primary, include bilateral comparison if available
+        current_metrics = latest.left_leg_metrics.model_dump()
+        current_metrics["right_leg"] = latest.right_leg_metrics.model_dump()
+        if latest.bilateral_comparison:
+            current_metrics["bilateral_comparison"] = latest.bilateral_comparison.model_dump()
+    else:
+        # Single-leg assessment
+        current_metrics = latest.metrics.model_dump() if latest.metrics else None
+
+        if not current_metrics:
+            logger.error(f"Latest assessment {latest.id} has no metrics")
+            raise ValueError("Latest assessment has no metrics")
 
     # Get compressed history via orchestrator
     logger.info(f"Generating report for athlete {athlete.name} (ID: {athlete_id})")
@@ -89,19 +237,34 @@ async def generate_report_content(
         compressed_history=routing["compressed_history"],
         current_metrics=current_metrics,
         assessment_count=routing["assessment_count"],
+        coach_name=coach_name,
     )
 
-    # Calculate latest score
+    # Calculate latest score (use hold_time for both single and dual-leg)
     latest_score = None
-    if current_metrics.get("duration_seconds"):
-        latest_score = get_duration_score(current_metrics["duration_seconds"])
+    hold_time = current_metrics.get("hold_time")
+    if hold_time:
+        latest_score = get_duration_score(hold_time)
+
+    # Compute enhanced report data for graphs and milestones
+    graph_data = _compute_graph_data(assessments)
+    progress_snapshot = _compute_progress_snapshot(assessments)
+    milestones = _compute_milestones(assessments, athlete.name)
 
     metadata = {
         "assessment_count": routing["assessment_count"],
         "latest_score": latest_score,
         "assessment_ids": [a.id for a in assessments],
+        # New fields for enhanced parent reports
+        "graph_data": [gd.model_dump() for gd in graph_data],
+        "progress_snapshot": progress_snapshot.model_dump() if progress_snapshot else None,
+        "milestones": [m.model_dump() for m in milestones],
     }
 
-    logger.info(f"Generated report for {athlete.name}: {len(content)} chars, {metadata['assessment_count']} assessments")
+    logger.info(
+        f"Generated report for {athlete.name}: {len(content)} chars, "
+        f"{metadata['assessment_count']} assessments, "
+        f"{len(milestones)} milestones"
+    )
 
     return content, metadata
