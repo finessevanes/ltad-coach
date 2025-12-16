@@ -14,6 +14,7 @@ import {
   ListItemText,
   Avatar,
   InputAdornment,
+  Skeleton,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -23,6 +24,7 @@ import { getCurrentSeason } from '../../../utils/dateUtils';
 
 interface AthletesPanelProps {
   athletes: Athlete[];
+  loading?: boolean;
 }
 
 type FilterStatus = 'all' | 'active' | 'pending' | 'declined';
@@ -60,7 +62,7 @@ const getAvatarBgColor = (status: string) => {
   }
 };
 
-export function AthletesPanel({ athletes }: AthletesPanelProps) {
+export function AthletesPanel({ athletes, loading = false }: AthletesPanelProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
@@ -85,6 +87,57 @@ export function AthletesPanel({ athletes }: AthletesPanelProps) {
   const handleAthleteClick = (athleteId: string) => {
     navigate(`/athletes/${athleteId}`);
   };
+
+  if (loading) {
+    return (
+      <Card
+        sx={{
+          height: '100%',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'grey.100',
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          {/* Season Header Skeleton */}
+          <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
+
+          {/* Athletes Header with Add Button Skeleton */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Skeleton variant="text" width={80} height={32} />
+            <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 2 }} />
+          </Box>
+
+          {/* Search Field Skeleton */}
+          <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 2 }} />
+
+          {/* Filter Chips Skeleton */}
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Skeleton variant="rectangular" width={50} height={24} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" width={70} height={24} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" width={75} height={24} sx={{ borderRadius: 2 }} />
+          </Box>
+
+          {/* Athlete List Skeleton */}
+          <List sx={{ mx: -1 }}>
+            {[1, 2, 3].map((i) => (
+              <ListItem key={i} disablePadding>
+                <Box sx={{ display: 'flex', gap: 2, width: '100%', py: 1, px: 2 }}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={24} />
+                    <Skeleton variant="text" width="40%" height={20} />
+                  </Box>
+                  <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 2 }} />
+                </Box>
+              </ListItem>
+            ))}
+          </List>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card

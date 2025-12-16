@@ -6,6 +6,7 @@ import {
   Button,
   Chip,
   Grid,
+  Skeleton,
 } from '@mui/material';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import EmailIcon from '@mui/icons-material/Email';
@@ -16,12 +17,14 @@ interface QuickActionCardsProps {
   pendingAthletes: Athlete[];
   onResendConsent: (athleteId: string) => void;
   onStartAssessment: () => void;
+  loading?: boolean;
 }
 
 export function QuickActionCards({
   pendingAthletes,
   onResendConsent,
   onStartAssessment,
+  loading = false,
 }: QuickActionCardsProps) {
   const firstPendingAthlete = pendingAthletes.find(
     (a) => a.consentStatus === 'pending'
@@ -36,6 +39,37 @@ export function QuickActionCards({
     }
     return 'Parent';
   };
+
+  if (loading) {
+    return (
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Skeleton for 3 cards */}
+        {[1, 2, 3].map((i) => (
+          <Grid item xs={12} sm={6} md={4} key={i}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'grey.100',
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Skeleton variant="rectangular" width={120} height={24} sx={{ mb: 1.5, borderRadius: 1 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="80%" height={32} sx={{ mb: 2 }} />
+                    <Skeleton variant="rectangular" width={130} height={36} sx={{ borderRadius: 2 }} />
+                  </Box>
+                  <Skeleton variant="circular" width={56} height={56} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
 
   return (
     <Grid container spacing={3} sx={{ mb: 3 }}>
