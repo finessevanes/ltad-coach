@@ -1,11 +1,13 @@
 import { api } from './api';
 
 export interface ReportPreview {
+  reportId: string | null;  // null until sent
   athleteId: string;
   athleteName: string;
   content: string;
   assessmentCount: number;
   latestScore?: number;
+  assessmentIds: string[];  // Needed for send request
 }
 
 export interface ReportSendResponse {
@@ -49,8 +51,16 @@ export const reportsApi = {
     return response.data;  // Already transformed by interceptor
   },
 
-  send: async (athleteId: string): Promise<ReportSendResponse> => {
-    const response = await api.post(`/reports/${athleteId}/send`);
+  send: async (
+    athleteId: string,
+    data: {
+      content: string;
+      assessmentIds: string[];
+      assessmentCount: number;
+      latestScore?: number;
+    }
+  ): Promise<ReportSendResponse> => {
+    const response = await api.post(`/reports/${athleteId}/send`, data);
     return response.data;  // Already transformed by interceptor
   },
 

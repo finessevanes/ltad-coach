@@ -107,7 +107,8 @@ class ReportRepository(BaseRepository[Report]):
         athlete_id: str,
         content: str,
         assessment_ids: List[str],
-        pin: str
+        pin: str,
+        sent_at: Optional[datetime] = None
     ) -> Report:
         """Create new report with hashed PIN and 90-day expiry.
 
@@ -117,6 +118,7 @@ class ReportRepository(BaseRepository[Report]):
             content: Report content (AI-generated)
             assessment_ids: List of assessment IDs included
             pin: Plain text PIN (will be hashed)
+            sent_at: Optional timestamp when report was sent (None for unsent)
 
         Returns:
             Report: Created report instance
@@ -129,7 +131,7 @@ class ReportRepository(BaseRepository[Report]):
             "access_pin_hash": self.hash_pin(pin),
             "report_content": content,
             "assessment_ids": assessment_ids,
-            "sent_at": None,
+            "sent_at": sent_at,
         }
 
         doc_ref = self.collection.document()
@@ -174,3 +176,34 @@ class ReportRepository(BaseRepository[Report]):
             report_id: Report ID
         """
         await self.update(report_id, {"sent_at": datetime.utcnow()})
+
+    async def get_unsent_by_athlete(
+        self,
+        athlete_id: str,
+        coach_id: str
+    ) -> Optional[Report]:
+        """Get most recent unsent report for athlete.
+
+        Args:
+            athlete_id: Athlete ID
+            coach_id: Coach ID (for ownership validation)
+
+        Returns:
+            Optional[Report]: Unsent report or None
+        """
+        docs = (
+            self.collection
+            .where("athlete_id", "==", athlete_id)
+            .where("coach_id", "==", coach_id)
+            .where("sent_at", "==", None)
+            .order_by("created_at", direction="DESCENDING")
+            .limit(1)
+            .stream()
+        )
+
+        for doc in docs:
+            data = doc.to_dict()
+            data["id"] = doc.id
+            return Report(**data)
+
+        return None

@@ -9,6 +9,7 @@ from app.agents.orchestrator import AgentOrchestrator
 from app.agents.progress import generate_progress_report
 from app.repositories.athlete import AthleteRepository
 from app.repositories.assessment import AssessmentRepository
+from app.repositories.user import UserRepository
 from app.services.metrics import get_duration_score
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ async def generate_report_content(
     """
     athlete_repo = AthleteRepository()
     assessment_repo = AssessmentRepository()
+    user_repo = UserRepository()
 
     # Get athlete
     athlete = await athlete_repo.get(athlete_id)
@@ -59,19 +61,37 @@ async def generate_report_content(
         logger.error(f"Athlete {athlete_id} not found")
         raise ValueError("Athlete not found")
 
+    # Get coach name
+    coach = await user_repo.get(coach_id)
+    coach_name = coach.name if coach else "Your Coach"
+
     # Get assessments
     assessments = await assessment_repo.get_by_athlete(athlete_id, limit=12)
     if not assessments:
         logger.error(f"No assessments found for athlete {athlete_id}")
         raise ValueError("No assessments found")
 
-    # Get latest metrics
+    # Get latest metrics (handle both single-leg and dual-leg assessments)
     latest = assessments[0]
-    current_metrics = latest.metrics.model_dump() if latest.metrics else None
 
-    if not current_metrics:
-        logger.error(f"Latest assessment {latest.id} has no metrics")
-        raise ValueError("Latest assessment has no metrics")
+    # For dual-leg assessments, combine metrics from both legs
+    if latest.leg_tested.value == "both":
+        if not latest.left_leg_metrics or not latest.right_leg_metrics:
+            logger.error(f"Dual-leg assessment {latest.id} missing leg metrics")
+            raise ValueError("Latest assessment has no metrics")
+
+        # Use left leg as primary, include bilateral comparison if available
+        current_metrics = latest.left_leg_metrics.model_dump()
+        current_metrics["right_leg"] = latest.right_leg_metrics.model_dump()
+        if latest.bilateral_comparison:
+            current_metrics["bilateral_comparison"] = latest.bilateral_comparison.model_dump()
+    else:
+        # Single-leg assessment
+        current_metrics = latest.metrics.model_dump() if latest.metrics else None
+
+        if not current_metrics:
+            logger.error(f"Latest assessment {latest.id} has no metrics")
+            raise ValueError("Latest assessment has no metrics")
 
     # Get compressed history via orchestrator
     logger.info(f"Generating report for athlete {athlete.name} (ID: {athlete_id})")
@@ -89,12 +109,14 @@ async def generate_report_content(
         compressed_history=routing["compressed_history"],
         current_metrics=current_metrics,
         assessment_count=routing["assessment_count"],
+        coach_name=coach_name,
     )
 
-    # Calculate latest score
+    # Calculate latest score (use hold_time for both single and dual-leg)
     latest_score = None
-    if current_metrics.get("duration_seconds"):
-        latest_score = get_duration_score(current_metrics["duration_seconds"])
+    hold_time = current_metrics.get("hold_time")
+    if hold_time:
+        latest_score = get_duration_score(hold_time)
 
     metadata = {
         "assessment_count": routing["assessment_count"],

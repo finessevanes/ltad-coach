@@ -9,12 +9,14 @@ class ReportGenerate(BaseModel):
 
 
 class ReportPreview(BaseModel):
-    """Preview response before sending"""
+    """Preview response before sending (not stored until sent)"""
+    report_id: Optional[str] = None  # None until sent
     athlete_id: str
     athlete_name: str
     content: str
     assessment_count: int
     latest_score: Optional[int] = None
+    assessment_ids: List[str]  # Needed for send request
 
 
 class ReportCreate(BaseModel):
@@ -37,8 +39,11 @@ class Report(BaseModel):
 
 
 class ReportSendRequest(BaseModel):
-    """Request to send report to parent"""
-    pass  # No body needed
+    """Request to send report to parent (includes content from preview)"""
+    content: str
+    assessment_ids: List[str]
+    assessment_count: int
+    latest_score: Optional[int] = None
 
 
 class ReportSendResponse(BaseModel):

@@ -64,14 +64,14 @@ security = HTTPBearer()
 settings = get_settings()
 
 # Configure CORS middleware
-# MVP: Allow all origins for demo flexibility
-# TODO: Restrict to specific domains after demo
+# Uses explicit origins from ALLOWED_ORIGINS env var
+# Required because allow_credentials=True forbids wildcard origins per CORS spec
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # MVP phase - will restrict post-demo
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,  # Explicit origins required with credentials
+    allow_credentials=True,  # Required for Authorization header (Bearer tokens)
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 # Register routers
