@@ -26,6 +26,7 @@ export function AICoach() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [suggestedPrompt, setSuggestedPrompt] = useState('');
   const { showSnackbar } = useSnackbar();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -174,7 +175,7 @@ export function AICoach() {
 
   const handleSuggestionClick = (prompt: string) => {
     if (!isStreaming) {
-      handleSend(prompt, selectedAthlete?.id);
+      setSuggestedPrompt(prompt);
     }
   };
 
@@ -245,6 +246,8 @@ export function AICoach() {
         athletes={athletes}
         selectedAthlete={selectedAthlete}
         onAthleteSelect={setSelectedAthlete}
+        suggestedPrompt={suggestedPrompt}
+        onSuggestedPromptConsumed={() => setSuggestedPrompt('')}
       />
     </Container>
   );
