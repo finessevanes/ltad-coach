@@ -2,11 +2,11 @@
 
 import hashlib
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Any
 from collections import defaultdict
 
 from app.repositories.base import BaseRepository
-from app.models.report import Report
+from app.models.report import Report, ReportGraphDataPoint, ProgressSnapshot, MilestoneInfo
 
 
 class PINVerificationLimiter:
@@ -108,7 +108,10 @@ class ReportRepository(BaseRepository[Report]):
         content: str,
         assessment_ids: List[str],
         pin: str,
-        sent_at: Optional[datetime] = None
+        sent_at: Optional[datetime] = None,
+        graph_data: Optional[List[dict]] = None,
+        progress_snapshot: Optional[dict] = None,
+        milestones: Optional[List[dict]] = None,
     ) -> Report:
         """Create new report with hashed PIN and 90-day expiry.
 
@@ -119,6 +122,9 @@ class ReportRepository(BaseRepository[Report]):
             assessment_ids: List of assessment IDs included
             pin: Plain text PIN (will be hashed)
             sent_at: Optional timestamp when report was sent (None for unsent)
+            graph_data: Optional list of graph data points for chart visualization
+            progress_snapshot: Optional progress snapshot comparing first/latest assessment
+            milestones: Optional list of milestone achievements
 
         Returns:
             Report: Created report instance
@@ -132,6 +138,10 @@ class ReportRepository(BaseRepository[Report]):
             "report_content": content,
             "assessment_ids": assessment_ids,
             "sent_at": sent_at,
+            # New fields for enhanced parent reports
+            "graph_data": graph_data or [],
+            "progress_snapshot": progress_snapshot,
+            "milestones": milestones or [],
         }
 
         doc_ref = self.collection.document()
