@@ -110,10 +110,12 @@ export function QuickActionCards({
               <Chip
                 label="Action Required"
                 size="small"
+                variant="outlined"
                 sx={{
                   mb: 1.5,
-                  bgcolor: 'warning.light',
-                  color: 'warning.dark',
+                  borderColor: 'warning.main',
+                  color: 'warning.main',
+                  bgcolor: 'white',
                   fontWeight: 500,
                   fontSize: '0.75rem',
                 }}
