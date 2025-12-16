@@ -9,6 +9,7 @@ from app.agents.orchestrator import AgentOrchestrator
 from app.agents.progress import generate_progress_report
 from app.repositories.athlete import AthleteRepository
 from app.repositories.assessment import AssessmentRepository
+from app.repositories.user import UserRepository
 from app.services.metrics import get_duration_score
 
 logger = logging.getLogger(__name__)
@@ -52,12 +53,17 @@ async def generate_report_content(
     """
     athlete_repo = AthleteRepository()
     assessment_repo = AssessmentRepository()
+    user_repo = UserRepository()
 
     # Get athlete
     athlete = await athlete_repo.get(athlete_id)
     if not athlete:
         logger.error(f"Athlete {athlete_id} not found")
         raise ValueError("Athlete not found")
+
+    # Get coach name
+    coach = await user_repo.get(coach_id)
+    coach_name = coach.name if coach else "Your Coach"
 
     # Get assessments
     assessments = await assessment_repo.get_by_athlete(athlete_id, limit=12)
@@ -103,6 +109,7 @@ async def generate_report_content(
         compressed_history=routing["compressed_history"],
         current_metrics=current_metrics,
         assessment_count=routing["assessment_count"],
+        coach_name=coach_name,
     )
 
     # Calculate latest score (use hold_time for both single and dual-leg)

@@ -19,6 +19,7 @@ async def generate_progress_report(
     compressed_history: str,
     current_metrics: Dict[str, Any],
     assessment_count: int,
+    coach_name: str,
 ) -> str:
     """Generate parent-friendly progress report.
 
@@ -28,6 +29,7 @@ async def generate_progress_report(
         compressed_history: Compressed summary of past assessments (from Compression Agent)
         current_metrics: Current/most recent assessment metrics
         assessment_count: Total number of assessments completed
+        coach_name: Coach's name for signature
 
     Returns:
         250-350 word parent report
@@ -65,7 +67,9 @@ Provide a parent report following the Parent Report Format from the context. Rem
 - Explain what balance means for overall athletic development
 - Provide specific, fun home activities
 - Encouraging and partnership-focused tone
-- Include LTAD developmental context for age {athlete_age}"""
+- Include LTAD developmental context for age {athlete_age}
+- End the report with: "Best regards, {coach_name}"
+- IMPORTANT: "{coach_name}" is the coach's actual name - use it exactly as provided (do not use "[Coach Name]" or any placeholder)"""
 
         messages = [
             {"role": "user", "content": user_prompt}
@@ -80,6 +84,11 @@ Provide a parent report following the Parent Report Format from the context. Rem
             max_tokens=600,  # ~350 words
         )
 
+        # Validate coach name appears in signature (safety net)
+        if coach_name not in response and "[Coach Name]" in response:
+            logger.warning(f"Claude used placeholder instead of coach name '{coach_name}', replacing...")
+            response = response.replace("[Coach Name]", coach_name)
+
         logger.info(f"Generated progress report for {athlete_name}")
         return response.strip()
 
@@ -92,6 +101,7 @@ Provide a parent report following the Parent Report Format from the context. Rem
             current_metrics=current_metrics,
             assessment_count=assessment_count,
             trend_analysis=trend_analysis,
+            coach_name=coach_name,
         )
 
 
@@ -178,6 +188,7 @@ def _generate_fallback_report(
     current_metrics: Dict[str, Any],
     assessment_count: int,
     trend_analysis: str,
+    coach_name: str,
 ) -> str:
     """Generate template-based fallback report.
 
@@ -187,6 +198,7 @@ def _generate_fallback_report(
         current_metrics: Current metrics
         assessment_count: Number of assessments
         trend_analysis: Trend analysis string
+        coach_name: Coach's name for signature
 
     Returns:
         Template-based parent report
@@ -247,7 +259,8 @@ These activities are fun, require no equipment, and can be done anywhere! Aim fo
 Looking Ahead:
 Balance skills develop rapidly at this age with consistent practice. We'll continue tracking progress and celebrating improvements. Thank you for supporting {athlete_name}'s athletic development!
 
-Keep up the great work!
+Best regards,
+{coach_name}
 
 (AI-generated report temporarily unavailable - template-based analysis provided)"""
 

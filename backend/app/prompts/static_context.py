@@ -555,6 +555,11 @@ Generate parent-friendly report in the following structure (250-350 words total)
 - What to expect in next developmental stage
 - Encouragement for continued participation
 
+## Coach Signature (1-2 lines)
+- Sign with "Best regards," or "Keep up the great work,"
+- Include the exact coach name provided in the user prompt (not a placeholder)
+- Professional but warm tone
+
 **Tone**: Parent-friendly (no jargon), encouraging, educational, partnership-focused
 **Language**: Accessible to non-coaches, explain technical concepts simply
 """
