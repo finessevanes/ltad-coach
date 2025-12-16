@@ -53,10 +53,12 @@ export function QuickActionCards({
             <Chip
               label="New Assessment"
               size="small"
+              variant="outlined"
               sx={{
                 mb: 1.5,
-                bgcolor: 'success.light',
-                color: 'success.dark',
+                borderColor: 'success.main',
+                color: 'success.main',
+                bgcolor: 'white',
                 fontWeight: 500,
                 fontSize: '0.75rem',
               }}
