@@ -53,7 +53,6 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
   onRecordingComplete,
   onBack,
   autoStart = false,
-  instructionText,
 }) => {
   const [phase, setPhase] = useState<RecordingPhase>(
     autoStart ? 'testing' : 'setup'
@@ -94,7 +93,6 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     holdTime,
     testResult,
     currentMetrics,
-    positionStatus,
     startTest,
     resetTest,
   } = useBalanceTest(poseResult, legTested, { debug: true });

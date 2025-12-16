@@ -6,12 +6,10 @@ import {
   DialogActions,
   Typography,
   Button,
-  Chip,
   Box,
   Stack,
 } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
 
