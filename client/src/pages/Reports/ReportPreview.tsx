@@ -57,12 +57,17 @@ export default function ReportPreviewPage() {
   };
 
   const handleSend = async () => {
-    if (!athleteId) return;
+    if (!athleteId || !preview) return;
     setSending(true);
     setConfirmModalOpen(false);
 
     try {
-      const result = await reportsApi.send(athleteId);
+      const result = await reportsApi.send(athleteId, {
+        content: preview.content,
+        assessmentIds: preview.assessmentIds,
+        assessmentCount: preview.assessmentCount,
+        latestScore: preview.latestScore,
+      });
       setSentPin(result.pin);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to send report');

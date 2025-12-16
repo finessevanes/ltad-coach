@@ -76,7 +76,7 @@ Provide a parent report following the Parent Report Format from the context. Rem
             model=settings.sonnet_model,
             messages=messages,
             system=FULL_STATIC_CONTEXT,
-            temperature=0.7,
+            temperature=0.3,  # Lower temperature for more consistent outputs
             max_tokens=600,  # ~350 words
         )
 

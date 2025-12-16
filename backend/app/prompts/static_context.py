@@ -530,7 +530,7 @@ PARENT_REPORT_FORMAT = """# Parent Report Format
 Generate parent-friendly report in the following structure (250-350 words total):
 
 ## Introduction (2 sentences)
-- Personalized greeting with athlete's name
+- Greeting addressed to parents (e.g., "Dear [Athlete]'s Parents," or "Hello [Parent Names],")
 - Number of assessments completed
 
 ## Progress Overview (3-4 sentences)
