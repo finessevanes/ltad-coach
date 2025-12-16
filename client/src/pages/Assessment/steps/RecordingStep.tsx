@@ -110,7 +110,6 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
   // Reset test when component mounts (critical for right leg in dual-leg mode)
   useEffect(() => {
-    console.log('[RecordingStep] Component mounted/reset - legTested:', parentLegTested, 'autoStart:', autoStart);
     resetTest();
   }, []); // Empty deps = run once on mount
 
