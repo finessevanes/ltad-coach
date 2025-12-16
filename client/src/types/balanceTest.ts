@@ -90,9 +90,28 @@ export interface TestResult {
   events?: BalanceEvent[];
 }
 
+/**
+ * Real-time metrics exposed during HOLDING state
+ * for display in coaching overlay
+ *
+ * All metrics use correct coordinate system (normalized coords + shoulder calibration)
+ */
+export interface CurrentMetrics {
+  /** Distance hip has moved from initial position (cm) */
+  hipSway?: number;
+  /** Left arm angle from horizontal (degrees, 0° = T-position) */
+  armAngleLeft: number;
+  /** Right arm angle from horizontal (degrees, 0° = T-position) */
+  armAngleRight: number;
+  /** Number of balance corrections (sway >2cm threshold crossings) */
+  corrections?: number;
+  /** Balance stability status based on 5cm threshold */
+  balanceStatus?: 'STABLE' | 'UNSTABLE';
+}
+
 // Constants for position detection
 export const POSITION_HOLD_BUFFER_MS = 1000;
-export const FOOT_TOUCHDOWN_THRESHOLD = 0.03; // 3% - raised foot Y must match standing foot Y (both on ground)
+export const FOOT_TOUCHDOWN_THRESHOLD = 0.05; // 5% - raised foot Y must match standing foot Y (both on ground)
 export const SUPPORT_FOOT_HOP_THRESHOLD = 0.05; // 5% - support foot lifted off ground (hop detection)
 export const TRACKING_LOST_TIMEOUT_MS = 500;
 export const DEFAULT_TARGET_DURATION = 30;
@@ -101,8 +120,8 @@ export const MIN_FOOT_RAISE_THRESHOLD = 0.08; // 8% - minimum height to consider
 // Confidence/visibility thresholds
 export const MIN_ANKLE_VISIBILITY = 0.7; // Minimum confidence to trust ankle position (0-1)
 
-// Raised foot descent threshold - requires foot to have actually descended, not just be at same level
-export const RAISED_FOOT_DESCENT_THRESHOLD = 0.06; // 6% - raised foot must descend this much from initial position
+// Raised foot descent threshold - detects slow lowering of foot (alternative to same-level check)
+export const RAISED_FOOT_DESCENT_THRESHOLD = 0.10; // 10% - triggers touchdown if foot descends this much
 
 // Support foot movement threshold - total displacement (X + Y combined) to detect hop/repositioning
 export const SUPPORT_FOOT_MOVEMENT_THRESHOLD = 0.04; // 4% - total Euclidean distance from initial position
