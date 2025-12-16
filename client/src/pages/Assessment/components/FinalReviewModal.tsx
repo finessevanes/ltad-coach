@@ -6,17 +6,13 @@ import {
   DialogActions,
   Typography,
   Button,
-  Chip,
   Box,
   Stack,
-  Grid,
-  Card,
-  CardContent,
-  Alert,
+  Divider,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 
 interface LegResult {
@@ -34,28 +30,6 @@ interface FinalReviewModalProps {
   onReshootRight: () => void;
 }
 
-/**
- * Calculate quick symmetry score from hold times
- */
-const calculateQuickSymmetry = (
-  leftResult: LegResult,
-  rightResult: LegResult
-) => {
-  const timeDiff = Math.abs(leftResult.holdTime - rightResult.holdTime);
-  const maxTime = Math.max(leftResult.holdTime, rightResult.holdTime);
-  const timeDiffPct = maxTime > 0 ? (timeDiff / maxTime) * 100 : 0;
-  const durationSymmetry = 1 - Math.min(timeDiffPct / 100, 1.0);
-  const score = Math.round(durationSymmetry * 100);
-
-  let assessment: string;
-  if (score >= 85) assessment = 'Excellent';
-  else if (score >= 70) assessment = 'Good';
-  else if (score >= 50) assessment = 'Fair';
-  else assessment = 'Needs Improvement';
-
-  return { score, assessment, timeDiff, timeDiffPct };
-};
-
 export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
   open,
   leftLegResult,
@@ -68,7 +42,7 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
     return null;
   }
 
-  const symmetry = calculateQuickSymmetry(leftLegResult, rightLegResult);
+  const bothComplete = leftLegResult.success && rightLegResult.success;
 
   return (
     <Dialog
@@ -80,151 +54,86 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
           return;
         }
       }}
-      maxWidth="md"
+      maxWidth="sm"
       fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+        },
+      }}
     >
-      <DialogTitle>
-        <Typography variant="h5" component="span">
-          Review Both Tests
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant="h5" fontWeight={600}>
+          Review Your Tests
         </Typography>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent sx={{ pt: 2 }}>
         <Stack spacing={3}>
-          {/* Side-by-side test results */}
-          <Grid container spacing={2}>
-            {/* Left Leg Result */}
-            <Grid item xs={12} sm={6}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Typography variant="h6">Left Leg</Typography>
-                    {leftLegResult.success ? (
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    ) : (
-                      <CancelIcon color="warning" fontSize="small" />
-                    )}
-                  </Box>
-
-                  <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                    (Right foot raised)
-                  </Typography>
-
-                  <Typography variant="h3" color="primary" sx={{ my: 1 }}>
-                    {leftLegResult.holdTime.toFixed(1)}s
-                  </Typography>
-
-                  <Chip
-                    label={leftLegResult.success ? 'Passed' : 'Failed'}
-                    color={leftLegResult.success ? 'success' : 'warning'}
-                    size="small"
-                    sx={{ mt: 1 }}
-                  />
-
-                  {!leftLegResult.success && leftLegResult.failureReason && (
-                    <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                      {leftLegResult.failureReason}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Right Leg Result */}
-            <Grid item xs={12} sm={6}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={1} mb={2}>
-                    <Typography variant="h6">Right Leg</Typography>
-                    {rightLegResult.success ? (
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    ) : (
-                      <CancelIcon color="warning" fontSize="small" />
-                    )}
-                  </Box>
-
-                  <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                    (Left foot raised)
-                  </Typography>
-
-                  <Typography variant="h3" color="primary" sx={{ my: 1 }}>
-                    {rightLegResult.holdTime.toFixed(1)}s
-                  </Typography>
-
-                  <Chip
-                    label={rightLegResult.success ? 'Passed' : 'Failed'}
-                    color={rightLegResult.success ? 'success' : 'warning'}
-                    size="small"
-                    sx={{ mt: 1 }}
-                  />
-
-                  {!rightLegResult.success && rightLegResult.failureReason && (
-                    <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                      {rightLegResult.failureReason}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          {/* Quick symmetry preview */}
-          <Box sx={{ bgcolor: 'grey.50', p: 2.5, borderRadius: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Quick Symmetry Preview
+          {/* Test results - simple text lines */}
+          <Box>
+            <Typography variant="h6" sx={{ mb: 1.5 }}>
+              <strong>Left Leg:</strong> {leftLegResult.holdTime.toFixed(1)}s
             </Typography>
-            <Box display="flex" alignItems="center" gap={2} mt={1.5}>
-              <Typography variant="h4" color="primary">
-                {symmetry.score}/100
-              </Typography>
-              <Chip
-                label={symmetry.assessment}
-                size="small"
-                color={
-                  symmetry.score >= 85
-                    ? 'success'
-                    : symmetry.score >= 70
-                      ? 'primary'
-                      : symmetry.score >= 50
-                        ? 'warning'
-                        : 'error'
-                }
-              />
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Time difference: {symmetry.timeDiff.toFixed(1)}s ({symmetry.timeDiffPct.toFixed(0)}%)
+            <Typography variant="h6" sx={{ mb: 1.5 }}>
+              <strong>Right Leg:</strong> {rightLegResult.holdTime.toFixed(1)}s
             </Typography>
           </Box>
 
-          {/* Info alert */}
-          <Alert severity="info">
-            Ready to upload? Full symmetry analysis will be available after processing.
-          </Alert>
+          <Divider />
+
+          {/* Completion status */}
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <CheckCircleIcon
+              sx={{
+                fontSize: 28,
+                color: bothComplete ? 'success.main' : 'warning.main',
+              }}
+            />
+            <Typography variant="body1" color="text.secondary">
+              {bothComplete ? 'Both tests complete' : 'Tests recorded'}
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          {/* Retake question */}
+          <Box>
+            <Typography variant="body1" fontWeight={500} sx={{ mb: 1.5 }}>
+              Need to retake?
+            </Typography>
+            <Box display="flex" gap={1.5}>
+              <Button
+                onClick={onReshootLeft}
+                variant="outlined"
+                size="medium"
+                sx={{ flex: 1 }}
+              >
+                Redo Left
+              </Button>
+              <Button
+                onClick={onReshootRight}
+                variant="outlined"
+                size="medium"
+                sx={{ flex: 1 }}
+              >
+                Redo Right
+              </Button>
+            </Box>
+          </Box>
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: 1, px: 3, pb: 3 }}>
-        <Button
-          onClick={onReshootLeft}
-          variant="outlined"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
-        >
-          Reshoot Left
-        </Button>
-        <Button
-          onClick={onReshootRight}
-          variant="outlined"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
-        >
-          Reshoot Right
-        </Button>
+      <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
         <Button
           onClick={onContinueToUpload}
           variant="contained"
+          size="large"
+          fullWidth
+          endIcon={<ArrowForwardIcon />}
           autoFocus
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          Upload & Continue
+          View Full Report
         </Button>
       </DialogActions>
     </Dialog>

@@ -96,9 +96,9 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Left Leg Card */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
+        <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+          <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1 }}>
               <Typography variant="h6" color="primary" gutterBottom>
                 Standing on Left Leg
               </Typography>
@@ -121,9 +121,9 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
         </Grid>
 
         {/* Symmetry Card */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ textAlign: 'center' }}>
-            <CardContent>
+        <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+          <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
+            <CardContent sx={{ flexGrow: 1 }}>
               <Typography variant="h6" gutterBottom>
                 Symmetry Analysis
               </Typography>
@@ -155,9 +155,9 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
         </Grid>
 
         {/* Right Leg Card */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
+        <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
+          <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1 }}>
               <Typography variant="h6" color="secondary" gutterBottom>
                 Standing on Right Leg
               </Typography>

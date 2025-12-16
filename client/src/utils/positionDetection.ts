@@ -28,8 +28,10 @@ export function checkBalancePosition(
   const rightShoulder = landmarks[LANDMARK_INDEX.RIGHT_SHOULDER];
 
   // Determine which leg should be raised vs standing
-  const raisedAnkle = legTested === 'left' ? leftAnkle : rightAnkle;
-  const standingAnkle = legTested === 'left' ? rightAnkle : leftAnkle;
+  // NOTE: MediaPipe uses anatomical left/right (person's perspective), but video is mirrored
+  // So we need to swap: when testing 'left', check right ankle, and vice versa
+  const raisedAnkle = legTested === 'left' ? rightAnkle : leftAnkle;
+  const standingAnkle = legTested === 'left' ? leftAnkle : rightAnkle;
 
   // Check 1: Raised foot is elevated
   // In normalized coordinates, Y increases downward, so raised foot has lower Y
@@ -84,9 +86,9 @@ export interface FootTouchdownResult {
  * Check if the raised foot has touched down during the test.
  * Used in HOLDING state for failure detection.
  *
- * Now requires BOTH conditions for a touchdown:
- * 1. Both ankles at the same Y level (existing check)
- * 2. Raised ankle has descended significantly from initial position (new)
+ * Triggers on EITHER condition:
+ * 1. Both ankles at the same Y level (within 3%) - quick touchdown
+ * 2. Raised ankle descended 6%+ AND is no longer raised high - slow lowering
  *
  * Also checks visibility/confidence - skips low-confidence frames instead of failing.
  */
@@ -95,15 +97,16 @@ export function checkFootTouchdown(
   legTested: LegTested,
   initialRaisedAnkleY: number
 ): FootTouchdownResult {
+  // NOTE: Swapped to account for mirrored video
   const raisedAnkle =
-    legTested === 'left'
-      ? landmarks[LANDMARK_INDEX.LEFT_ANKLE]
-      : landmarks[LANDMARK_INDEX.RIGHT_ANKLE];
-
-  const standingAnkle =
     legTested === 'left'
       ? landmarks[LANDMARK_INDEX.RIGHT_ANKLE]
       : landmarks[LANDMARK_INDEX.LEFT_ANKLE];
+
+  const standingAnkle =
+    legTested === 'left'
+      ? landmarks[LANDMARK_INDEX.LEFT_ANKLE]
+      : landmarks[LANDMARK_INDEX.RIGHT_ANKLE];
 
   // Get visibility scores (default to 1 if not available)
   const standingVisibility = standingAnkle.visibility ?? 1;
@@ -121,18 +124,21 @@ export function checkFootTouchdown(
     };
   }
 
-  // Condition 1: Both ankles at same Y level
+  // Check if both ankles are at same Y level (foot is on ground)
   // In normalized coords, Y increases downward (0 = top, 1 = bottom)
   const yDifference = Math.abs(raisedAnkle.y - standingAnkle.y);
   const atSameLevel = yDifference < FOOT_TOUCHDOWN_THRESHOLD;
 
-  // Condition 2: Raised foot has descended from initial position
-  // Y increases downward, so descent = current - initial (positive means lowered)
+  // Also check if raised foot has descended significantly from initial position
+  // This helps distinguish between:
+  // - Actual touchdown (foot lowered to ground level)
+  // - Temporary pose estimation glitches
   const descent = raisedAnkle.y - initialRaisedAnkleY;
   const hasDescended = descent > RAISED_FOOT_DESCENT_THRESHOLD;
 
-  // Only fail if BOTH conditions are true
-  const touchedDown = atSameLevel && hasDescended;
+  // Fail if ankles are at same level OR foot has descended significantly
+  // This catches both slow lowering and quick touchdowns
+  const touchedDown = atSameLevel || (hasDescended && yDifference < MIN_FOOT_RAISE_THRESHOLD);
 
   return {
     triggered: touchedDown,
@@ -174,10 +180,11 @@ export function checkSupportFootMoved(
   initialStandingAnkleX: number,
   initialStandingAnkleY: number
 ): SupportFootHopResult {
+  // NOTE: Swapped to account for mirrored video
   const standingAnkle =
     legTested === 'left'
-      ? landmarks[LANDMARK_INDEX.RIGHT_ANKLE]
-      : landmarks[LANDMARK_INDEX.LEFT_ANKLE];
+      ? landmarks[LANDMARK_INDEX.LEFT_ANKLE]
+      : landmarks[LANDMARK_INDEX.RIGHT_ANKLE];
 
   // Get visibility score (default to 1 if not available)
   const visibility = standingAnkle.visibility ?? 1;
@@ -276,15 +283,16 @@ export function getInitialPositions(
   landmarks: PoseLandmark[],
   legTested: LegTested
 ): InitialPositions {
+  // NOTE: Swapped to account for mirrored video
   const standingAnkle =
-    legTested === 'left'
-      ? landmarks[LANDMARK_INDEX.RIGHT_ANKLE]
-      : landmarks[LANDMARK_INDEX.LEFT_ANKLE];
-
-  const raisedAnkle =
     legTested === 'left'
       ? landmarks[LANDMARK_INDEX.LEFT_ANKLE]
       : landmarks[LANDMARK_INDEX.RIGHT_ANKLE];
+
+  const raisedAnkle =
+    legTested === 'left'
+      ? landmarks[LANDMARK_INDEX.RIGHT_ANKLE]
+      : landmarks[LANDMARK_INDEX.LEFT_ANKLE];
 
   return {
     standingAnkleX: standingAnkle.x,
