@@ -6,18 +6,19 @@ import {
   Typography,
   Chip,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material';
 import {
   Stop as StopIcon,
   CheckCircle as ReadyIcon,
   Videocam as CameraIcon,
-  ExpandMore as ExpandMoreIcon,
   Info as InfoIcon,
   Replay as ReplayIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useCamera } from '../../../hooks/useCamera';
 import { useMediaPipe } from '../../../hooks/useMediaPipe';
@@ -25,7 +26,7 @@ import { useVideoRecorder } from '../../../hooks/useVideoRecorder';
 import { useBalanceTest } from '../../../hooks/useBalanceTest';
 import { VideoPreview } from '../components/VideoPreview';
 import { CameraSelector } from '../components/CameraSelector';
-import { BalanceTestOverlay } from '../../../components/BalanceTestOverlay';
+import { MetricsPanel } from '../../../components/MetricsPanel';
 import { TestType, LegTested } from '../../../types/assessment';
 import { TestResult } from '../../../types/balanceTest';
 
@@ -52,7 +53,6 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
   onRecordingComplete,
   onBack,
   autoStart = false,
-  instructionText,
 }) => {
   const [phase, setPhase] = useState<RecordingPhase>(
     autoStart ? 'testing' : 'setup'
@@ -87,17 +87,26 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
     setLegTested(parentLegTested);
   }, [parentLegTested, setLegTested]);
 
-  // Balance test state machine - debug mode enabled
+  // Balance test state machine
   const {
     testState,
     holdTime,
-    failureReason,
-    positionStatus,
     testResult,
-    debugInfo,
+    currentMetrics,
     startTest,
     resetTest,
   } = useBalanceTest(poseResult, legTested, { debug: true });
+
+  // ===== PHASE 1 TEST: Log real-time metrics =====
+  // NOTE: Disabled - hip sway/corrections/balance status removed due to coordinate bug
+  // useEffect(() => {
+  //   if (currentMetrics && testState === 'holding') {
+  //     console.log('📊 REAL-TIME METRICS:', {
+  //       armLeft: currentMetrics.armAngleLeft?.toFixed(1) + '°',
+  //       armRight: currentMetrics.armAngleRight?.toFixed(1) + '°',
+  //     });
+  //   }
+  // }, [currentMetrics, testState]);
 
   // Reset test when component mounts (critical for right leg in dual-leg mode)
   useEffect(() => {
@@ -265,26 +274,21 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
   return (
     <Box>
-      {/* Instruction Banner */}
-      {instructionText && !isTestEnded && (
-        <Alert
-          severity="info"
-          sx={{
-            mb: 2,
-            fontSize: '1.1rem',
-            fontWeight: 'medium',
-          }}
-        >
-          {instructionText}
-        </Alert>
-      )}
-
       {/* Header - only show in setup phase */}
       {phase === 'setup' && (
         <Box mb={2}>
-          <Typography variant="h5" gutterBottom>
-            Recording Setup
-          </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="h5">
+              Recording Setup
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setShowPositioningTips(true)}
+              sx={{ color: 'primary.main' }}
+            >
+              <InfoIcon />
+            </IconButton>
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Select your camera and position the athlete in frame
           </Typography>
@@ -310,168 +314,187 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
         </Box>
       )}
 
-      <Paper
+      {/* Video + Metrics Layout */}
+      <Box
         sx={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '16/9',
-          overflow: 'hidden',
-          bgcolor: 'black',
+          display: 'grid',
+          gridTemplateColumns: phase === 'testing' ? '1fr 300px' : '1fr',
+          gap: 2,
           mb: 3,
+          maxWidth: phase === 'testing' ? '1150px' : '800px',
+          mx: 'auto',
         }}
       >
-        {/* Loading Overlay - only in setup */}
-        {loading && phase === 'setup' && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: 'rgba(0,0,0,0.7)',
-              zIndex: 10,
-            }}
-          >
-            <Box textAlign="center">
-              <CircularProgress sx={{ mb: 2 }} />
-              <Typography color="white">
-                {cameraLoading ? 'Accessing camera...' : 'Loading pose detection...'}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-
-        <VideoPreview videoRef={videoRef} canvasRef={canvasRef} mirrored />
-
-        {/* Person Positioning Guide - only when no person detected in setup */}
-        {!isPersonDetected && phase === 'setup' && !loading && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-              zIndex: 3,
-            }}
-          >
+        {/* Video Container */}
+        <Paper
+          sx={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16/9',
+            overflow: 'hidden',
+            bgcolor: 'black',
+          }}
+        >
+          {/* Loading Overlay - only in setup */}
+          {loading && phase === 'setup' && (
             <Box
               sx={{
-                width: '30%',
-                height: '80%',
-                border: '2px dashed rgba(255,255,255,0.5)',
-                borderRadius: 2,
+                position: 'absolute',
+                inset: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                bgcolor: 'rgba(0,0,0,0.7)',
+                zIndex: 10,
               }}
             >
-              <Typography color="white" sx={{ opacity: 0.7 }}>
-                Position athlete here
+              <Box textAlign="center">
+                <CircularProgress sx={{ mb: 2 }} />
+                <Typography color="white">
+                  {cameraLoading ? 'Accessing camera...' : 'Loading pose detection...'}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          <VideoPreview videoRef={videoRef} canvasRef={canvasRef} mirrored />
+
+          {/* Person Positioning Guide - only when no person detected in setup */}
+          {!isPersonDetected && phase === 'setup' && !loading && (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 3,
+              }}
+            >
+              <Box
+                sx={{
+                  width: '30%',
+                  height: '80%',
+                  border: '2px dashed rgba(255,255,255,0.5)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography color="white" sx={{ opacity: 0.7 }}>
+                  Position athlete here
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* Recording indicator - during active test */}
+          {phase === 'testing' && isTestActive && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                zIndex: 15,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: 'error.main',
+                  animation: 'pulse 1s infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0.5 },
+                  },
+                }}
+              />
+              <Typography color="white" fontWeight="bold">
+                REC
               </Typography>
             </Box>
-          </Box>
-        )}
+          )}
 
-        {/* Balance Test Overlay - during testing phase */}
-        {phase === 'testing' && (
-          <BalanceTestOverlay
-            testState={testState}
-            holdTime={holdTime}
-            failureReason={failureReason}
-            positionStatus={positionStatus}
-            debugInfo={debugInfo}
-          />
-        )}
-
-        {/* Recording indicator - during active test */}
-        {phase === 'testing' && isTestActive && (
+          {/* Status Chips - top-right corner */}
           <Box
             sx={{
               position: 'absolute',
-              top: 16,
-              left: 16,
+              top: 8,
+              right: 8,
               display: 'flex',
-              alignItems: 'center',
               gap: 1,
               zIndex: 15,
             }}
           >
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                bgcolor: 'error.main',
-                animation: 'pulse 1s infinite',
-                '@keyframes pulse': {
-                  '0%, 100%': { opacity: 1 },
-                  '50%': { opacity: 0.5 },
-                },
-              }}
-            />
-            <Typography color="white" fontWeight="bold">
-              REC
-            </Typography>
-          </Box>
-        )}
-
-        {/* Status Chips - top-right corner */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            display: 'flex',
-            gap: 1,
-            zIndex: 15,
-          }}
-        >
-          {/* FPS Chip - always visible */}
-          <Chip
-            size="small"
-            label={`${fps} FPS`}
-            color={fps >= 15 ? 'success' : 'warning'}
-          />
-
-          {/* Person Detection Chip - only in setup */}
-          {phase === 'setup' && (
+            {/* FPS Chip - always visible */}
             <Chip
               size="small"
-              icon={isPersonDetected ? <ReadyIcon /> : <CameraIcon />}
-              label={isPersonDetected ? 'Ready' : 'No Person'}
-              color={isPersonDetected ? 'success' : 'default'}
+              label={`${fps} FPS`}
+              color={fps >= 15 ? 'success' : 'warning'}
             />
-          )}
-        </Box>
-      </Paper>
 
-      {/* Positioning Tips Accordion - only in setup */}
-      {phase === 'setup' && (
-        <Accordion
-          expanded={showPositioningTips}
-          onChange={(_, expanded) => setShowPositioningTips(expanded)}
-          sx={{ mb: 3 }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="body2">
-              <InfoIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
-              Positioning Tips
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
-              <li>Full body should be visible in frame</li>
-              <li>Ensure good lighting on the athlete</li>
-              <li>Avoid busy backgrounds if possible</li>
-              <li>Camera should be at athlete&apos;s chest height</li>
-              <li>Athlete should raise their {legTested} foot for this test</li>
-            </ul>
-          </AccordionDetails>
-        </Accordion>
-      )}
+            {/* Person Detection Chip - only in setup */}
+            {phase === 'setup' && (
+              <Chip
+                size="small"
+                icon={isPersonDetected ? <ReadyIcon /> : <CameraIcon />}
+                label={isPersonDetected ? 'Ready' : 'No Person'}
+                color={isPersonDetected ? 'success' : 'default'}
+              />
+            )}
+          </Box>
+        </Paper>
+
+        {/* Metrics Panel - only during testing phase */}
+        {phase === 'testing' && (
+          <MetricsPanel
+            testState={testState}
+            holdTime={holdTime}
+            currentMetrics={currentMetrics}
+            targetDuration={30}
+            legTested={legTested}
+          />
+        )}
+      </Box>
+
+      {/* Positioning Tips Dialog */}
+      <Dialog
+        open={showPositioningTips}
+        onClose={() => setShowPositioningTips(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={1}>
+              <InfoIcon color="primary" />
+              <Typography variant="h6">Positioning Tips</Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => setShowPositioningTips(false)}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <li>Full body should be visible in frame</li>
+            <li>Ensure good lighting on the athlete</li>
+            <li>Avoid busy backgrounds if possible</li>
+            <li>Camera should be at athlete&apos;s chest height</li>
+            <li>Athlete should raise their {legTested} foot for this test</li>
+          </ul>
+        </DialogContent>
+      </Dialog>
 
       <Box display="flex" justifyContent="center" gap={2}>
         {/* Setup phase buttons */}

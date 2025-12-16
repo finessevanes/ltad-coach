@@ -7,6 +7,7 @@ import {
   Paper,
   IconButton,
   Chip,
+  Skeleton,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -18,6 +19,7 @@ interface DashboardHeaderProps {
   athletes: Athlete[];
   selectedAthlete: Athlete | null;
   onAthleteSelect: (athlete: Athlete | null) => void;
+  loading?: boolean;
 }
 
 const aiTabs = ['Balance Exercises', 'Coaching Cues', 'Athlete Analysis'];
@@ -26,6 +28,7 @@ export function DashboardHeader({
   athletes,
   selectedAthlete,
   onAthleteSelect,
+  loading = false,
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const [aiQuery, setAiQuery] = useState('');
@@ -62,6 +65,28 @@ export function DashboardHeader({
       setAiQuery(tabPrompts[tab] || '');
     }
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ mb: 4 }}>
+        {/* Greeting Skeleton */}
+        <Skeleton variant="text" width={250} height={48} sx={{ mb: 3 }} />
+
+        {/* Athlete Selector Skeleton */}
+        <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 2 }} />
+
+        {/* AI Input Field Skeleton */}
+        <Skeleton variant="rectangular" height={56} sx={{ mb: 2, borderRadius: 3 }} />
+
+        {/* Filter Tabs Skeleton */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Skeleton variant="rectangular" width={140} height={32} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" width={130} height={32} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" width={150} height={32} sx={{ borderRadius: 2 }} />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mb: 4 }}>

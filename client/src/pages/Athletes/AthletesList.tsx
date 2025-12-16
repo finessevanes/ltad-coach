@@ -33,6 +33,11 @@ export default function AthletesList() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
+    // Load dismissed alerts from localStorage
+    const stored = localStorage.getItem('dismissedConsentAlerts');
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
 
@@ -83,6 +88,15 @@ export default function AthletesList() {
     }
   };
 
+  // Handle dismiss consent alert
+  const handleDismissAlert = (athleteId: string) => {
+    const newDismissed = new Set(dismissedAlerts);
+    newDismissed.add(athleteId);
+    setDismissedAlerts(newDismissed);
+    // Persist to localStorage
+    localStorage.setItem('dismissedConsentAlerts', JSON.stringify([...newDismissed]));
+  };
+
   // Show empty state if no athletes exist at all
   if (!loading && athletes.length === 0 && !statusFilter && !searchQuery) {
     return (
@@ -117,15 +131,16 @@ export default function AthletesList() {
       )}
 
       {/* Consent Alerts for pending/declined athletes */}
-      {!loading && filteredAthletes.some((a) => a.consentStatus === 'pending' || a.consentStatus === 'declined') && (
+      {!loading && filteredAthletes.some((a) => (a.consentStatus === 'pending' || a.consentStatus === 'declined') && !dismissedAlerts.has(a.id)) && (
         <Stack spacing={2} sx={{ mb: 3 }}>
           {filteredAthletes
-            .filter((a) => a.consentStatus === 'pending' || a.consentStatus === 'declined')
+            .filter((a) => (a.consentStatus === 'pending' || a.consentStatus === 'declined') && !dismissedAlerts.has(a.id))
             .map((athlete) => (
               <ConsentAlert
                 key={athlete.id}
                 athlete={athlete}
                 onResend={() => handleResendConsent(athlete.id, athlete.name)}
+                onDismiss={() => handleDismissAlert(athlete.id)}
               />
             ))}
         </Stack>

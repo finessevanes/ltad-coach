@@ -118,12 +118,12 @@ export function useMediaPipe(
         const drawingUtils = new DrawingUtils(ctx);
         drawingUtils.drawLandmarks(result.landmarks[0], {
           radius: 2,
-          color: '#00FF00',
+          color: '#FFFFFF',
         });
         drawingUtils.drawConnectors(
           result.landmarks[0],
           PoseLandmarker.POSE_CONNECTIONS,
-          { color: '#00FF00', lineWidth: 1 }
+          { color: '#FFFFFF', lineWidth: 1 }
         );
       } else {
         setIsPersonDetected(false);

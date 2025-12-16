@@ -111,7 +111,7 @@ export default function AssessmentFlow() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Phase 1: Left Leg Testing (raise left foot, stand on right) */}
       {phase === 'left-leg-testing' && (
         <RecordingStep

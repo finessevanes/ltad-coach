@@ -274,9 +274,9 @@ export const theme = createTheme({
           borderLeft: '4px solid #10B981',
         },
         standardWarning: {
-          backgroundColor: '#FEF3C7',
-          color: '#F59E0B',
-          borderLeft: '4px solid #F59E0B',
+          backgroundColor: '#FFF7ED',
+          color: '#EA580C',
+          borderLeft: '4px solid #F97316',
         },
         standardError: {
           backgroundColor: '#FEE2E2',

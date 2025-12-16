@@ -6,13 +6,11 @@ import {
   DialogActions,
   Typography,
   Button,
-  Chip,
   Box,
   Stack,
 } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 
 interface TransitionModalProps {
@@ -59,30 +57,17 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
       fullWidth
     >
       <DialogTitle>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="h5" component="span">
-            {completedLegName} Leg Test Complete
-          </Typography>
-          {success ? (
-            <CheckCircleIcon color="success" fontSize="large" />
-          ) : (
-            <CancelIcon color="warning" fontSize="large" />
-          )}
-        </Box>
+        <Typography variant="h5" component="span">
+          {completedLegName} Leg Test Complete
+        </Typography>
+        <Typography variant="body2" color="primary" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <InfoIcon fontSize="small" />
+          Let's review your attempt
+        </Typography>
       </DialogTitle>
 
       <DialogContent>
         <Stack spacing={3}>
-          {/* Status Chip */}
-          <Box>
-            <Chip
-              label={success ? 'Test Passed' : 'Test Failed'}
-              color={success ? 'success' : 'warning'}
-              icon={success ? <CheckCircleIcon /> : <CancelIcon />}
-              sx={{ fontSize: '1rem', py: 2.5 }}
-            />
-          </Box>
-
           {/* Hold Time */}
           <Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -93,11 +78,19 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
             </Typography>
           </Box>
 
-          {/* Failure Reason (if applicable) */}
+          {/* What happened note (if test ended early) */}
           {!success && failureReason && (
-            <Box>
+            <Box
+              sx={{
+                bgcolor: 'warning.50',
+                p: 2,
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'warning.200',
+              }}
+            >
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Reason
+                What happened:
               </Typography>
               <Typography variant="body1">
                 {failureReason}
@@ -119,7 +112,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
               Ready to test the {nextLegName.toLowerCase()} leg?
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              You can reshoot the {completedLegName.toLowerCase()} leg if needed, or continue to the {nextLegName.toLowerCase()} leg test.
+              You can try the {completedLegName.toLowerCase()} leg again to improve your time, or move on to test your {nextLegName.toLowerCase()} leg.
             </Typography>
           </Box>
         </Stack>
@@ -132,7 +125,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           color="secondary"
           size="large"
         >
-          Reshoot {completedLegName} Leg
+          Try {completedLegName} Leg Again
         </Button>
         <Button
           onClick={onContinue}
