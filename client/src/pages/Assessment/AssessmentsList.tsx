@@ -55,20 +55,15 @@ export default function AssessmentsList() {
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
-    console.log('[AssessmentsList] Component mounted, initializing fetch');
-
     const fetchAssessments = async () => {
       try {
-        console.log('[AssessmentsList] Fetch started, loading=true');
         setLoading(true);
         const data = await assessmentsService.getAll(50);
-        console.log('[AssessmentsList] Fetch success, received', data.length, 'assessments');
         setAssessments(data);
       } catch (error) {
         console.error('[AssessmentsList] Fetch error:', error);
         showSnackbar('Failed to load assessments', 'error');
       } finally {
-        console.log('[AssessmentsList] Fetch completed, loading=false');
         setLoading(false);
       }
     };
@@ -117,11 +112,8 @@ export default function AssessmentsList() {
     }).format(date);
   };
 
-  console.log('[AssessmentsList] Render - loading:', loading, 'assessments count:', assessments.length);
-
   // Loading state
   if (loading) {
-    console.log('[AssessmentsList] Rendering loading state');
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Page Header Skeleton */}
@@ -217,7 +209,6 @@ export default function AssessmentsList() {
 
   // Empty state
   if (assessments.length === 0) {
-    console.log('[AssessmentsList] Rendering empty state');
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -241,7 +232,6 @@ export default function AssessmentsList() {
   }
 
   // Main content
-  console.log('[AssessmentsList] Rendering main content with', assessments.length, 'assessments');
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Page Header */}
