@@ -55,24 +55,50 @@ def _get_assessment_score(assessment: Assessment) -> int:
 
 
 def _compute_graph_data(assessments: List[Assessment]) -> List[ReportGraphDataPoint]:
-    """Transform assessments into chart-ready data points.
+    """Transform assessments into chart-ready data points with bilateral support.
 
     Args:
         assessments: List of assessments (most recent first from repository)
 
     Returns:
         List of graph data points sorted chronologically (oldest first)
+        with separate left_leg and right_leg fields for bilateral visualization
     """
     # Sort chronologically (oldest first) for graph display
     sorted_assessments = sorted(assessments, key=lambda a: a.created_at)
 
-    return [
-        ReportGraphDataPoint(
+    data_points = []
+    for a in sorted_assessments:
+        # Extract bilateral data
+        left_leg_time = None
+        right_leg_time = None
+
+        if a.leg_tested.value == "both":
+            # Dual-leg assessment
+            if a.left_leg_metrics:
+                left_leg_time = a.left_leg_metrics.hold_time
+            if a.right_leg_metrics:
+                right_leg_time = a.right_leg_metrics.hold_time
+        elif a.leg_tested.value == "left":
+            # Single left leg
+            if a.metrics:
+                left_leg_time = a.metrics.hold_time
+        elif a.leg_tested.value == "right":
+            # Single right leg
+            if a.metrics:
+                right_leg_time = a.metrics.hold_time
+
+        # Legacy duration field (left leg for consistency)
+        duration = left_leg_time or right_leg_time or 0.0
+
+        data_points.append(ReportGraphDataPoint(
             date=a.created_at.strftime("%b %d"),
-            duration=_get_assessment_hold_time(a)
-        )
-        for a in sorted_assessments
-    ]
+            duration=duration,
+            left_leg=left_leg_time,
+            right_leg=right_leg_time
+        ))
+
+    return data_points
 
 
 def _compute_progress_snapshot(assessments: List[Assessment]) -> Optional[ProgressSnapshot]:

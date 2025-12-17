@@ -3,7 +3,9 @@ import { api } from './api';
 // New types for enhanced parent reports
 export interface ReportGraphDataPoint {
   date: string;      // "Dec 15"
-  duration: number;  // hold time in seconds
+  duration: number;  // hold time in seconds (legacy - left leg for dual-leg)
+  leftLeg?: number;  // left leg hold time
+  rightLeg?: number; // right leg hold time
 }
 
 export interface ProgressSnapshot {
