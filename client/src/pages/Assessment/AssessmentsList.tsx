@@ -70,7 +70,8 @@ export default function AssessmentsList() {
     };
 
     fetchAssessments();
-  }, [showSnackbar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch on mount, showSnackbar is stable
 
   const handleAssessmentClick = (assessmentId: string) => {
     navigate(`/assessments/${assessmentId}`);
