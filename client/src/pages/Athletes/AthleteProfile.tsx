@@ -181,6 +181,15 @@ export default function AthleteProfile() {
               borderRadius: 1.5,
               textTransform: 'none',
               fontWeight: 600,
+              borderColor: 'black',
+              color: 'black',
+              '& .MuiSvgIcon-root': {
+                color: 'black',
+              },
+              '&:hover': {
+                borderColor: 'black',
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
             }}
           >
             Upload Video
@@ -194,6 +203,15 @@ export default function AthleteProfile() {
               borderRadius: 1.5,
               textTransform: 'none',
               fontWeight: 600,
+              borderColor: 'black',
+              color: 'black',
+              '& .MuiSvgIcon-root': {
+                color: 'black',
+              },
+              '&:hover': {
+                borderColor: 'black',
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
             }}
           >
             Generate Report

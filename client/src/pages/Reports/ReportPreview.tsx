@@ -153,8 +153,14 @@ export default function ReportPreviewPage() {
                 onClick={() => setConfirmModalOpen(true)}
                 disabled={sending}
                 sx={{
-                  backgroundColor: '#2563EB',
-                  '&:hover': { backgroundColor: '#1D4ED8' },
+                  backgroundColor: '#000000',
+                  color: '#FFFFFF',
+                  '& .MuiSvgIcon-root': {
+                    color: '#FFFFFF',
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                  },
                 }}
               >
                 {sending ? 'Sending...' : 'Send to Parent'}
