@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -27,80 +27,65 @@ import {
   Upload as UploadIcon,
   Description as ReportIcon,
 } from '@mui/icons-material';
-import athletesService from '../../services/athletes';
-import assessmentsService from '../../services/assessments';
-import { reportsApi, ReportListItem } from '../../services/reports';
-import { Athlete } from '../../types/athlete';
+import { useAthlete, useDeleteAthlete } from '../../hooks/useAthletes';
+import { useAthleteAssessments } from '../../hooks/useAssessments';
+import { reportsApi } from '../../services/reports';
 import { StatusBadge } from '../../components/StatusBadge';
 import { AssessmentHistory } from './AssessmentHistory';
 import { ProgressChart } from './ProgressChart';
 import { EditAthleteModal } from './EditAthleteModal';
 import { ReportHistory } from '../Reports/ReportHistory';
 import { useSnackbar } from '../../contexts/SnackbarContext';
-
-interface AssessmentListItem {
-  id: string;
-  athleteId: string;
-  athleteName: string;
-  testType: string;
-  legTested: string;
-  createdAt: string;
-  status: string;
-  durationSeconds?: number;
-}
+import { useQuery } from '@tanstack/react-query';
 
 export default function AthleteProfile() {
   const { athleteId } = useParams<{ athleteId: string }>();
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
 
-  const [athlete, setAthlete] = useState<Athlete | null>(null);
-  const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
-  const [reports, setReports] = useState<ReportListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // Use React Query hooks for parallel data fetching with caching
+  const { data: athlete, isLoading: athleteLoading, error: athleteError } = useAthlete(athleteId);
+  const { data: assessmentsResponse, isLoading: assessmentsLoading } = useAthleteAssessments(athleteId);
+  const { data: reports, isLoading: reportsLoading } = useQuery({
+    queryKey: ['reports', 'athlete', athleteId],
+    queryFn: () => reportsApi.getByAthlete(athleteId!),
+    enabled: !!athleteId,
+  });
+
+  const deleteAthleteMutation = useDeleteAthlete();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [athleteId]);
+  // Combine loading states
+  const loading = athleteLoading || assessmentsLoading || reportsLoading;
+  const error = athleteError ? (athleteError as any).message || 'Failed to load athlete data' : '';
 
-  const loadData = async () => {
-    if (!athleteId) return;
-    try {
-      setLoading(true);
-      const [athleteData, assessmentsResponse, reportsData] = await Promise.all([
-        athletesService.getById(athleteId),
-        assessmentsService.getByAthlete(athleteId),
-        reportsApi.getByAthlete(athleteId),
-      ]);
-      setAthlete(athleteData);
-      setAssessments(assessmentsResponse.assessments);
-      setReports(reportsData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load athlete data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Extract assessments from response
+  const assessments = assessmentsResponse?.assessments || [];
 
   const handleDelete = async () => {
     if (!athleteId) return;
-    try {
-      await athletesService.delete(athleteId);
-      showSnackbar('Athlete deleted successfully', 'success');
-      navigate('/athletes');
-    } catch (err: any) {
-      showSnackbar(err.message || 'Failed to delete athlete', 'error');
-    }
-    setDeleteDialogOpen(false);
+
+    deleteAthleteMutation.mutate(athleteId, {
+      onSuccess: () => {
+        showSnackbar('Athlete deleted successfully', 'success');
+        navigate('/athletes');
+      },
+      onError: (err: any) => {
+        showSnackbar(err.message || 'Failed to delete athlete', 'error');
+      },
+    });
   };
 
-  const handleAthleteUpdated = async () => {
-    await loadData();
+  const loadData = async () => {
+    // No longer needed - React Query handles refetching automatically
+    // Kept as empty function for compatibility with existing code
+  };
+
+  const handleAthleteUpdated = () => {
+    // React Query will automatically refetch when cache is invalidated
     showSnackbar('Athlete updated successfully', 'success');
   };
 
@@ -243,7 +228,7 @@ export default function AthleteProfile() {
         <Grid item xs={12}>
           <ReportHistory
             athleteId={athleteId!}
-            reports={reports}
+            reports={reports || []}
             onReportResent={loadData}
           />
         </Grid>

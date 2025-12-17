@@ -2,18 +2,16 @@ import { useState } from 'react';
 import {
   Box,
   Typography,
-  TextField,
-  Autocomplete,
-  Paper,
-  IconButton,
-  Chip,
+  Button,
   Skeleton,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import { useNavigate } from 'react-router-dom';
 import { Athlete } from '../../../types/athlete';
 import { getGreeting } from '../../../utils/dateUtils';
+import { ChatInput } from '../../AICoach/components/ChatInput';
 
 interface DashboardHeaderProps {
   athletes: Athlete[];
@@ -22,7 +20,23 @@ interface DashboardHeaderProps {
   loading?: boolean;
 }
 
-const aiTabs = ['Balance Exercises', 'Coaching Cues', 'Athlete Analysis'];
+const aiTabs = [
+  {
+    icon: <FitnessCenterIcon sx={{ fontSize: 16 }} />,
+    label: 'Balance Exercises',
+    prompt: 'What balance exercises do you recommend',
+  },
+  {
+    icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
+    label: 'Coaching Cues',
+    prompt: 'What are some coaching cues for',
+  },
+  {
+    icon: <PersonSearchIcon sx={{ fontSize: 16 }} />,
+    label: 'Athlete Analysis',
+    prompt: 'Analyze the progress of',
+  },
+];
 
 export function DashboardHeader({
   athletes,
@@ -32,38 +46,21 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const [aiQuery, setAiQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<string | null>(null);
 
-  const handleAISubmit = () => {
-    if (aiQuery.trim()) {
+  const handleAISubmit = (message: string, athleteId?: string) => {
+    if (message.trim()) {
       // Navigate to AI Coach with initial query
       navigate('/ai-coach', {
         state: {
-          initialQuery: aiQuery,
-          athleteId: selectedAthlete?.id,
+          initialQuery: message,
+          athleteId: athleteId || selectedAthlete?.id,
         },
       });
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAISubmit();
-    }
-  };
-
-  const handleTabClick = (tab: string) => {
-    setActiveTab(activeTab === tab ? null : tab);
-    // Optionally pre-fill query based on tab
-    if (activeTab !== tab) {
-      const tabPrompts: Record<string, string> = {
-        'Balance Exercises': 'What balance exercises do you recommend',
-        'Coaching Cues': 'What are some coaching cues for',
-        'Athlete Analysis': 'Analyze the progress of',
-      };
-      setAiQuery(tabPrompts[tab] || '');
-    }
+  const handleTabClick = (prompt: string) => {
+    setAiQuery(prompt);
   };
 
   if (loading) {
@@ -72,17 +69,14 @@ export function DashboardHeader({
         {/* Greeting Skeleton */}
         <Skeleton variant="text" width={250} height={48} sx={{ mb: 3 }} />
 
-        {/* Athlete Selector Skeleton */}
-        <Skeleton variant="rectangular" height={40} sx={{ mb: 2, borderRadius: 2 }} />
-
-        {/* AI Input Field Skeleton */}
+        {/* ChatInput Skeleton */}
         <Skeleton variant="rectangular" height={56} sx={{ mb: 2, borderRadius: 3 }} />
 
-        {/* Filter Tabs Skeleton */}
+        {/* Action Buttons Skeleton */}
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Skeleton variant="rectangular" width={140} height={32} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rectangular" width={130} height={32} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rectangular" width={150} height={32} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" width={160} height={40} sx={{ borderRadius: 3 }} />
+          <Skeleton variant="rectangular" width={140} height={40} sx={{ borderRadius: 3 }} />
+          <Skeleton variant="rectangular" width={150} height={40} sx={{ borderRadius: 3 }} />
         </Box>
       </Box>
     );
@@ -99,105 +93,42 @@ export function DashboardHeader({
         {getGreeting()} coach
       </Typography>
 
-      {/* Athlete Context Dropdown */}
-      <Autocomplete
-        options={athletes}
-        value={selectedAthlete}
-        onChange={(_, value) => onAthleteSelect(value)}
-        getOptionLabel={(option) => option.name}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        popupIcon={<KeyboardArrowDownIcon />}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder="Select athlete for context (optional)"
-            size="small"
+      {/* Chat Input */}
+      <Box sx={{ mb: 2 }}>
+        <ChatInput
+          onSend={handleAISubmit}
+          disabled={false}
+          athletes={athletes}
+          selectedAthlete={selectedAthlete}
+          onAthleteSelect={onAthleteSelect}
+          suggestedPrompt={aiQuery}
+          onSuggestedPromptConsumed={() => setAiQuery('')}
+        />
+      </Box>
+
+      {/* Action Buttons */}
+      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+        {aiTabs.map((tab) => (
+          <Button
+            key={tab.label}
+            variant="outlined"
+            startIcon={tab.icon}
+            onClick={() => handleTabClick(tab.prompt)}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                backgroundColor: 'background.paper',
+              borderRadius: 3,
+              px: 2.5,
+              py: 1,
+              textTransform: 'none',
+              borderColor: 'divider',
+              color: 'text.primary',
+              '&:hover': {
+                borderColor: 'primary.main',
+                bgcolor: 'action.hover',
               },
             }}
-          />
-        )}
-        renderOption={(props, option) => (
-          <li {...props} key={option.id}>
-            <Box>
-              <Typography variant="body2">{option.name}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                Age {option.age} {option.gender}
-              </Typography>
-            </Box>
-          </li>
-        )}
-        sx={{ mb: 2 }}
-      />
-
-      {/* AI Input Field */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 0.5,
-          pl: 2,
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'grey.200',
-        }}
-      >
-        <TextField
-          fullWidth
-          value={aiQuery}
-          onChange={(e) => setAiQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask for recommendations or insights"
-          variant="standard"
-          InputProps={{
-            disableUnderline: true,
-          }}
-          sx={{
-            '& .MuiInputBase-input': {
-              py: 1,
-            },
-          }}
-        />
-        <IconButton
-          color="primary"
-          onClick={handleAISubmit}
-          disabled={!aiQuery.trim()}
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            '&:hover': {
-              bgcolor: 'primary.dark',
-            },
-            '&.Mui-disabled': {
-              bgcolor: 'grey.300',
-              color: 'grey.500',
-            },
-          }}
-        >
-          <SendIcon fontSize="small" />
-        </IconButton>
-      </Paper>
-
-      {/* Filter Tabs */}
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        {aiTabs.map((tab) => (
-          <Chip
-            key={tab}
-            label={tab}
-            onClick={() => handleTabClick(tab)}
-            color={activeTab === tab ? 'primary' : 'default'}
-            variant={activeTab === tab ? 'filled' : 'outlined'}
-            sx={{
-              borderRadius: 2,
-              fontWeight: 500,
-            }}
-          />
+          >
+            {tab.label}
+          </Button>
         ))}
       </Box>
     </Box>

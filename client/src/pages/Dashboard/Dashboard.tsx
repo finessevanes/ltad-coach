@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from './components/DashboardHeader';
@@ -6,8 +6,8 @@ import { QuickActionCards } from './components/QuickActionCards';
 import { AthletesPanel } from './components/AthletesPanel';
 import { RecentAssessmentsPanel } from './components/RecentAssessmentsPanel';
 import { AthletePickerModal } from './components/AthletePickerModal';
-import athletesService from '../../services/athletes';
-import { dashboardApi } from '../../services/dashboardApi';
+import { useDashboard } from '../../hooks/useDashboard';
+import { useResendConsent } from '../../hooks/useAthletes';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
@@ -21,68 +21,42 @@ import { useSnackbar } from '../../contexts/SnackbarContext';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [athletes, setAthletes] = useState<Athlete[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [showAthletePickerModal, setShowAthletePickerModal] = useState(false);
   const { showSnackbar } = useSnackbar();
 
-  // Dashboard data state
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  // Fetch dashboard data with React Query (automatic caching & deduplication)
+  const { data: dashboardData, isLoading: loading, error } = useDashboard();
 
-  // Fetch dashboard data on mount
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
+  // Mutation for resending consent
+  const resendConsentMutation = useResendConsent();
 
-        // Fetch dashboard data from API and athletes list
-        try {
-          const [dashboardResponse, athletesData] = await Promise.all([
-            dashboardApi.getData(),
-            athletesService.getAll(),
-          ]);
-          setDashboardData(dashboardResponse);
-          setAthletes(athletesData);
-        } catch (apiErr: any) {
-          // Fallback: If dashboard API fails, still try to fetch athletes
-          console.warn('Dashboard API error:', apiErr);
-          try {
-            const athletesData = await athletesService.getAll();
-            setAthletes(athletesData);
-          } catch {
-            // Both failed, show error
-            throw apiErr;
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        showSnackbar('Failed to load dashboard data', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Show error if fetch failed
+  if (error) {
+    showSnackbar('Failed to load dashboard data', 'error');
+  }
 
-    fetchDashboardData();
-  }, []);
-
-  // Use API data if available, otherwise fallback to empty array
+  // Extract data from dashboard response
+  const athletes = dashboardData?.athletes || [];
   const recentAssessments = dashboardData?.recentAssessments || [];
 
-  // Handle resend consent
+  // Handle resend consent with React Query mutation
   const handleResendConsent = async (athleteId: string) => {
-    try {
-      const athlete = athletes.find((a) => a.id === athleteId);
-      await athletesService.resendConsent(athleteId);
-      showSnackbar(
-        `Consent email resent to ${athlete?.name}'s parent`,
-        'success'
-      );
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || 'Failed to resend consent email';
-      showSnackbar(errorMessage, 'error');
-    }
+    const athlete = athletes.find((a) => a.id === athleteId);
+
+    resendConsentMutation.mutate(athleteId, {
+      onSuccess: () => {
+        showSnackbar(
+          `Consent email resent to ${athlete?.name}'s parent`,
+          'success'
+        );
+      },
+      onError: (err: any) => {
+        const errorMessage =
+          err.response?.data?.message || 'Failed to resend consent email';
+        showSnackbar(errorMessage, 'error');
+      },
+    });
   };
 
   // Athletes needing consent action

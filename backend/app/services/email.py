@@ -18,7 +18,7 @@ def send_email(
     to: str,
     subject: str,
     html: str,
-    from_email: str = "CoachLens <noreply@coachlens.laschicas.ai>",
+    from_email: str = "Coach Lens <noreply@coachlens.laschicas.ai>",
 ) -> bool:
     """Send an email via Resend API.
 
@@ -70,7 +70,7 @@ def send_consent_request(
     settings = get_settings()
     consent_url = f"{settings.frontend_url}/consent/{consent_token}"
 
-    subject = f"Consent Request for {athlete_name} - CoachLens"
+    subject = f"Consent Request for {athlete_name} - Coach Lens"
 
     html = f"""
     <!DOCTYPE html>
@@ -92,7 +92,7 @@ def send_consent_request(
 
             <p>Hello,</p>
 
-            <p>Coach <strong>{coach_name}</strong> has added <strong>{athlete_name}</strong> to their athletic assessment program using CoachLens.</p>
+            <p>Coach <strong>{coach_name}</strong> has added <strong>{athlete_name}</strong> to their athletic assessment program using Coach Lens.</p>
 
             <p>To proceed with video-based athletic assessments, we need your consent as a parent or legal guardian. The assessment includes:</p>
 
@@ -110,7 +110,7 @@ def send_consent_request(
             <p>This consent link will expire in 30 days. If you have questions, please contact Coach {coach_name} directly.</p>
 
             <div class="footer">
-                <p>CoachLens - Athletic Assessment Platform<br>
+                <p>Coach Lens - Athletic Assessment Platform<br>
                 If you did not expect this email, please disregard it.</p>
             </div>
         </div>
@@ -169,7 +169,7 @@ def send_consent_confirmed(
             <a href="{athletes_url}" class="button">View Athletes</a>
 
             <div class="footer">
-                <p>CoachLens - Athletic Assessment Platform</p>
+                <p>Coach Lens - Athletic Assessment Platform</p>
             </div>
         </div>
     </body>
@@ -229,7 +229,7 @@ def send_consent_declined(
             <a href="{athletes_url}" class="button">View Athletes</a>
 
             <div class="footer">
-                <p>CoachLens - Athletic Assessment Platform</p>
+                <p>Coach Lens - Athletic Assessment Platform</p>
             </div>
         </div>
     </body>

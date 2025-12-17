@@ -50,12 +50,16 @@ Assessment History (most recent first):
 {assessment_data}
 
 Provide a 150-word summary covering:
-1. Overall trend (improving, stable, declining, or variable)
-2. Best and worst performances (duration, key metrics)
-3. Consistent strengths or challenges
+1. **RECENT TREND (REQUIRED)**: Compare the average of the 3 MOST RECENT assessments (#1-3) to the average of the OLDER assessments (#4+). You MUST use ONE of these exact keywords in your first sentence:
+   - "improving" if recent avg > older avg by 10%+
+   - "declining" if recent avg < older avg by 10%+
+   - "stable" if within ±10%
+   - "variable" ONLY if inconsistent with no clear direction
+2. Best and worst performances (duration, scores)
+3. Consistent strengths or challenges across assessments
 4. Any notable patterns in sway, arm position, or temporal performance
 
-Focus on facts and patterns. No recommendations yet - just summarize what happened."""
+CRITICAL: The trend keyword must reflect RECENT performance (#1-3) vs OLDER performance (#4+). If recent performance is worse, use "declining" even if there was earlier improvement."""
 
         messages = [
             {"role": "user", "content": user_prompt}
@@ -90,6 +94,11 @@ def _format_assessments_for_compression(assessments: List[Dict[str, Any]]) -> st
     lines = []
     for i, assessment in enumerate(assessments, 1):
         metrics = assessment.get("metrics", {})
+
+        # Skip assessments with missing metrics (prevents treating as zeros)
+        if not metrics:
+            logger.warning(f"Assessment {i} has no metrics - skipping from compression")
+            continue
 
         # Extract key metrics
         hold_time = metrics.get("hold_time", 0)

@@ -4,9 +4,11 @@ from typing import Optional, List
 
 
 class ReportGraphDataPoint(BaseModel):
-    """Data point for the progress chart"""
+    """Data point for the progress chart with bilateral support"""
     date: str  # "Dec 15"
-    duration: float  # hold time in seconds
+    duration: float  # hold time in seconds (legacy - left leg for dual-leg)
+    left_leg: Optional[float] = None  # left leg hold time
+    right_leg: Optional[float] = None  # right leg hold time
 
 
 class ProgressSnapshot(BaseModel):

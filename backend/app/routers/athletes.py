@@ -2,9 +2,9 @@
 
 import asyncio
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.models.athlete import (
@@ -44,7 +44,7 @@ class ResendRateLimiter:
         Returns:
             True if allowed (and recorded), False if rate limited
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(days=1)
 
         # Remove entries older than 24 hours
@@ -139,6 +139,7 @@ async def create_athlete(
 
 @router.get("", response_model=AthletesListResponse)
 async def list_athletes(
+    response: Response,
     status: Optional[str] = Query(None, description="Filter by consent status: pending|active|declined"),
     current_user: User = Depends(get_current_user),
 ):
@@ -147,6 +148,7 @@ async def list_athletes(
     Optionally filter by consent status.
 
     Args:
+        response: FastAPI response for setting headers
         status: Optional consent status filter
         current_user: Authenticated coach
 
@@ -156,6 +158,9 @@ async def list_athletes(
     Raises:
         400: Invalid status value
     """
+    # Cache for 60 seconds - athlete list changes infrequently
+    response.headers["Cache-Control"] = "private, max-age=60"
+
     athlete_repo = AthleteRepository()
 
     # Validate status parameter if provided

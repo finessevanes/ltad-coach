@@ -18,11 +18,12 @@ import {
   Button,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PersonIcon from '@mui/icons-material/Person';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { Assessment } from '../../../types/assessment';
 import { Athlete } from '../../../types/athlete';
-import { VideoPlayer } from '../../../components/VideoPlayer';
+import { VideoThumbnail } from '../../../components/VideoThumbnail';
 
 interface TwoLegResultsViewProps {
   assessment: Assessment;
@@ -84,12 +85,22 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               {athlete.name} • {formattedDate}
             </Typography>
           </div>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/athletes')}
-          >
-            Back
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              startIcon={<PersonIcon />}
+              onClick={() => navigate(`/athletes/${assessment.athleteId}`)}
+            >
+              View Athlete
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/athletes')}
+            >
+              Back
+            </Button>
+          </Box>
         </Box>
       </Paper>
 
@@ -181,45 +192,33 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
       </Grid>
 
       {/* Video Comparison */}
-      {(assessment.leftLegVideoUrl || assessment.rightLegVideoUrl) && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Video Comparison
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="primary" gutterBottom>
-                  Standing on Left Leg (Right foot raised)
-                </Typography>
-                {assessment.leftLegVideoUrl ? (
-                  <VideoPlayer
-                    videoUrl={assessment.leftLegVideoUrl}
-                    videoId={`${assessment.id}-left`}
-                    label="Left Leg Support"
-                  />
-                ) : (
-                  <Alert severity="info">Video not available</Alert>
-                )}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="secondary" gutterBottom>
-                  Standing on Right Leg (Left foot raised)
-                </Typography>
-                {assessment.rightLegVideoUrl ? (
-                  <VideoPlayer
-                    videoUrl={assessment.rightLegVideoUrl}
-                    videoId={`${assessment.id}-right`}
-                    label="Right Leg Support"
-                  />
-                ) : (
-                  <Alert severity="info">Video not available</Alert>
-                )}
-              </Grid>
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Video Comparison
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" color="primary" gutterBottom>
+                Standing on Left Leg (Right foot raised)
+              </Typography>
+              <VideoThumbnail
+                videoUrl={assessment.leftLegVideoUrl}
+                altText="Left Leg Support"
+              />
             </Grid>
-          </CardContent>
-        </Card>
-      )}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" color="secondary" gutterBottom>
+                Standing on Right Leg (Left foot raised)
+              </Typography>
+              <VideoThumbnail
+                videoUrl={assessment.rightLegVideoUrl}
+                altText="Right Leg Support"
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {/* Metrics Comparison Table */}
       <Card sx={{ mb: 3 }}>

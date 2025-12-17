@@ -52,11 +52,37 @@ def _get_duration_seconds(assessment) -> Optional[float]:
         return None
 
 
+def _get_leg_hold_times(assessment) -> tuple[Optional[float], Optional[float]]:
+    """Extract individual leg hold times.
+
+    Args:
+        assessment: Assessment instance from database
+
+    Returns:
+        Tuple of (left_hold_time, right_hold_time)
+    """
+    left_time = None
+    right_time = None
+
+    if assessment.leg_tested == 'both':
+        # Dual-leg: use left_leg_metrics and right_leg_metrics
+        left_time = assessment.left_leg_metrics.hold_time if assessment.left_leg_metrics else None
+        right_time = assessment.right_leg_metrics.hold_time if assessment.right_leg_metrics else None
+    elif assessment.leg_tested == 'left':
+        # Single left leg: use metrics.hold_time
+        left_time = assessment.metrics.hold_time if assessment.metrics else None
+    elif assessment.leg_tested == 'right':
+        # Single right leg: use metrics.hold_time
+        right_time = assessment.metrics.hold_time if assessment.metrics else None
+
+    return left_time, right_time
+
+
 def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
     """Build metrics dictionary from client metrics and duration score.
 
     Converts Pydantic model to dict and adds server-calculated LTAD score.
-    Handles both legacy (temporal + five_second_segments) and new (segmented_metrics) formats.
+    Handles both legacy (temporal thirds) and new (segmented_metrics) formats.
 
     Args:
         client_metrics: Client-side metrics from MediaPipe analysis
@@ -90,14 +116,10 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
         metrics_dict["segmented_metrics"] = client_metrics.segmented_metrics.model_dump()
         logger.info(f"Stored {len(client_metrics.segmented_metrics.segments)} segments "
                    f"({client_metrics.segmented_metrics.segment_duration}s duration)")
-    else:
-        # LEGACY: Use old temporal + five_second_segments if present
-        if client_metrics.temporal:
-            metrics_dict["temporal"] = client_metrics.temporal.model_dump()
-            logger.warning("Using legacy temporal format (first/middle/last thirds)")
-        if client_metrics.five_second_segments:
-            metrics_dict["five_second_segments"] = [seg.model_dump() for seg in client_metrics.five_second_segments]
-            logger.warning("Using legacy five_second_segments format")
+    elif client_metrics.temporal:
+        # LEGACY: Use old temporal format if present
+        metrics_dict["temporal"] = client_metrics.temporal.model_dump()
+        logger.warning("Using legacy temporal format (first/middle/last thirds)")
 
     # Events (unchanged)
     if client_metrics.events:
@@ -401,6 +423,8 @@ async def get_assessments_for_athlete(
             created_at=a.created_at,
             status=a.status,
             duration_seconds=_get_duration_seconds(a),
+            left_leg_hold_time=_get_leg_hold_times(a)[0],
+            right_leg_hold_time=_get_leg_hold_times(a)[1],
         )
         for a in assessments
     ]

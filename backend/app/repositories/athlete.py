@@ -1,7 +1,7 @@
 """Repository for athlete data management."""
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from app.repositories.base import BaseRepository
 from app.models.athlete import Athlete, AthleteCreate, ConsentStatus
@@ -24,7 +24,7 @@ class AthleteRepository(BaseRepository[Athlete]):
         Returns:
             Created athlete with consent_token and defaults
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         consent_token = str(uuid.uuid4())
         consent_token_expires = now + timedelta(days=30)
 

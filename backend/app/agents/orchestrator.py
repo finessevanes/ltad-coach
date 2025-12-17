@@ -195,28 +195,56 @@ class AgentOrchestrator:
             else:
                 assessments = all_assessments[:12]
 
+            # Helper function to extract metrics from assessments
+            def _extract_assessment_metrics(assessment):
+                """Extract metrics from assessment, handling both single-leg and dual-leg.
+
+                For dual-leg balance assessments, uses left leg as primary for consistency
+                with report graphs and progress tracking.
+                """
+                # Dual-leg assessment - use left leg as primary (matches report service)
+                # IMPORTANT: Compare enum.value to string, not enum to string
+                if assessment.leg_tested.value == "both" and assessment.left_leg_metrics:
+                    metrics = assessment.left_leg_metrics
+                    return metrics.model_dump() if hasattr(metrics, 'model_dump') else metrics
+
+                # Single-leg assessment (legacy - should not exist in production)
+                # IMPORTANT: All balance tests are dual-leg as of current architecture
+                if assessment.leg_tested.value != "both" and assessment.metrics:
+                    logger.warning(f"Assessment {assessment.id} uses deprecated single-leg format (leg_tested={assessment.leg_tested.value})")
+                    return assessment.metrics.model_dump() if hasattr(assessment.metrics, 'model_dump') else assessment.metrics
+
+                # Fallback - return empty dict instead of None to prevent errors
+                logger.error(f"Assessment {assessment.id} has no extractable metrics (leg_tested={assessment.leg_tested.value}, has_left={bool(assessment.left_leg_metrics)}, has_single={bool(assessment.metrics)})")
+                return {}
+
             # Convert to dicts for compression
             assessment_dicts = [
                 {
                     "id": a.id,
                     "created_at": a.created_at,
-                    "metrics": a.metrics.model_dump() if hasattr(a.metrics, 'model_dump') else a.metrics,
+                    "metrics": _extract_assessment_metrics(a),
                     "status": a.status,
                 }
                 for a in assessments
             ]
 
-            # Compress history if we have assessments
+            # Analyze trend using deterministic logic (replaces AI compression)
             compressed_history = None
             if assessment_dicts:
                 try:
-                    compressed_history = await compress_history(
+                    from app.services.trend_analyzer import analyze_trend
+
+                    trend_analysis = analyze_trend(
                         assessments=assessment_dicts,
                         athlete_name=athlete_name,
                         athlete_age=athlete_age,
                     )
+                    # Convert to narrative for Progress Agent
+                    compressed_history = trend_analysis.to_narrative_summary()
+                    logger.info(f"Trend analysis for {athlete_name}: {trend_analysis.trend} ({trend_analysis.trend_strength})")
                 except Exception as e:
-                    logger.error(f"History compression failed: {e}")
+                    logger.error(f"Trend analysis failed: {e}")
                     compressed_history = (
                         f"{athlete_name} has completed {len(assessment_dicts)} assessments. "
                         "Detailed history unavailable."

@@ -1,7 +1,7 @@
 """Report repository for parent reports with PIN protection."""
 
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Any
 from collections import defaultdict
 
@@ -25,7 +25,7 @@ class PINVerificationLimiter:
         Returns:
             bool: True if under rate limit, False if rate limited
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(minutes=1)
 
         # Remove old attempts
@@ -53,7 +53,7 @@ class PINVerificationLimiter:
             report_id: Report ID
             success: Whether the attempt succeeded
         """
-        self.attempts[report_id].append(datetime.utcnow())
+        self.attempts[report_id].append(datetime.now(timezone.utc))
         if not success:
             self.failed_counts[report_id] += 1
 
@@ -132,8 +132,8 @@ class ReportRepository(BaseRepository[Report]):
         report_data = {
             "athlete_id": athlete_id,
             "coach_id": coach_id,
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(days=90),  # 90-day expiry
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=90),  # 90-day expiry
             "access_pin_hash": self.hash_pin(pin),
             "report_content": content,
             "assessment_ids": assessment_ids,
@@ -163,12 +163,13 @@ class ReportRepository(BaseRepository[Report]):
         Returns:
             List[Report]: List of reports
         """
+        # Use .get() instead of .stream() for better performance with <1000 docs
         docs = (
             self.collection
             .where("athlete_id", "==", athlete_id)
             .order_by("created_at", direction="DESCENDING")
             .limit(limit)
-            .stream()
+            .get()
         )
 
         results = []
@@ -185,7 +186,7 @@ class ReportRepository(BaseRepository[Report]):
         Args:
             report_id: Report ID
         """
-        await self.update(report_id, {"sent_at": datetime.utcnow()})
+        await self.update(report_id, {"sent_at": datetime.now(timezone.utc)})
 
     async def get_unsent_by_athlete(
         self,
@@ -201,6 +202,7 @@ class ReportRepository(BaseRepository[Report]):
         Returns:
             Optional[Report]: Unsent report or None
         """
+        # Use .get() instead of .stream() for better performance
         docs = (
             self.collection
             .where("athlete_id", "==", athlete_id)
@@ -208,7 +210,7 @@ class ReportRepository(BaseRepository[Report]):
             .where("sent_at", "==", None)
             .order_by("created_at", direction="DESCENDING")
             .limit(1)
-            .stream()
+            .get()
         )
 
         for doc in docs:

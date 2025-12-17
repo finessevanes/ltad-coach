@@ -47,18 +47,6 @@ class TemporalMetrics(BaseModel):
     last_third: SegmentMetrics = Field(..., description="Metrics for last third of test (66-100%)")
 
 
-class FiveSecondSegment(BaseModel):
-    """Metrics for a 5-second segment (for LLM temporal analysis)."""
-    start_time: float = Field(..., description="Start time in seconds")
-    end_time: float = Field(..., description="End time in seconds")
-    avg_velocity: float = Field(..., description="Average sway velocity (cm/s)")
-    corrections: int = Field(..., description="Number of corrections")
-    arm_angle_left: float = Field(..., description="Average left arm angle (degrees)")
-    arm_angle_right: float = Field(..., description="Average right arm angle (degrees)")
-    sway_std_x: float = Field(..., description="Sway standard deviation X (cm)")
-    sway_std_y: float = Field(..., description="Sway standard deviation Y (cm)")
-
-
 class TimeSegment(BaseModel):
     """Metrics for a time segment with configurable duration (typically 1 second)."""
     start_time: float = Field(..., description="Start time in seconds")
@@ -168,10 +156,6 @@ class ClientMetricsData(BaseModel):
     arm_asymmetry_ratio: float = Field(..., description="Left/Right arm angle ratio")
     # BACKWARD COMPAT: Legacy temporal fields (kept for old assessments)
     temporal: Optional[TemporalMetrics] = Field(None, description="Legacy temporal breakdown (thirds)")
-    five_second_segments: Optional[list[FiveSecondSegment]] = Field(
-        None,
-        description="Legacy 5-second segment breakdown"
-    )
     # NEW: Unified temporal data with configurable segment duration
     segmented_metrics: Optional[SegmentedMetrics] = Field(
         None,
@@ -221,10 +205,6 @@ class MetricsData(BaseModel):
     duration_score: int = Field(..., ge=1, le=5, description="LTAD duration score (1-5)")
     # BACKWARD COMPAT: Legacy temporal fields (kept for old assessments)
     temporal: Optional[TemporalMetrics] = Field(None, description="Legacy temporal breakdown (thirds)")
-    five_second_segments: Optional[list[FiveSecondSegment]] = Field(
-        None,
-        description="Legacy 5-second segment breakdown"
-    )
     # NEW: Unified temporal data with configurable segment duration
     segmented_metrics: Optional[SegmentedMetrics] = Field(
         None,
@@ -362,6 +342,8 @@ class AssessmentListItem(BaseModel):
     created_at: datetime
     status: AssessmentStatus
     duration_seconds: Optional[float] = Field(None, description="Test duration in seconds")
+    left_leg_hold_time: Optional[float] = Field(None, description="Left leg hold time in seconds")
+    right_leg_hold_time: Optional[float] = Field(None, description="Right leg hold time in seconds")
 
 
 class AssessmentListResponse(BaseModel):

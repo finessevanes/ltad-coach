@@ -2,8 +2,8 @@
     "metadata": {
       "version": "2.0.0",
       "lastUpdated": "2025-12-12",
-      "author": "CoachLens Design Team",
-      "description": "Modern Athletic Minimalism design system for CoachLens - AI-powered coaching platform for middle school athletes",
+      "author": "Coach Lens Design Team",
+      "description": "Modern Athletic Minimalism design system for Coach Lens - AI-powered coaching platform for middle school athletes",
       "targetPlatform": "Desktop Web Application (Mobile-responsive)",
       "componentLibrary": "Material-UI (MUI) v5+ with custom theme",
       "designStyle": "Modern Athletic Minimalism",
@@ -15,7 +15,7 @@
     },
   
     "brand": {
-      "name": "CoachLens",
+      "name": "Coach Lens",
       "tagline": "See Progress, Build Champions",
       "personality": [
         "Clean & Professional",
@@ -1277,7 +1277,7 @@
     },
   
     "muiThemeConfig": {
-      "summary": "MUI theme configuration for CoachLens Modern Athletic Minimalism",
+      "summary": "MUI theme configuration for Coach Lens Modern Athletic Minimalism",
       "palette": {
         "primary": {
           "main": "#2563EB",
