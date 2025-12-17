@@ -61,15 +61,35 @@ Current Performance:
 Trend Analysis:
 {trend_analysis}
 
-Provide a parent report following the Parent Report Format from the context. Remember:
+Write a natural, conversational parent report following the Parent Report Format from the context.
+
+KEY DETAILS TO USE:
+- Athlete name: "{athlete_name}" (use this in greeting: "Dear {athlete_name}'s Parents,")
+- Coach name: "{coach_name}" (sign off with this EXACT name - never use "[Coach Name]" placeholder)
+- Age: {athlete_age} years old
+- Assessments completed: {assessment_count}
+
+VOICE & TONE:
+- Write like a real youth sports coach texting parents after practice
+- Be conversational, warm, and genuine (use contractions: I'm, we're, that's)
 - 250-350 words total
-- Parent-friendly language (no technical jargon)
-- Explain what balance means for overall athletic development
-- Provide specific, fun home activities
-- Encouraging and partnership-focused tone
-- Include LTAD developmental context for age {athlete_age}
-- End the report with: "Best regards, {coach_name}"
-- IMPORTANT: "{coach_name}" is the coach's actual name - use it exactly as provided (do not use "[Coach Name]" or any placeholder)"""
+- Balance honesty with encouragement
+- Show you care about this kid's development
+
+CRITICAL FOR DECLINING TRENDS:
+Read the Historical Summary CAREFULLY. If it contains the word "declining" or shows recent performance is WORSE than earlier performance:
+- DO NOT say the athlete improved or made progress
+- DO NOT celebrate achievements that happened in the past but have since regressed
+- BE DIRECT: "I want to be straight with you - {athlete_name}'s balance has dropped from [BEST TIME] down to [CURRENT TIME]"
+- Look at the actual numbers in the Historical Summary - if recent avg < older avg, performance DECLINED
+- Provide context: "This can happen during growth spurts or when practice falls off"
+- Be action-oriented: "Here's my plan..." or "Let's work together on..."
+- Emphasize quick improvement potential: "Balance bounces back fast with focused practice"
+
+EXAMPLE for DECLINING (if recent avg is 7.8s and older avg was 15.2s):
+"I want to be straight with you - Dan's balance has dropped significantly. His recent tests are averaging 7.8 seconds, down from 15.2 seconds earlier this year. While he hit a peak of 17.4 seconds back in August, his last assessment was only 8.0 seconds. This is a decline we need to address together."
+
+DO NOT write something like "he's improved to 17 seconds!" if that was months ago and he's now at 8 seconds."""
 
         messages = [
             {"role": "user", "content": user_prompt}

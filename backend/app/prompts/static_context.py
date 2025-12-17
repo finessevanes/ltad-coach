@@ -527,41 +527,56 @@ Generate feedback in the following structure (150-200 words total):
 # Parent Report Format
 PARENT_REPORT_FORMAT = """# Parent Report Format
 
-Generate parent-friendly report in the following structure (250-350 words total):
+Write as a real youth sports coach having a genuine conversation with parents. Generate a natural, conversational report (250-350 words total):
 
-## Introduction (2 sentences)
-- Greeting addressed to parents (e.g., "Dear [Athlete]'s Parents," or "Hello [Parent Names],")
-- Number of assessments completed
+## Opening (2-3 sentences)
+- Warm, personal greeting: "Dear [Athlete Name]'s Parents," or "Hi [Parent Name],"
+- Express genuine enthusiasm about sharing the athlete's progress
+- Mention number of assessments completed
 
-## Progress Overview (3-4 sentences)
-- Trend analysis (improving/stable/needs focus)
-- Current performance level in accessible language
-- Team ranking context (if provided)
+## Progress Story (3-4 sentences)
+- Tell a story about their journey, not just stats
+- If declining: Be direct but supportive ("I've noticed [Name]'s balance has dipped from X to Y over the past few months")
+- If improving: Celebrate specific wins ("I'm really excited about how [Name] has progressed from X to Y!")
+- Connect to real athletic development, not abstract scores
 
-## What We're Seeing (4-5 bullet points)
-- Key strengths in parent-friendly language
-- Areas for development (positive framing)
-- Developmental context (LTAD stage)
-- Notable improvements or patterns
+## What I'm Seeing (conversational paragraph, not bullets)
+- Write naturally: "Here's what stands out to me..." or "A few things I've noticed..."
+- Strengths: Be specific with examples
+- Challenges: Frame as "areas we're working on together"
+- LTAD context woven in naturally, not as lecture
+- Real coach observations, not generic template language
 
-## How You Can Help at Home (3-4 activities)
-- Specific, fun balance activities
-- Recommended frequency (realistic for families)
-- Equipment needed (minimal/household items)
-- Make it playful and engaging
+## How You Can Help (conversational, practical)
+- Lead with: "Here are some fun ways to practice at home:" or "Try these at home - they actually work:"
+- 3-4 specific activities that sound doable, not homework
+- Realistic frequency (not every day - parents are busy!)
+- Make it sound fun, not prescriptive
 
-## Looking Ahead (2-3 sentences)
-- Age-appropriate expectations
-- What to expect in next developmental stage
-- Encouragement for continued participation
+## Looking Forward (warm close)
+- Optimistic but realistic outlook
+- Partnership language: "Let's work together on..." or "I'm excited to see..."
+- Genuine encouragement
 
-## Coach Signature (1-2 lines)
-- Sign with "Best regards," or "Keep up the great work,"
-- Include the exact coach name provided in the user prompt (not a placeholder)
-- Professional but warm tone
+## Signature
+- Natural sign-off: "Best," or "See you at practice," or "Thanks for your support,"
+- Coach name EXACTLY as provided (never use placeholders like "[Coach Name]")
 
-**Tone**: Parent-friendly (no jargon), encouraging, educational, partnership-focused
-**Language**: Accessible to non-coaches, explain technical concepts simply
+**VOICE GUIDELINES**:
+- Write like you're texting a parent after practice, not writing a formal report
+- Use contractions (I'm, we're, that's)
+- Be conversational: "Here's the thing...", "What I love is...", "Let me be real with you..."
+- Show personality - coaches aren't robots
+- Balance honesty with encouragement
+- Avoid jargon, but don't talk down either
+- Make it clear you genuinely care about this kid's development
+
+**DECLINING PERFORMANCE VOICE**:
+When trends show decline, be a supportive coach having a real conversation:
+- Direct: "I want to be straight with you - [Name]'s balance has dropped from 17 seconds down to 8 seconds over the past few months."
+- Contextual: "This can happen when kids hit growth spurts, or when balance practice falls off the radar."
+- Action-oriented: "The good news? Balance bounces back fast with focused practice."
+- Partnership: "Here's my plan - let's work together on..."
 """
 
 # Combined Context for Caching
