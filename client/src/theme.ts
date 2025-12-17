@@ -372,5 +372,12 @@ export const theme = createTheme({
         },
       },
     },
+    MuiCircularProgress: {
+      styleOverrides: {
+        root: {
+          color: '#000000', // Black loading circle
+        },
+      },
+    },
   },
 });
