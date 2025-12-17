@@ -82,7 +82,7 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
     """Build metrics dictionary from client metrics and duration score.
 
     Converts Pydantic model to dict and adds server-calculated LTAD score.
-    Handles both legacy (temporal + five_second_segments) and new (segmented_metrics) formats.
+    Handles both legacy (temporal thirds) and new (segmented_metrics) formats.
 
     Args:
         client_metrics: Client-side metrics from MediaPipe analysis
@@ -116,14 +116,10 @@ def _build_metrics_dict(client_metrics, duration_score: int) -> Dict[str, Any]:
         metrics_dict["segmented_metrics"] = client_metrics.segmented_metrics.model_dump()
         logger.info(f"Stored {len(client_metrics.segmented_metrics.segments)} segments "
                    f"({client_metrics.segmented_metrics.segment_duration}s duration)")
-    else:
-        # LEGACY: Use old temporal + five_second_segments if present
-        if client_metrics.temporal:
-            metrics_dict["temporal"] = client_metrics.temporal.model_dump()
-            logger.warning("Using legacy temporal format (first/middle/last thirds)")
-        if client_metrics.five_second_segments:
-            metrics_dict["five_second_segments"] = [seg.model_dump() for seg in client_metrics.five_second_segments]
-            logger.warning("Using legacy five_second_segments format")
+    elif client_metrics.temporal:
+        # LEGACY: Use old temporal format if present
+        metrics_dict["temporal"] = client_metrics.temporal.model_dump()
+        logger.warning("Using legacy temporal format (first/middle/last thirds)")
 
     # Events (unchanged)
     if client_metrics.events:
