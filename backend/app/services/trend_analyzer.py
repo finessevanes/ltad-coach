@@ -109,22 +109,19 @@ class TrendAnalysis(BaseModel):
         return summary
 
 
-def _detect_trend(
+def _detect_direction_changes(
     scores: List[float],
     dates: List[str]
-) -> Tuple[str, str, List[Dict[str, Any]]]:
-    """Detect trend and direction changes.
+) -> List[Dict[str, Any]]:
+    """Detect direction changes (reversals) in performance trajectory.
 
     Args:
         scores: Hold times in chronological order (oldest → newest)
         dates: Date strings corresponding to each score
 
     Returns:
-        (current_trend, trend_strength, direction_changes)
+        List of direction change events
     """
-    if len(scores) < 2:
-        return "stable", "slight", []
-
     direction_changes = []
     current_direction = None
 
@@ -155,25 +152,64 @@ def _detect_trend(
         if step_direction != "flat":
             current_direction = step_direction
 
-    # Determine trend (current direction)
-    if current_direction == "up":
-        trend = "improving"
-    elif current_direction == "down":
-        trend = "declining"
-    else:
-        trend = "stable"
+    return direction_changes
 
-    # Calculate trend strength based on first → last change
-    first_score = scores[0]
-    last_score = scores[-1]
-    pct_change = ((last_score - first_score) / first_score) * 100
 
-    if abs(pct_change) >= 25:
-        strength = "significant"
-    elif abs(pct_change) >= 10:
-        strength = "moderate"
+def _detect_trend(
+    scores: List[float],
+    dates: List[str]
+) -> Tuple[str, str, List[Dict[str, Any]]]:
+    """Detect trend using window-based comparison.
+
+    Compares recent performance (last 3 assessments) to older performance
+    (earlier assessments) to determine overall trend direction.
+
+    Args:
+        scores: Hold times in chronological order (oldest → newest)
+        dates: Date strings corresponding to each score
+
+    Returns:
+        (current_trend, trend_strength, direction_changes)
+    """
+    if len(scores) < 2:
+        return "stable", "slight", []
+
+    # Track direction changes for narrative context
+    direction_changes = _detect_direction_changes(scores, dates)
+
+    # Window-based trend detection
+    if len(scores) >= 4:
+        # Compare recent window (last 3) vs older window (all before that)
+        recent_window = scores[-3:]
+        older_window = scores[:-3]
+
+        recent_avg = sum(recent_window) / len(recent_window)
+        older_avg = sum(older_window) / len(older_window)
+
+        # Determine trend (10% threshold)
+        if recent_avg > older_avg * 1.10:
+            trend = "improving"
+            strength = "significant" if recent_avg > older_avg * 1.25 else "moderate"
+        elif recent_avg < older_avg * 0.90:
+            trend = "declining"
+            strength = "significant" if recent_avg < older_avg * 0.75 else "moderate"
+        else:
+            trend = "stable"
+            strength = "slight"
     else:
-        strength = "slight"
+        # Fallback for 2-3 assessments: Simple first-to-last comparison
+        first_score = scores[0]
+        last_score = scores[-1]
+        pct_change = ((last_score - first_score) / first_score) * 100
+
+        if pct_change > 10:
+            trend = "improving"
+        elif pct_change < -10:
+            trend = "declining"
+        else:
+            trend = "stable"
+
+        strength = "significant" if abs(pct_change) >= 25 else ("moderate" if abs(pct_change) >= 10 else "slight")
 
     return trend, strength, direction_changes
 

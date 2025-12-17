@@ -163,12 +163,13 @@ class ReportRepository(BaseRepository[Report]):
         Returns:
             List[Report]: List of reports
         """
+        # Use .get() instead of .stream() for better performance with <1000 docs
         docs = (
             self.collection
             .where("athlete_id", "==", athlete_id)
             .order_by("created_at", direction="DESCENDING")
             .limit(limit)
-            .stream()
+            .get()
         )
 
         results = []
@@ -201,6 +202,7 @@ class ReportRepository(BaseRepository[Report]):
         Returns:
             Optional[Report]: Unsent report or None
         """
+        # Use .get() instead of .stream() for better performance
         docs = (
             self.collection
             .where("athlete_id", "==", athlete_id)
@@ -208,7 +210,7 @@ class ReportRepository(BaseRepository[Report]):
             .where("sent_at", "==", None)
             .order_by("created_at", direction="DESCENDING")
             .limit(1)
-            .stream()
+            .get()
         )
 
         for doc in docs:

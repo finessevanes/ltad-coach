@@ -39,6 +39,17 @@ class PendingAthleteItem(BaseModel):
     created_at: datetime = Field(..., description="When athlete was added")
 
 
+class AthleteListItem(BaseModel):
+    """Athlete for list display"""
+    id: str = Field(..., description="Athlete ID")
+    name: str = Field(..., description="Athlete name")
+    age: int = Field(..., description="Athlete age")
+    gender: str = Field(..., description="Athlete gender")
+    parent_email: str = Field(..., description="Parent email address")
+    consent_status: str = Field(..., description="Consent status")
+    created_at: datetime = Field(..., description="When athlete was added")
+
+
 class DashboardResponse(BaseModel):
     """Combined dashboard data response"""
     stats: DashboardStats = Field(..., description="Aggregated statistics")
@@ -47,4 +58,7 @@ class DashboardResponse(BaseModel):
     )
     pending_athletes: List[PendingAthleteItem] = Field(
         ..., description="Athletes with pending consent status"
+    )
+    athletes: List[AthleteListItem] = Field(
+        ..., description="All athletes for this coach"
     )

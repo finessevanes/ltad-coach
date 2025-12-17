@@ -123,7 +123,12 @@ async def chat_stream(
                 latest_message = msg["content"]
                 break
 
-        if latest_message:
+        # Only fetch athletes if message contains potential athlete keywords
+        # This avoids N+1 fetching on every chat message
+        if latest_message and any(
+            keyword in latest_message.lower()
+            for keyword in ['athlete', 'student', 'player', 'about', 'report']
+        ):
             # Get coach's athletes for name matching
             athlete_repo = AthleteRepository()
             athletes = await athlete_repo.get_by_coach(current_user.id)

@@ -34,10 +34,21 @@ export interface PendingAthleteItem {
   createdAt: string;
 }
 
+export interface AthleteListItem {
+  id: string;
+  name: string;
+  age: number;
+  gender: 'male' | 'female';
+  parentEmail: string;
+  consentStatus: 'pending' | 'active' | 'declined';
+  createdAt: string;
+}
+
 export interface DashboardData {
   stats: DashboardStats;
   recentAssessments: RecentAssessmentItem[];
   pendingAthletes: PendingAthleteItem[];
+  athletes: AthleteListItem[];
 }
 
 export const dashboardApi = {
