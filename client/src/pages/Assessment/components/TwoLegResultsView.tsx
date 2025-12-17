@@ -18,6 +18,7 @@ import {
   Button,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PersonIcon from '@mui/icons-material/Person';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { Assessment } from '../../../types/assessment';
@@ -84,12 +85,22 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               {athlete.name} • {formattedDate}
             </Typography>
           </div>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/athletes')}
-          >
-            Back
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              startIcon={<PersonIcon />}
+              onClick={() => navigate(`/athletes/${assessment.athleteId}`)}
+            >
+              View Athlete
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/athletes')}
+            >
+              Back
+            </Button>
+          </Box>
         </Box>
       </Paper>
 
