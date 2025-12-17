@@ -30,10 +30,11 @@ interface AssessmentType {
 }
 
 const assessmentTypes: AssessmentType[] = [
-  { id: 'balance', name: 'Balance Test', image: '/balance-test.jpg', isActive: true },
-  { id: 'pull-up', name: 'Pull Up', image: '/pull-up.jpg', isActive: false },
-  { id: 'push-up', name: 'Push Up', image: '/push-up.jpg', isActive: false },
-  { id: 'squat', name: 'Squat', image: '/squat.jpg', isActive: false },
+  { id: 'balance', name: 'One Leg Balance', image: '/OneLegBalance.png', isActive: true },
+  { id: 'lunge', name: 'Lunge', image: '/lunge.png', isActive: false },
+  { id: 'side-plank', name: 'Side Plank', image: '/SidePlank.png', isActive: false },
+  { id: 'single-leg-hop', name: 'Single-leg Hop', image: '/SingleLegHop.png', isActive: false },
+  { id: 'squat', name: 'Squat', image: '/squat.png', isActive: false },
 ];
 
 interface AssessmentListItem {
@@ -55,20 +56,15 @@ export default function AssessmentsList() {
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
-    console.log('[AssessmentsList] Component mounted, initializing fetch');
-
     const fetchAssessments = async () => {
       try {
-        console.log('[AssessmentsList] Fetch started, loading=true');
         setLoading(true);
         const data = await assessmentsService.getAll(50);
-        console.log('[AssessmentsList] Fetch success, received', data.length, 'assessments');
         setAssessments(data);
       } catch (error) {
         console.error('[AssessmentsList] Fetch error:', error);
         showSnackbar('Failed to load assessments', 'error');
       } finally {
-        console.log('[AssessmentsList] Fetch completed, loading=false');
         setLoading(false);
       }
     };
@@ -117,11 +113,8 @@ export default function AssessmentsList() {
     }).format(date);
   };
 
-  console.log('[AssessmentsList] Render - loading:', loading, 'assessments count:', assessments.length);
-
   // Loading state
   if (loading) {
-    console.log('[AssessmentsList] Rendering loading state');
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Page Header Skeleton */}
@@ -134,14 +127,14 @@ export default function AssessmentsList() {
         <Box sx={{ mb: 5 }}>
           <Skeleton variant="text" height={32} width="220px" sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            {[1, 2, 3, 4].map((item) => (
+            {[1, 2, 3, 4, 5].map((item) => (
               <Grid item xs={6} sm={4} md={3} key={item}>
                 <Card>
                   {/* 3:4 Aspect Ratio Image Skeleton */}
                   <Box
                     sx={{
                       position: 'relative',
-                      paddingTop: '133.33%', // 3:4 aspect ratio
+                      paddingTop: '133.33%',
                       overflow: 'hidden',
                     }}
                   >
@@ -215,33 +208,10 @@ export default function AssessmentsList() {
     );
   }
 
-  // Empty state
-  if (assessments.length === 0) {
-    console.log('[AssessmentsList] Rendering empty state');
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h5" gutterBottom color="text.secondary">
-            No Assessments Yet
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            Start by adding athletes and conducting your first balance assessment.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/athletes')}
-            sx={{ mt: 2 }}
-          >
-            View Athletes
-          </Button>
-        </Box>
-      </Container>
-    );
-  }
+  // Note: Empty state for completed assessments is now handled inline below
+  // so we always show the Assessment Types cards
 
   // Main content
-  console.log('[AssessmentsList] Rendering main content with', assessments.length, 'assessments');
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Page Header */}
@@ -340,9 +310,33 @@ export default function AssessmentsList() {
         </Typography>
       </Box>
 
-      {/* Assessments Grid */}
-      <Grid container spacing={2}>
-        {assessments.map((assessment) => (
+      {/* Empty state for completed assessments */}
+      {assessments.length === 0 ? (
+        <Box
+          sx={{
+            textAlign: 'center',
+            py: 6,
+            backgroundColor: 'grey.50',
+            borderRadius: 3,
+            border: '1px dashed',
+            borderColor: 'grey.300',
+          }}
+        >
+          <Typography variant="body1" color="text.secondary" paragraph>
+            No completed assessments yet. Select an assessment type above to get started!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/athletes')}
+          >
+            Start Balance Test
+          </Button>
+        </Box>
+      ) : (
+        /* Assessments Grid */
+        <Grid container spacing={2}>
+          {assessments.map((assessment) => (
           <Grid item xs={12} key={assessment.id}>
             <Card>
               <CardActionArea onClick={() => handleAssessmentClick(assessment.id)}>
@@ -407,8 +401,9 @@ export default function AssessmentsList() {
               </CardActionArea>
             </Card>
           </Grid>
-        ))}
-      </Grid>
+          ))}
+        </Grid>
+      )}
 
       {/* Coming Soon Modal */}
       <Dialog

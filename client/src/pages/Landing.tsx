@@ -110,7 +110,7 @@ export function Landing() {
       </Box>
 
       {/* Hero Section */}
-      <Container maxWidth="xl" sx={{ mt: 12, px: { xs: 3, md: 8 } }}>
+      <Container maxWidth="xl" sx={{ mt: 20, px: { xs: 3, md: 8 } }}>
         <Box
           sx={{
             textAlign: 'center',
@@ -120,7 +120,7 @@ export function Landing() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '64px', md: '120px', lg: '140px' },
+              fontSize: { xs: '54px', md: '110px', lg: '130px' },
               fontWeight: 500,
               lineHeight: 0.98,
               color: '#000000',
@@ -141,16 +141,16 @@ export function Landing() {
               },
             }}
           >
-            The Foundation Before the Scoreboard
+            Build a D1 Foundation
           </Typography>
 
           {/* Video Demo Section */}
           <Box
             sx={{
               position: 'relative',
-              maxWidth: '1100px',
+              maxWidth: '900px',
               mx: 'auto',
-              mt: 2,
+              mt: -2,
               opacity: 0,
               animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
               '@keyframes fadeInUp': {
@@ -272,7 +272,7 @@ export function Landing() {
                 mb: 2,
               }}
             >
-              Real-Time Movement Analysis
+              Real-Time Analysis
             </Typography>
             <Typography
               sx={{
@@ -409,7 +409,7 @@ export function Landing() {
       <Box sx={{ borderTop: '1px solid #E5E5E5', my: 20 }} />
 
       {/* LTAD Framework Diagram */}
-      <Container maxWidth="lg" sx={{ mb: 24 }}>
+      <Container maxWidth="xl" sx={{ mb: 24 }}>
         <Card
           sx={{
             borderRadius: '24px',
@@ -427,7 +427,7 @@ export function Landing() {
             >
               <Box
                 component="img"
-                src="/profression-diagram.png"
+                src="/diagram.png"
                 alt="Long-Term Athletic Development Framework showing the Five S's: Skill, Speed, Suppleness, Stamina, and Strength across developmental stages"
                 sx={{
                   width: '100%',
@@ -525,7 +525,7 @@ export function Landing() {
       </Container>
 
       {/* Final CTA Section */}
-      <Container maxWidth="lg" sx={{ mb: 20, mt: 24 }}>
+      <Container maxWidth="lg" sx={{ mb: 3, mt: 24 }}>
         <Box sx={{ textAlign: 'center' }}>
           <Typography
             variant="h2"
@@ -535,43 +535,32 @@ export function Landing() {
               lineHeight: 1.2,
               color: '#2D2D2D',
               fontFamily: 'Jost, sans-serif',
-              mb: 3,
+              mb: 5,
             }}
           >
-            Ready to keep your athletes motivated?
+            Let's unlock your athlete's true potential—together.
           </Typography>
           <Typography
             sx={{
-              fontSize: '18px',
-              color: '#6B6B6B',
+              fontSize: '20px',
+              color: '#2D2D2D',
               fontFamily: 'Jost, sans-serif',
-              mb: 5,
-              maxWidth: '700px',
-              mx: 'auto',
+              fontWeight: 500,
+              mb: 3,
             }}
           >
-            Join coaches who are using objective data to prove progress and build confidence.
+            Scan to Book a Demo
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => window.open('https://calendly.com/naniskinner', '_blank')}
+          <Box
+            component="img"
+            src="/Calendly QR Code.png"
+            alt="Scan to book a demo"
             sx={{
-              bgcolor: '#2563EB',
-              color: 'white',
-              fontFamily: 'Jost, sans-serif',
-              fontWeight: 600,
-              fontSize: '18px',
-              textTransform: 'none',
-              px: 8,
-              py: 2.5,
-              borderRadius: '100px',
-              '&:hover': {
-                bgcolor: '#1d4ed8',
-              },
+              width: 300,
+              height: 300,
+              objectFit: 'contain',
             }}
-          >
-            Book a Demo →
-          </Button>
+          />
         </Box>
       </Container>
 
