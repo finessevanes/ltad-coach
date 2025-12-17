@@ -1,5 +1,5 @@
 /**
- * Chat types for AI Coach Assistant
+ * Chat types for CoachAI Assistant
  */
 
 /**

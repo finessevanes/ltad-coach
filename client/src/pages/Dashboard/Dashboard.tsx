@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { DashboardHeader } from './components/DashboardHeader';
-import { QuickActionCards } from './components/QuickActionCards';
+import { DashboardGreeting } from './components/DashboardGreeting';
+import { StartAssessmentButton } from './components/StartAssessmentButton';
+import { ChatInput } from '../AICoach/components/ChatInput';
 import { AthletesPanel } from './components/AthletesPanel';
-import { RecentAssessmentsPanel } from './components/RecentAssessmentsPanel';
+import { TodaySchedule } from './components/TodaySchedule';
+import { ActionsPanel } from './components/ActionsPanel';
 import { AthletePickerModal } from './components/AthletePickerModal';
 import { useDashboard } from '../../hooks/useDashboard';
-import { useResendConsent } from '../../hooks/useAthletes';
 import { Athlete } from '../../types/athlete';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 
@@ -28,9 +29,6 @@ export function Dashboard() {
   // Fetch dashboard data with React Query (automatic caching & deduplication)
   const { data: dashboardData, isLoading: loading, error } = useDashboard();
 
-  // Mutation for resending consent
-  const resendConsentMutation = useResendConsent();
-
   // Show error if fetch failed
   if (error) {
     showSnackbar('Failed to load dashboard data', 'error');
@@ -38,31 +36,6 @@ export function Dashboard() {
 
   // Extract data from dashboard response
   const athletes = dashboardData?.athletes || [];
-  const recentAssessments = dashboardData?.recentAssessments || [];
-
-  // Handle resend consent with React Query mutation
-  const handleResendConsent = async (athleteId: string) => {
-    const athlete = athletes.find((a) => a.id === athleteId);
-
-    resendConsentMutation.mutate(athleteId, {
-      onSuccess: () => {
-        showSnackbar(
-          `Consent email resent to ${athlete?.name}'s parent`,
-          'success'
-        );
-      },
-      onError: (err: any) => {
-        const errorMessage =
-          err.response?.data?.message || 'Failed to resend consent email';
-        showSnackbar(errorMessage, 'error');
-      },
-    });
-  };
-
-  // Athletes needing consent action
-  const athletesNeedingConsent = athletes.filter(
-    (a) => a.consentStatus === 'pending' || a.consentStatus === 'declined'
-  );
 
   // Handle starting assessment
   const handleStartAssessment = () => {
@@ -81,37 +54,69 @@ export function Dashboard() {
     navigate(`/assess/${athlete.id}`);
   };
 
+  // Handle AI message submission
+  const handleAISubmit = (message: string, athleteId?: string) => {
+    if (message.trim()) {
+      navigate('/ai-coach', {
+        state: {
+          initialQuery: message,
+          athleteId: athleteId || selectedAthlete?.id,
+        },
+      });
+    }
+  };
+
   return (
-    <Box sx={{ py: 3, px: { xs: 2, sm: 4 } }}>
-      {/* Dashboard Header */}
-      <DashboardHeader
-        athletes={athletes}
-        selectedAthlete={selectedAthlete}
-        onAthleteSelect={setSelectedAthlete}
-        loading={loading}
+    <Box sx={{ py: 5, px: { xs: 2, sm: 4 } }}>
+      {/* Header Row: Greeting + Start Assessment Button */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          mb: 5,
+          gap: 2,
+        }}
+      >
+        <DashboardGreeting loading={loading} />
+        <StartAssessmentButton onClick={handleStartAssessment} loading={loading} />
+      </Box>
+
+      {/* AI Chat Input - Full Width */}
+      <Box sx={{ mb: 5 }}>
+        <ChatInput
+          onSend={handleAISubmit}
+          disabled={false}
+          athletes={athletes}
+          selectedAthlete={selectedAthlete}
+          onAthleteSelect={setSelectedAthlete}
+        />
+      </Box>
+
+      {/* Divider */}
+      <Box
+        sx={{
+          borderBottom: '1px solid',
+          borderColor: 'grey.200',
+          mb: 5,
+        }}
       />
 
-      {/* Quick Action Cards */}
-      <QuickActionCards
-        pendingAthletes={athletesNeedingConsent}
-        onResendConsent={handleResendConsent}
-        onStartAssessment={handleStartAssessment}
-        loading={loading}
-      />
-
-      {/* Two Column Layout */}
-      <Grid container spacing={3}>
-        {/* Left Column - Athletes Panel */}
-        <Grid item xs={12} md={4}>
+      {/* Three Column Layout */}
+      <Grid container spacing={4}>
+        {/* Left Column - Priority Roster */}
+        <Grid item xs={12} md={3}>
           <AthletesPanel athletes={athletes} loading={loading} />
         </Grid>
 
-        {/* Right Column - Recent Assessments */}
-        <Grid item xs={12} md={8}>
-          <RecentAssessmentsPanel
-            assessments={recentAssessments}
-            loading={loading}
-          />
+        {/* Center Column - Today Schedule */}
+        <Grid item xs={12} md={5}>
+          <TodaySchedule loading={loading} />
+        </Grid>
+
+        {/* Right Column - Actions Panel */}
+        <Grid item xs={12} md={4}>
+          <ActionsPanel loading={loading} />
         </Grid>
       </Grid>
 

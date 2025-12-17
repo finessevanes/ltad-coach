@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { formatDateTime } from '../../utils/dateUtils';
 import {
-  Paper,
   Typography,
   Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
   IconButton,
   Dialog,
@@ -88,66 +81,148 @@ export const ReportHistory: React.FC<Props> = ({ reports, onReportResent }) => {
 
   if (reports.length === 0) {
     return (
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Report History
-        </Typography>
-        <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+      <Box>
+        {/* Section Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+            pb: 1.5,
+            borderBottom: '1px solid',
+            borderColor: 'grey.200',
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              fontSize: '1.125rem',
+              color: '#2D2D2D',
+            }}
+          >
+            Report History
+          </Typography>
+        </Box>
+        <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
           No reports generated yet. Click "Generate Report" to create the first parent report.
         </Typography>
-      </Paper>
+      </Box>
     );
   }
 
   return (
     <>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Report History
-        </Typography>
+      <Box>
+        {/* Section Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+            pb: 1.5,
+            borderBottom: '1px solid',
+            borderColor: 'grey.200',
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              fontSize: '1.125rem',
+              color: '#2D2D2D',
+            }}
+          >
+            Report History
+          </Typography>
+        </Box>
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           View all generated reports and resend with a new PIN if needed.
         </Typography>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Created</TableCell>
-                <TableCell>Sent</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {reports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell>{formatDateTime(report.createdAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</TableCell>
-                  <TableCell>
-                    {report.sentAt ? formatDateTime(report.sentAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not sent'}
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleCopyLink(report.id)}
-                      title="Copy report link"
-                    >
-                      <CopyIcon fontSize="small" />
-                    </IconButton>
-                    <Button
-                      size="small"
-                      startIcon={<SendIcon />}
-                      onClick={() => handleResendClick(report)}
-                      sx={{ ml: 1 }}
-                    >
-                      Resend
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+        {/* Report List */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {reports.map((report) => (
+            <Box
+              key={report.id}
+              sx={{
+                p: 2,
+                bgcolor: 'white',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'grey.200',
+                borderLeft: '4px solid',
+                borderLeftColor: report.sentAt ? '#10B981' : '#F59E0B',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
+              {/* Left side: Report info */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Progress Report
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                    Created: {formatDateTime(report.createdAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                    {report.sentAt
+                      ? `Sent: ${formatDateTime(report.sentAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+                      : 'Not sent yet'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Right side: Actions */}
+              <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                <IconButton
+                  size="small"
+                  onClick={() => handleCopyLink(report.id)}
+                  title="Copy report link"
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                    borderRadius: 1,
+                    '&:hover': {
+                      bgcolor: 'grey.50',
+                    },
+                  }}
+                >
+                  <CopyIcon fontSize="small" />
+                </IconButton>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<SendIcon />}
+                  onClick={() => handleResendClick(report)}
+                  sx={{
+                    borderRadius: 1.5,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    bgcolor: '#000',
+                    '&:hover': {
+                      bgcolor: '#2D2D2D',
+                    },
+                  }}
+                >
+                  Resend
+                </Button>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
 
       {/* Resend Dialog */}
       <Dialog open={resendDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

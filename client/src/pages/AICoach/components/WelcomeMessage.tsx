@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import FlagIcon from '@mui/icons-material/Flag';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function WelcomeMessage({ onSuggestionClick }: Props) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   return (
     <Box
       sx={{
@@ -41,26 +43,28 @@ export function WelcomeMessage({ onSuggestionClick }: Props) {
       {/* Flag Icon */}
       <FlagIcon
         sx={{
-          fontSize: 40,
-          color: 'text.secondary',
-          mb: 2,
-          opacity: 0.7,
+          fontSize: 64,
+          color: '#BDBDBD',
+          mb: 3,
         }}
       />
 
       {/* Main Title */}
       <Typography
-        variant="h4"
+        variant="h3"
         gutterBottom
         sx={{
-          fontWeight: 600,
-          maxWidth: 600,
+          fontWeight: 900,
+          textTransform: 'uppercase',
+          letterSpacing: '-0.02em',
+          maxWidth: 700,
           mx: 'auto',
-          mb: 1.5,
-          lineHeight: 1.3,
+          mb: 2,
+          lineHeight: 1.2,
+          fontSize: { xs: '1.75rem', md: '2.25rem' },
         }}
       >
-        Elevate Your Athletes with AI-Powered Coaching Intelligence
+        AI-Powered Coaching Intelligence
       </Typography>
 
       {/* Subtitle */}
@@ -68,10 +72,11 @@ export function WelcomeMessage({ onSuggestionClick }: Props) {
         variant="body1"
         color="text.secondary"
         sx={{
-          mb: 3,
-          maxWidth: 550,
+          mb: 4,
+          maxWidth: 600,
           mx: 'auto',
           lineHeight: 1.6,
+          fontSize: '1rem',
         }}
       >
         Ask questions about your athletes&apos; assessments, identify performance gaps,
@@ -87,28 +92,37 @@ export function WelcomeMessage({ onSuggestionClick }: Props) {
           justifyContent: 'center',
         }}
       >
-        {suggestions.map((suggestion, index) => (
-          <Button
-            key={index}
-            variant="outlined"
-            startIcon={suggestion.icon}
-            onClick={() => onSuggestionClick(suggestion.prompt)}
-            sx={{
-              borderRadius: 3,
-              px: 2.5,
-              py: 1,
-              textTransform: 'none',
-              borderColor: 'divider',
-              color: 'text.primary',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'action.hover',
-              },
-            }}
-          >
-            {suggestion.title}
-          </Button>
-        ))}
+        {suggestions.map((suggestion, index) => {
+          const isActive = activeIndex === index;
+          return (
+            <Button
+              key={index}
+              variant="outlined"
+              startIcon={suggestion.icon}
+              onClick={() => {
+                setActiveIndex(index);
+                onSuggestionClick(suggestion.prompt);
+              }}
+              sx={{
+                borderRadius: 1.5,
+                px: 3,
+                py: 1.25,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: isActive ? 'primary.main' : 'grey.300',
+                color: isActive ? 'black' : 'text.primary',
+                bgcolor: isActive ? 'white' : 'transparent',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  color: 'black',
+                  bgcolor: 'white',
+                },
+              }}
+            >
+              {suggestion.title}
+            </Button>
+          );
+        })}
       </Box>
 
       {/* Disclaimer */}

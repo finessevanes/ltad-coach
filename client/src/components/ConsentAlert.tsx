@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, CircularProgress, Box } from '@mui/material';
+import { Alert, Button, CircularProgress, Box, Typography } from '@mui/material';
 import { Athlete } from '../types/athlete';
 
 interface ConsentAlertProps {
@@ -35,6 +35,9 @@ export function ConsentAlert({ athlete, onResend, onDismiss }: ConsentAlertProps
         onClose={onDismiss}
         sx={{
           alignItems: 'flex-start',
+          borderRadius: 1,
+          borderLeft: '4px solid',
+          borderLeftColor: '#F59E0B',
           '& .MuiAlert-message': {
             width: '100%',
             py: 0.5,
@@ -57,12 +60,17 @@ export function ConsentAlert({ athlete, onResend, onDismiss }: ConsentAlertProps
           width: '100%'
         }}>
           <Box sx={{ flex: 1, minWidth: 0, pt: 0.25, pr: 1 }}>
-            Parental consent has not been received. Email was sent to <strong>{athlete.parentEmail}</strong>.
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+              Pending Consent
+            </Typography>
+            <Typography variant="body2">
+              Parental consent has not been received. Email was sent to <strong>{athlete.parentEmail}</strong>.
+            </Typography>
           </Box>
           {onResend && (
             <Button
               color="warning"
-              variant="outlined"
+              variant="contained"
               onClick={handleResend}
               disabled={loading}
               startIcon={loading ? <CircularProgress size={14} color="inherit" /> : null}
@@ -70,15 +78,14 @@ export function ConsentAlert({ athlete, onResend, onDismiss }: ConsentAlertProps
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
                 fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                py: 0.5,
-                px: 1.5,
+                py: 0.75,
+                px: 2,
                 minHeight: 'auto',
-                height: { xs: '28px', sm: '32px' },
-                borderWidth: 1,
+                height: { xs: '32px', sm: '36px' },
+                borderRadius: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
                 lineHeight: 1.4,
-                '&:hover': {
-                  borderWidth: 1,
-                }
               }}
             >
               {loading ? 'Sending...' : 'Resend Email'}
@@ -96,20 +103,30 @@ export function ConsentAlert({ athlete, onResend, onDismiss }: ConsentAlertProps
         severity="error"
         onClose={onDismiss}
         sx={{
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          borderRadius: 1,
+          borderLeft: '4px solid',
+          borderLeftColor: '#EF4444',
           '& .MuiAlert-message': {
             py: 0.5,
           },
           '& .MuiAlert-icon': {
             mr: 1.5,
+            mt: 0.25,
           },
           '& .MuiIconButton-root': {
             ml: 1,
+            mt: -0.5,
           },
         }}
       >
-        Parent/guardian has declined consent. Contact <strong>{athlete.parentEmail}</strong> directly to
-        discuss. Assessments cannot be conducted for this athlete.
+        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+          Consent Declined
+        </Typography>
+        <Typography variant="body2">
+          Parent/guardian has declined consent. Contact <strong>{athlete.parentEmail}</strong> directly to
+          discuss. Assessments cannot be conducted for this athlete.
+        </Typography>
       </Alert>
     );
   }

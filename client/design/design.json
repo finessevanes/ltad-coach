@@ -1,7 +1,7 @@
 {
     "metadata": {
-      "version": "2.0.0",
-      "lastUpdated": "2025-12-12",
+      "version": "2.1.0",
+      "lastUpdated": "2025-12-17",
       "author": "Coach Lens Design Team",
       "description": "Modern Athletic Minimalism design system for Coach Lens - AI-powered coaching platform for middle school athletes",
       "targetPlatform": "Desktop Web Application (Mobile-responsive)",
@@ -75,15 +75,20 @@
             "muiMapping": "primary.main"
           },
           "secondary": {
-            "value": "#F97316",
-            "name": "Energy Orange",
-            "light": "#FB923C",
-            "dark": "#EA580C",
+            "value": "#60A5FA",
+            "name": "Lighter Blue",
+            "light": "#93C5FD",
+            "dark": "#3B82F6",
             "contrastText": "#FFFFFF",
-            "usage": ["Improvement metrics", "Alerts", "Highlights", "Achievement accents", "CTAs"],
+            "usage": ["Complements primary", "Secondary CTAs", "Less prominent actions"],
             "accessibility": "4.5:1 contrast on white",
-            "important": "Use sparingly - this is an accent, not a primary color",
-            "muiMapping": "secondary.main"
+            "note": "MUI theme uses lighter blue for secondary to avoid orange overuse. Energy Orange (#F97316) is used via warning color.",
+            "muiMapping": "secondary.main (#60A5FA)",
+            "energyOrange": {
+              "value": "#F97316",
+              "muiMapping": "warning.main",
+              "usage": "Use warning color for Energy Orange accents"
+            }
           }
         },
   
@@ -151,15 +156,16 @@
         },
   
         "backgrounds": {
-          "default": "#FFFFFF",
+          "default": "#F5F5F5",
           "paper": "#FFFFFF",
           "elevated": "#FFFFFF",
           "alternate": "#F5F5F5",
-          "reasoning": "White base with light gray alternates reduces eye strain while maintaining clean aesthetic",
+          "reasoning": "Light gray default background with white paper cards creates depth and visual hierarchy. Matches actual theme.ts implementation.",
           "muiMapping": {
-            "default": "background.default",
-            "paper": "background.paper"
-          }
+            "default": "background.default (#F5F5F5)",
+            "paper": "background.paper (#FFFFFF)"
+          },
+          "note": "Updated v2.1.0: Default background is light gray to create contrast with white cards"
         },
   
         "muiGreyScale": {
@@ -553,6 +559,37 @@
             "muiProps": {
               "variant": "text"
             }
+          },
+          "black": {
+            "backgroundColor": "#000000",
+            "color": "#FFFFFF",
+            "border": "none",
+            "padding": "12px 24px",
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "borderRadius": "12px",
+            "textTransform": "uppercase",
+            "hover": {
+              "backgroundColor": "#2D2D2D"
+            },
+            "usage": "High-emphasis CTAs in action panels, contrasts strongly with Athletic Blue",
+            "note": "Added in v2.1.0 - used in ActionsPanel for maximum visibility"
+          },
+          "suggestion": {
+            "backgroundColor": "#FFFFFF",
+            "color": "#000000",
+            "border": "1px solid #E5E5E5",
+            "padding": "12px 24px",
+            "fontSize": "16px",
+            "fontWeight": 600,
+            "borderRadius": "12px",
+            "textTransform": "none",
+            "hover": {
+              "backgroundColor": "#FFFFFF",
+              "borderColor": "#D4FF00"
+            },
+            "usage": "AI Coach welcome screen suggestion buttons (Exercise, Analyze, Progress)",
+            "note": "White fill maintained on hover with neon yellow border highlight"
           },
           "icon": {
             "size": "40px",

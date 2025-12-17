@@ -60,7 +60,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
         <Typography variant="h5" component="span">
           {completedLegName} Leg Test Complete
         </Typography>
-        <Typography variant="body2" color="primary" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <InfoIcon fontSize="small" />
           Let's review your attempt
         </Typography>
@@ -73,7 +73,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Hold Time
             </Typography>
-            <Typography variant="h3" component="div" color="primary">
+            <Typography variant="h3" component="div" color="text.primary">
               {holdTime.toFixed(1)}s
             </Typography>
           </Box>
@@ -82,11 +82,11 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           {!success && failureReason && (
             <Box
               sx={{
-                bgcolor: 'warning.50',
+                bgcolor: 'grey.50',
                 p: 2,
                 borderRadius: 1,
                 border: '1px solid',
-                borderColor: 'warning.200',
+                borderColor: 'grey.300',
               }}
             >
               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -101,11 +101,11 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           {/* Next Step Prompt */}
           <Box
             sx={{
-              bgcolor: 'primary.50',
+              bgcolor: 'grey.50',
               p: 2,
               borderRadius: 1,
               border: '1px solid',
-              borderColor: 'primary.200',
+              borderColor: 'grey.300',
             }}
           >
             <Typography variant="body1" fontWeight="medium">
@@ -118,12 +118,13 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 3 }}>
+      <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
         <Button
           onClick={onReshootLeft}
           variant="outlined"
           color="secondary"
           size="large"
+          fullWidth
         >
           Try {completedLegName} Leg Again
         </Button>
@@ -132,6 +133,7 @@ export const TransitionModal: React.FC<TransitionModalProps> = ({
           variant="contained"
           color="primary"
           size="large"
+          fullWidth
           autoFocus
         >
           Continue to {nextLegName} Leg

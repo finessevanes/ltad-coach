@@ -3,15 +3,19 @@ import {
   Box,
   TextField,
   IconButton,
-  Paper,
-  Autocomplete,
   Typography,
   Tooltip,
+  Menu,
+  MenuItem,
+  InputAdornment,
+  Chip,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PeopleIcon from '@mui/icons-material/People';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CloseIcon from '@mui/icons-material/Close';
 import { Athlete } from '../../../types/athlete';
 
 // Type declaration for Web Speech API
@@ -44,6 +48,7 @@ export function ChatInput({
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isVoiceSupported, setIsVoiceSupported] = useState(false);
+  const [athleteMenuAnchor, setAthleteMenuAnchor] = useState<null | HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -126,123 +131,156 @@ export function ChatInput({
   };
 
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: 2,
-        borderRadius: 3,
-        bgcolor: 'grey.50',
-      }}
-    >
-      {/* Message input with inline athlete selector */}
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
-        {/* Athlete selector - compact dropdown */}
-        <Autocomplete
-          size="small"
-          options={athletes}
-          getOptionLabel={(option) => `${option.name} (Age ${option.age})`}
-          value={selectedAthlete}
-          onChange={(_, value) => onAthleteSelect(value)}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          sx={{ minWidth: 180 }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="Select Athletes"
-              InputProps={{
-                ...params.InputProps,
-                startAdornment: (
-                  <>
-                    <PeopleIcon sx={{ color: 'text.secondary', mr: 0.5, ml: 0.5 }} />
-                    {params.InputProps.startAdornment}
-                  </>
-                ),
-                sx: {
-                  bgcolor: 'white',
-                  borderRadius: 2,
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'grey.300',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'grey.400',
-                  },
-                },
-              }}
-            />
-          )}
-          renderOption={(props, option) => (
-            <li {...props} key={option.id}>
-              <Box>
-                <Typography variant="body2">{option.name}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Age {option.age} | {option.consentStatus}
-                </Typography>
+    <Box>
+      {/* Text input with athlete selector and action buttons inside */}
+      <TextField
+        fullWidth
+        multiline
+        maxRows={4}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Ask CoachAI about athlete performance..."
+        disabled={disabled}
+        inputRef={inputRef}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Tooltip title="Select athlete">
+                  <IconButton
+                    onClick={(e) => setAthleteMenuAnchor(e.currentTarget)}
+                    size="small"
+                    sx={{
+                      color: 'text.secondary',
+                      '&:hover': {
+                        bgcolor: 'grey.100',
+                      },
+                    }}
+                  >
+                    <PeopleIcon fontSize="small" />
+                    <KeyboardArrowDownIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                {selectedAthlete && (
+                  <Chip
+                    label={selectedAthlete.name}
+                    size="small"
+                    onDelete={() => onAthleteSelect(null)}
+                    deleteIcon={<CloseIcon />}
+                    sx={{
+                      bgcolor: 'black',
+                      color: 'white',
+                      fontWeight: 600,
+                      '& .MuiChip-deleteIcon': {
+                        color: 'white',
+                        '&:hover': {
+                          color: 'grey.200',
+                        },
+                      },
+                    }}
+                  />
+                )}
               </Box>
-            </li>
-          )}
-        />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Voice input button */}
+                {isVoiceSupported && (
+                  <Tooltip title={isListening ? 'Stop recording' : 'Voice input'}>
+                    <IconButton
+                      onClick={handleVoiceInput}
+                      disabled={disabled}
+                      size="small"
+                      sx={{
+                        color: isListening ? 'error.main' : 'text.secondary',
+                        '&:hover': {
+                          bgcolor: 'grey.100',
+                        },
+                      }}
+                    >
+                      {isListening ? <MicOffIcon /> : <MicIcon />}
+                    </IconButton>
+                  </Tooltip>
+                )}
 
-        {/* Text input */}
-        <TextField
-          fullWidth
-          multiline
-          maxRows={4}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Start typing to interact..."
-          disabled={disabled}
-          inputRef={inputRef}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              bgcolor: 'white',
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'grey.300',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'grey.400',
-              },
+                {/* Send button with lime color */}
+                <IconButton
+                  onClick={handleSend}
+                  disabled={disabled || !message.trim()}
+                  size="small"
+                  sx={{
+                    bgcolor: '#D4FF00',
+                    color: 'black',
+                    '&:hover': { bgcolor: '#c0e600' },
+                    '&:disabled': { bgcolor: 'grey.300', color: 'grey.500' },
+                  }}
+                >
+                  <SendIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            bgcolor: 'white',
+            borderRadius: 1,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'grey.300',
             },
-          }}
-        />
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'grey.400',
+            },
+          },
+        }}
+      />
 
-        {/* Voice input button */}
-        {isVoiceSupported && (
-          <Tooltip title={isListening ? 'Stop recording' : 'Voice input'}>
-            <IconButton
-              onClick={handleVoiceInput}
-              disabled={disabled}
-              sx={{
-                bgcolor: 'white',
-                border: '1px solid',
-                borderColor: 'grey.300',
-                color: isListening ? 'error.main' : 'text.secondary',
-                '&:hover': {
-                  bgcolor: isListening ? 'error.lighter' : 'grey.100',
-                  borderColor: 'grey.400',
-                },
-              }}
-            >
-              {isListening ? <MicOffIcon /> : <MicIcon />}
-            </IconButton>
-          </Tooltip>
-        )}
-
-        {/* Send button with lime color */}
-        <IconButton
-          onClick={handleSend}
-          disabled={disabled || !message.trim()}
-          sx={{
-            bgcolor: '#D4FF00',
-            color: 'black',
-            '&:hover': { bgcolor: '#c0e600' },
-            '&:disabled': { bgcolor: 'grey.300', color: 'grey.500' },
+      {/* Athlete selector menu */}
+      <Menu
+        anchorEl={athleteMenuAnchor}
+        open={Boolean(athleteMenuAnchor)}
+        onClose={() => setAthleteMenuAnchor(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              maxHeight: 300,
+              width: 250,
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            onAthleteSelect(null);
+            setAthleteMenuAnchor(null);
           }}
+          selected={!selectedAthlete}
         >
-          <SendIcon />
-        </IconButton>
-      </Box>
-    </Paper>
+          <Typography variant="body2" color="text.secondary">
+            All Athletes
+          </Typography>
+        </MenuItem>
+        {athletes.map((athlete) => (
+          <MenuItem
+            key={athlete.id}
+            onClick={() => {
+              onAthleteSelect(athlete);
+              setAthleteMenuAnchor(null);
+            }}
+            selected={selectedAthlete?.id === athlete.id}
+          >
+            <Box>
+              <Typography variant="body2">{athlete.name}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Age {athlete.age}
+              </Typography>
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+    </Box>
   );
 }

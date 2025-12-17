@@ -105,12 +105,9 @@ export function PublicReport() {
         <Box sx={{ mb: 4 }}>
           <Typography
             variant="h4"
-            sx={{ color: 'primary.main', fontWeight: 'bold', mb: 1 }}
+            sx={{ color: '#000000', fontWeight: 'bold', mb: 1 }}
           >
-            AI Coach
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Progress Report
+            CoachAI Progress Report
           </Typography>
         </Box>
 

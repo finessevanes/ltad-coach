@@ -1,31 +1,32 @@
 import { createTheme } from '@mui/material/styles';
 
-// Coach Lens Modern Athletic Minimalism Design System
-// Based on design.json v2.0.0
+// Coach Lens Design System
+// White/Black/Gray + Lime Green Accent
+// Based on design.json v3.0.0
 
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#2563EB', // Athletic Blue - trust, technology, professional
-      light: '#60A5FA',
-      dark: '#1E40AF',
-      contrastText: '#FFFFFF',
+      main: '#D4FF00', // Lime Green - energetic, modern, athletic
+      light: '#E3FF4D',
+      dark: '#A3CC00',
+      contrastText: '#000000',
     },
     secondary: {
-      main: '#60A5FA', // Lighter Blue - complements primary, less jarring than orange
-      light: '#93C5FD',
-      dark: '#3B82F6',
+      main: '#000000', // Black - strong, professional, high contrast
+      light: '#2D2D2D',
+      dark: '#000000',
       contrastText: '#FFFFFF',
     },
     success: {
-      main: '#10B981',
-      light: '#34D399',
-      dark: '#059669',
+      main: '#84CC16', // Softer Lime Green for success states
+      light: '#A3E635',
+      dark: '#65A30D',
     },
     warning: {
-      main: '#F97316', // Energy Orange - matches the vibrant orange from design
-      light: '#FB923C',
-      dark: '#EA580C',
+      main: '#F59E0B', // Amber for warnings
+      light: '#FBBF24',
+      dark: '#D97706',
     },
     error: {
       main: '#EF4444',
@@ -38,12 +39,12 @@ export const theme = createTheme({
       dark: '#2563EB',
     },
     background: {
-      default: '#FFFFFF',
+      default: '#F5F5F5',
       paper: '#FFFFFF',
     },
     text: {
-      primary: 'rgba(45, 45, 45, 0.87)', // Charcoal
-      secondary: 'rgba(107, 107, 107, 0.87)', // Gray
+      primary: '#000000', // Pure Black for maximum contrast
+      secondary: '#6B6B6B', // Gray for secondary text
       disabled: 'rgba(0, 0, 0, 0.38)',
     },
     divider: '#E5E5E5',
@@ -211,13 +212,13 @@ export const theme = createTheme({
           padding: '4px 12px',
         },
         colorSuccess: {
-          backgroundColor: '#ECFDF5', // Light green background
-          color: '#059669', // Dark green text
+          backgroundColor: '#F7FEE7', // Light lime background
+          color: '#65A30D', // Dark lime text
           border: 'none',
         },
         colorWarning: {
-          backgroundColor: '#FFF7ED', // Light orange background
-          color: '#EA580C', // Dark orange text
+          backgroundColor: '#FEF3C7', // Light amber background
+          color: '#D97706', // Dark amber text
           border: 'none',
         },
         colorError: {
@@ -226,8 +227,8 @@ export const theme = createTheme({
           border: 'none',
         },
         colorPrimary: {
-          backgroundColor: '#EFF6FF', // Light blue background
-          color: '#1E40AF', // Dark blue text
+          backgroundColor: '#F7FEE7', // Light lime background
+          color: '#000000', // Black text
           border: 'none',
         },
       },
@@ -245,7 +246,7 @@ export const theme = createTheme({
               borderColor: '#E5E5E5',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#2563EB',
+              borderColor: '#D4FF00',
               borderWidth: '2px',
             },
           },
@@ -269,24 +270,24 @@ export const theme = createTheme({
           fontSize: '16px',
         },
         standardSuccess: {
-          backgroundColor: '#ECFDF5',
-          color: '#10B981',
-          borderLeft: '4px solid #10B981',
+          backgroundColor: '#F7FEE7',
+          color: '#65A30D',
+          borderLeft: '4px solid #84CC16',
         },
         standardWarning: {
-          backgroundColor: '#FFF7ED',
-          color: '#EA580C',
-          borderLeft: '4px solid #F97316',
+          backgroundColor: '#FEF3C7',
+          color: '#D97706',
+          borderLeft: '4px solid #F59E0B',
         },
         standardError: {
           backgroundColor: '#FEE2E2',
-          color: '#EF4444',
+          color: '#DC2626',
           borderLeft: '4px solid #EF4444',
         },
         standardInfo: {
-          backgroundColor: '#DBEAFE',
-          color: '#3B82F6',
-          borderLeft: '4px solid #3B82F6',
+          backgroundColor: '#F5F5F5',
+          color: '#000000',
+          borderLeft: '4px solid #6B6B6B',
         },
       },
     },
@@ -319,11 +320,11 @@ export const theme = createTheme({
             backgroundColor: '#F5F5F5',
           },
           '&.Mui-selected': {
-            backgroundColor: '#EFF6FF',
-            color: '#2563EB',
+            backgroundColor: '#F7FEE7',
+            color: '#000000',
             fontWeight: 600,
             '&:hover': {
-              backgroundColor: '#EFF6FF',
+              backgroundColor: '#F7FEE7',
             },
           },
         },
@@ -359,7 +360,7 @@ export const theme = createTheme({
         },
         bar: {
           borderRadius: '999px',
-          backgroundColor: '#2563EB',
+          backgroundColor: '#D4FF00',
         },
       },
     },
@@ -368,6 +369,13 @@ export const theme = createTheme({
         root: {
           backgroundColor: '#F5F5F5',
           borderRadius: '8px',
+        },
+      },
+    },
+    MuiCircularProgress: {
+      styleOverrides: {
+        root: {
+          color: '#000000', // Black loading circle
         },
       },
     },

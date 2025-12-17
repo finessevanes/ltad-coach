@@ -13,17 +13,21 @@ export function ChatMessage({ message }: Props) {
     <Box
       sx={{
         display: 'flex',
-        mb: 3,
+        mb: 2,
         justifyContent: isAssistant ? 'flex-start' : 'flex-end',
       }}
     >
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
+          px: 3,
           maxWidth: '80%',
-          bgcolor: isAssistant ? 'grey.50' : 'primary.50',
-          borderRadius: 2,
+          minWidth: '100px',
+          bgcolor: isAssistant ? 'white' : '#EFF6FF',
+          borderRadius: isAssistant ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
+          border: 'none',
+          boxShadow: 'none',
         }}
       >
         {message.isStreaming && !message.content ? (

@@ -9,7 +9,7 @@ export function Landing() {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'white' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F5F5' }}>
       {/* Full Width Nav Bar */}
       <Box
         component="nav"
@@ -19,7 +19,7 @@ export function Landing() {
           left: 0,
           right: 0,
           zIndex: 1001,
-          py: 3,
+          py: 1.5,
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
           backgroundColor: 'rgba(255, 255, 255, 0.7)',
@@ -37,45 +37,57 @@ export function Landing() {
           },
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth="lg">
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              px: { xs: 3, md: 8 },
+              px: { xs: 2, md: 4 },
             }}
           >
             {/* Logo */}
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 500,
-                color: '#000000',
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '20px',
-              }}
-            >
-              Coach Lens
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                component="img"
+                src="/favicon.png"
+                alt="Coach Lens"
+                sx={{
+                  width: 28,
+                  height: 28,
+                  objectFit: 'contain',
+                }}
+              />
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 500,
+                  color: '#000000',
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '20px',
+                }}
+              >
+                Coach Lens
+              </Typography>
+            </Box>
 
             {/* Right Side: Sign In + CTA */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button
                 onClick={() => navigate('/login')}
                 sx={{
-                  color: '#2D2D2D',
+                  bgcolor: 'transparent',
+                  color: '#000000',
                   fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: '15px',
                   textTransform: 'none',
                   px: 3,
                   py: 1,
-                  borderRadius: '100px',
+                  borderRadius: '12px',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
-                    bgcolor: 'rgba(37, 99, 235, 0.08)',
-                    color: '#2563EB',
+                    bgcolor: '#D4FF00',
                   },
                 }}
               >
@@ -83,22 +95,22 @@ export function Landing() {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => window.open('https://calendly.com/naniskinner', '_blank')}
+                onClick={() => navigate('/book-demo')}
                 sx={{
-                  bgcolor: '#2563EB',
-                  color: 'white',
+                  bgcolor: '#000000',
+                  color: '#FFFFFF',
                   fontFamily: 'Jost, sans-serif',
                   fontWeight: 600,
                   fontSize: '14px',
-                  textTransform: 'none',
+                  textTransform: 'uppercase',
                   px: 3,
                   py: 1.25,
-                  borderRadius: '100px',
+                  borderRadius: '12px',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
-                    bgcolor: '#1d4ed8',
+                    bgcolor: '#2D2D2D',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                   },
                 }}
               >
@@ -141,7 +153,7 @@ export function Landing() {
               },
             }}
           >
-            Build a D1 Foundation
+            Build a D1 Athlete
           </Typography>
 
           {/* Video Demo Section */}
@@ -201,42 +213,52 @@ export function Landing() {
       </Container>
 
       {/* Benefits Section */}
-      <Container maxWidth="lg" sx={{ mb: 24, mt: 20 }}>
-        <Typography
-          sx={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#2563EB',
-            fontFamily: 'Jost, sans-serif',
-            mb: 4,
-          }}
-        >
-          Benefits
-        </Typography>
-        <Typography
-          variant="h2"
-          sx={{
-            fontSize: { xs: '36px', md: '56px' },
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: '#2D2D2D',
-            fontFamily: 'Jost, sans-serif',
-            mb: 3,
-          }}
-        >
-          We've cracked the code.
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '16px',
-            color: '#6B6B6B',
-            fontFamily: 'Jost, sans-serif',
-            mb: 8,
-            maxWidth: '900px',
-          }}
-        >
-          Showing progress builds confidence and retains athletes. Computer vision meets expert coaching to give every middle schooler the objective feedback they need to stay motivated.
-        </Typography>
+      <Box sx={{ bgcolor: '#FFFFFF', py: { xs: 6, md: 10 }, mb: 24, mt: 20 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 4 }}>
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: '#D4FF00',
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#2D2D2D',
+                fontFamily: 'Jost, sans-serif',
+              }}
+            >
+              Benefits
+            </Typography>
+          </Box>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '36px', md: '56px' },
+              fontWeight: 400,
+              lineHeight: 1.2,
+              color: '#2D2D2D',
+              fontFamily: 'Jost, sans-serif',
+              mb: 3,
+            }}
+          >
+            We've cracked the code.
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '16px',
+              color: '#6B6B6B',
+              fontFamily: 'Jost, sans-serif',
+              mb: 8,
+              maxWidth: '900px',
+            }}
+          >
+            Showing progress builds confidence and retains athletes. Computer vision meets expert coaching to give every middle schooler the objective feedback they need to stay motivated.
+          </Typography>
 
         {/* Feature Cards Grid */}
         <Box
@@ -253,7 +275,7 @@ export function Landing() {
               sx={{
                 width: '48px',
                 height: '48px',
-                bgcolor: '#EFF6FF',
+                bgcolor: '#F5F5F5',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -261,7 +283,7 @@ export function Landing() {
                 mb: 3,
               }}
             >
-              <GpsFixedIcon sx={{ fontSize: 24, color: '#2563EB' }} />
+              <GpsFixedIcon sx={{ fontSize: 24, color: '#000000' }} />
             </Box>
             <Typography
               sx={{
@@ -292,7 +314,7 @@ export function Landing() {
               sx={{
                 width: '48px',
                 height: '48px',
-                bgcolor: '#EFF6FF',
+                bgcolor: '#F5F5F5',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -300,7 +322,7 @@ export function Landing() {
                 mb: 3,
               }}
             >
-              <TimelineIcon sx={{ fontSize: 24, color: '#2563EB' }} />
+              <TimelineIcon sx={{ fontSize: 24, color: '#000000' }} />
             </Box>
             <Typography
               sx={{
@@ -331,7 +353,7 @@ export function Landing() {
               sx={{
                 width: '48px',
                 height: '48px',
-                bgcolor: '#EFF6FF',
+                bgcolor: '#F5F5F5',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -339,7 +361,7 @@ export function Landing() {
                 mb: 3,
               }}
             >
-              <ChatBubbleOutlineIcon sx={{ fontSize: 24, color: '#2563EB' }} />
+              <ChatBubbleOutlineIcon sx={{ fontSize: 24, color: '#000000' }} />
             </Box>
             <Typography
               sx={{
@@ -370,7 +392,7 @@ export function Landing() {
               sx={{
                 width: '48px',
                 height: '48px',
-                bgcolor: '#EFF6FF',
+                bgcolor: '#F5F5F5',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -378,7 +400,7 @@ export function Landing() {
                 mb: 3,
               }}
             >
-              <TrendingUpIcon sx={{ fontSize: 24, color: '#2563EB' }} />
+              <TrendingUpIcon sx={{ fontSize: 24, color: '#000000' }} />
             </Box>
             <Typography
               sx={{
@@ -403,7 +425,8 @@ export function Landing() {
             </Typography>
           </Box>
         </Box>
-      </Container>
+        </Container>
+      </Box>
 
       {/* Divider */}
       <Box sx={{ borderTop: '1px solid #E5E5E5', my: 20 }} />
@@ -525,52 +548,56 @@ export function Landing() {
       </Container>
 
       {/* Final CTA Section */}
-      <Container maxWidth="lg" sx={{ mb: 3, mt: 24 }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '36px', md: '48px' },
-              fontWeight: 400,
-              lineHeight: 1.2,
-              color: '#2D2D2D',
-              fontFamily: 'Jost, sans-serif',
-              mb: 5,
-            }}
-          >
-            Let's unlock your athlete's true potential—together.
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '20px',
-              color: '#2D2D2D',
-              fontFamily: 'Jost, sans-serif',
-              fontWeight: 500,
-              mb: 3,
-            }}
-          >
-            Scan to Book a Demo
-          </Typography>
-          <Box
-            component="img"
-            src="/Calendly QR Code.png"
-            alt="Scan to book a demo"
-            sx={{
-              width: 300,
-              height: 300,
-              objectFit: 'contain',
-            }}
-          />
-        </Box>
-      </Container>
+      <Box sx={{ bgcolor: '#000000', py: { xs: 6, md: 8 }, mt: 24 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '36px', md: '48px' },
+                fontWeight: 400,
+                lineHeight: 1.2,
+                color: '#FFFFFF',
+                fontFamily: 'Jost, sans-serif',
+                mb: 4,
+              }}
+            >
+              Let's unlock your athlete's true potential together.
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/book-demo')}
+              sx={{
+                bgcolor: '#D4FF00',
+                color: '#000000',
+                fontFamily: 'Jost, sans-serif',
+                fontWeight: 600,
+                fontSize: '18px',
+                textTransform: 'none',
+                px: 5,
+                py: 2,
+                borderRadius: '12px',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  bgcolor: '#C4EF00',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(212, 255, 0, 0.3)',
+                },
+              }}
+            >
+              Book a Demo
+            </Button>
+          </Box>
+        </Container>
+      </Box>
 
       {/* Footer */}
       <Box
         component="footer"
         sx={{
-          borderTop: '1px solid #E5E5E5',
+          bgcolor: '#000000',
+          borderTop: '1px solid #2D2D2D',
           py: 6,
-          mt: 16,
         }}
       >
         <Container maxWidth="lg">
@@ -596,7 +623,7 @@ export function Landing() {
               <Typography
                 sx={{
                   fontSize: '14px',
-                  color: '#6B6B6B',
+                  color: '#9CA3AF',
                   fontFamily: 'Jost, sans-serif',
                 }}
               >
@@ -605,7 +632,7 @@ export function Landing() {
               <Typography
                 sx={{
                   fontSize: '14px',
-                  color: '#6B6B6B',
+                  color: '#9CA3AF',
                   fontFamily: 'Jost, sans-serif',
                 }}
               >
@@ -617,7 +644,7 @@ export function Landing() {
             <Typography
               sx={{
                 fontSize: '14px',
-                color: '#6B6B6B',
+                color: '#9CA3AF',
                 fontFamily: 'Jost, sans-serif',
                 textAlign: 'center',
               }}

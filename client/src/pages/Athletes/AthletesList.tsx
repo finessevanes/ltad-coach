@@ -159,7 +159,14 @@ export default function AthletesList() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           size="small"
-          sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 200 } }}
+          sx={{
+            flexGrow: 1,
+            minWidth: { xs: '100%', sm: 200 },
+            '& .MuiOutlinedInput-root': {
+              bgcolor: '#FFFFFF',
+              borderRadius: '12px',
+            },
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -170,7 +177,16 @@ export default function AthletesList() {
         />
 
         {/* Status Filter */}
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: { xs: '100%', sm: 150 },
+            '& .MuiOutlinedInput-root': {
+              bgcolor: '#FFFFFF',
+              borderRadius: '12px',
+            },
+          }}
+        >
           <InputLabel id="status-filter-label">Status</InputLabel>
           <Select
             labelId="status-filter-label"
@@ -190,7 +206,14 @@ export default function AthletesList() {
           variant="contained"
           startIcon={<Add />}
           onClick={handleAddAthlete}
-          sx={{ minWidth: { xs: '100%', sm: 150 } }}
+          sx={{
+            minWidth: { xs: '100%', sm: 150 },
+            bgcolor: '#D4FF00',
+            color: '#000000',
+            '&:hover': {
+              bgcolor: '#C4EF00',
+            },
+          }}
         >
           Add Athlete
         </Button>

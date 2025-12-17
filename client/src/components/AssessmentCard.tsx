@@ -25,7 +25,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({
       sx={{
         cursor: 'pointer',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'visible',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -36,71 +36,85 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({
         transition: 'all 0.2s ease',
       }}
     >
-      {/* Image or Text Placeholder Container - 3:4 Aspect Ratio */}
+      {/* Image or Text Placeholder Container with spacing */}
       <Box
         sx={{
           position: 'relative',
-          paddingTop: '133.33%',
-          overflow: 'hidden',
-          backgroundColor: imageOrPlaceholder.type === 'placeholder' ? 'grey.100' : 'transparent',
+          aspectRatio: '4/3',
+          overflow: 'visible',
+          p: 1.5,
         }}
       >
-        {imageOrPlaceholder.type === 'image' ? (
-          <Box
-            component="img"
-            src={imageOrPlaceholder.value}
-            alt={assessment.name}
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'grey.200',
-              padding: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
+        <Box
+          sx={{
+            width: 'calc(100% - 24px)',
+            height: 'calc(100% - 24px)',
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            overflow: 'hidden',
+            borderRadius: 1,
+            backgroundColor: imageOrPlaceholder.type === 'placeholder' ? 'grey.200' : 'transparent',
+          }}
+        >
+          {imageOrPlaceholder.type === 'image' ? (
+            <img
+              src={imageOrPlaceholder.value}
+              alt={assessment.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: assessment.id === 'balance' ? 'center 25%' : 'center center',
+                display: 'block',
+              }}
+              onError={() => {
+                console.error('Image failed to load:', imageOrPlaceholder.value);
+              }}
+            />
+          ) : (
+            <Box
               sx={{
-                textAlign: 'center',
-                color: 'text.secondary',
-                fontWeight: 500,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'grey.200',
+                padding: 2,
               }}
             >
-              {imageOrPlaceholder.value}
-            </Typography>
-          </Box>
-        )}
+              <Typography
+                variant="body2"
+                sx={{
+                  textAlign: 'center',
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                }}
+              >
+                {imageOrPlaceholder.value}
+              </Typography>
+            </Box>
+          )}
+        </Box>
 
-        {/* Coming Soon Ribbon - Only show if not active */}
+        {/* Coming Soon Badge - Top-right, straight, lime green with black text, aligned with card edge */}
         {!assessment.isActive && (
           <Box
             sx={{
               position: 'absolute',
-              top: 20,
-              right: -35,
-              backgroundColor: 'warning.main',
-              color: 'white',
-              padding: '4px 40px',
-              transform: 'rotate(45deg)',
-              fontSize: '12px',
-              fontWeight: 600,
-              boxShadow: 2,
+              top: 12,
+              right: 12,
+              backgroundColor: '#D4FF00',
+              color: '#000000',
+              padding: '6px 16px',
+              borderRadius: 1,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              zIndex: 2,
             }}
           >
             Coming Soon

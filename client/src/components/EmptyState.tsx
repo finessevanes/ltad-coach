@@ -32,20 +32,46 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     >
       <PersonAdd
         sx={{
-          fontSize: 80,
-          color: 'text.secondary',
-          mb: 2,
-          opacity: 0.5,
+          fontSize: 64,
+          color: '#BDBDBD',
+          mb: 3,
         }}
       />
-      <Typography variant="h5" gutterBottom>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          mb: 1,
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500 }}>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{
+          mb: 4,
+          maxWidth: 500,
+          fontSize: '1rem',
+        }}
+      >
         {description}
       </Typography>
       {actionLabel && onAction && (
-        <Button variant="contained" onClick={onAction} startIcon={<PersonAdd />}>
+        <Button
+          variant="contained"
+          onClick={onAction}
+          startIcon={<PersonAdd />}
+          sx={{
+            borderRadius: 1.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: 3,
+            py: 1.5,
+          }}
+        >
           {actionLabel}
         </Button>
       )}

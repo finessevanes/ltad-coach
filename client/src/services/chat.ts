@@ -1,5 +1,5 @@
 /**
- * Chat service for AI Coach Assistant
+ * Chat service for CoachAI Assistant
  *
  * Handles streaming chat responses via Server-Sent Events (SSE)
  */
