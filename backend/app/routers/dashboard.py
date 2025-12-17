@@ -1,7 +1,7 @@
 """Dashboard API endpoint."""
 
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.models.dashboard import (
@@ -9,6 +9,7 @@ from app.models.dashboard import (
     DashboardStats,
     RecentAssessmentItem,
     PendingAthleteItem,
+    AthleteListItem,
 )
 from app.models.athlete import ConsentStatus
 from app.repositories.athlete import AthleteRepository
@@ -45,6 +46,7 @@ def _get_duration_seconds(assessment) -> Optional[float]:
 
 @router.get("", response_model=DashboardResponse)
 async def get_dashboard(
+    response: Response,
     current_user: User = Depends(get_current_user),
 ) -> DashboardResponse:
     """Get combined dashboard data for authenticated coach.
@@ -52,19 +54,20 @@ async def get_dashboard(
     Returns:
         DashboardResponse with stats, recent assessments, and pending athletes
     """
+    # Cache for 30 seconds to reduce redundant queries
+    response.headers["Cache-Control"] = "private, max-age=30"
     athlete_repo = AthleteRepository()
     assessment_repo = AssessmentRepository()
 
-    # Fetch athletes using server-side filtering (50% faster than client-side)
-    active_athletes = await athlete_repo.get_by_coach(
-        current_user.id, consent_status=ConsentStatus.ACTIVE
-    )
-    pending_athletes = await athlete_repo.get_by_coach(
-        current_user.id, consent_status=ConsentStatus.PENDING
-    )
+    # Fetch all athletes once, then filter in-memory (saves 1 Firestore read)
+    all_athletes = await athlete_repo.get_by_coach(current_user.id)
+
+    # Filter in-memory by consent status
+    active_athletes = [a for a in all_athletes if a.consent_status == ConsentStatus.ACTIVE]
+    pending_athletes = [a for a in all_athletes if a.consent_status == ConsentStatus.PENDING]
 
     # Get total count for stats
-    total_athletes_count = len(active_athletes) + len(pending_athletes)
+    total_athletes_count = len(all_athletes)
 
     # Fetch recent assessments (last 10)
     recent_assessments = await assessment_repo.get_by_coach(current_user.id, limit=10)
@@ -75,7 +78,6 @@ async def get_dashboard(
     total_assessments = len(recent_assessments)
 
     # Build athlete name lookup dict for efficient name resolution
-    all_athletes = active_athletes + pending_athletes
     athlete_names = {athlete.id: athlete.name for athlete in all_athletes}
 
     # Map assessments to response items with athlete names
@@ -108,6 +110,20 @@ async def get_dashboard(
         for athlete in pending_athletes
     ]
 
+    # Map all athletes to response items
+    athlete_items = [
+        AthleteListItem(
+            id=athlete.id,
+            name=athlete.name,
+            age=athlete.age,
+            gender=athlete.gender,
+            parent_email=athlete.parent_email,
+            consent_status=athlete.consent_status,
+            created_at=athlete.created_at,
+        )
+        for athlete in all_athletes
+    ]
+
     # Build stats
     stats = DashboardStats(
         total_athletes=total_athletes_count,
@@ -120,4 +136,5 @@ async def get_dashboard(
         stats=stats,
         recent_assessments=recent_items,
         pending_athletes=pending_items,
+        athletes=athlete_items,
     )
