@@ -68,7 +68,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({
                 objectPosition: assessment.id === 'balance' ? 'center 25%' : 'center center',
                 display: 'block',
               }}
-              onError={(e) => {
+              onError={() => {
                 console.error('Image failed to load:', imageOrPlaceholder.value);
               }}
             />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, CircularProgress, Box } from '@mui/material';
+import { Alert, Button, CircularProgress, Box, Typography } from '@mui/material';
 import { Athlete } from '../types/athlete';
 
 interface ConsentAlertProps {
