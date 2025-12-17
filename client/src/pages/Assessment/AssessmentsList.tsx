@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Divider,
 } from '@mui/material';
 import {
   getAllAssessments,
@@ -156,60 +155,21 @@ export default function AssessmentsList() {
       </Box>
 
       {/* Filters Section */}
-      <Box sx={{ mb: 4 }}>
-        {/* Availability Filter */}
-        <AvailabilityFilter
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
-        />
-
-        {/* Divider */}
-        <Divider sx={{ my: 2 }} />
-
-        {/* Category Filter */}
-        <Box sx={{ mt: 2 }}>
-          <Typography
-            variant="subtitle2"
-            sx={{
-              mb: 1.5,
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              fontSize: '0.75rem',
-              letterSpacing: '0.5px',
-              color: 'text.secondary',
-            }}
-          >
-            Category
-          </Typography>
-          <CategoryFilter
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-          />
-        </Box>
-
-        {/* Active Filters Summary */}
-        {(selectedCategory || selectedStatus) && (
-          <Box
-            sx={{
-              mt: 3,
-              p: 2,
-              backgroundColor: 'info.lighter',
-              borderLeft: '4px solid',
-              borderColor: 'info.main',
-              borderRadius: 1,
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              <strong>Showing:</strong>{' '}
-              {selectedStatus === 'active'
-                ? 'Active assessments'
-                : selectedStatus === 'coming-soon'
-                  ? 'Coming soon assessments'
-                  : 'All availability'}
-              {selectedCategory && ` in ${categoryLabels[selectedCategory]}`}
-            </Typography>
-          </Box>
-        )}
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <AvailabilityFilter
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+          </Grid>
+        </Grid>
       </Box>
 
       {/* Empty State */}
@@ -255,8 +215,8 @@ export default function AssessmentsList() {
                 sx={{
                   mb: 3,
                   fontWeight: 600,
-                  borderBottom: '2px solid',
-                  borderColor: 'primary.main',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
                   pb: 1,
                 }}
               >
