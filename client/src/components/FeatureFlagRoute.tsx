@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useFeatureFlags } from '../contexts/FeatureFlagContext';
 import { FeatureFlagKey } from '../types/featureFlags';
-import { Box, Typography, Container, Paper } from '@mui/material';
+import { Typography, Container, Paper } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 
 interface FeatureFlagRouteProps {

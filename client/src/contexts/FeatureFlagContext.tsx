@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { FeatureFlags } from '../types/featureFlags';
-import api from '../services/api';
+import { api } from '../services/api';
 
 /**
  * Context API for managing feature flags.
@@ -52,9 +52,10 @@ export function FeatureFlagProvider({ children }: FeatureFlagProviderProps) {
       const response = await api.get<Record<string, boolean>>('/feature-flags');
 
       // Convert snake_case from backend to camelCase for frontend
+      const data = response.data;
       setFlags({
-        assessmentsEnabled: response.assessments_enabled ?? true,
-        athleteProfileEnabled: response.athlete_profile_enabled ?? true,
+        assessmentsEnabled: data.assessments_enabled ?? true,
+        athleteProfileEnabled: data.athlete_profile_enabled ?? true,
       });
     } catch (error) {
       console.error('Failed to fetch feature flags, using defaults:', error);
