@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import FlagIcon from '@mui/icons-material/Flag';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function WelcomeMessage({ onSuggestionClick }: Props) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   return (
     <Box
       sx={{
@@ -90,29 +92,37 @@ export function WelcomeMessage({ onSuggestionClick }: Props) {
           justifyContent: 'center',
         }}
       >
-        {suggestions.map((suggestion, index) => (
-          <Button
-            key={index}
-            variant="outlined"
-            startIcon={suggestion.icon}
-            onClick={() => onSuggestionClick(suggestion.prompt)}
-            sx={{
-              borderRadius: 1.5,
-              px: 3,
-              py: 1.25,
-              textTransform: 'none',
-              fontWeight: 600,
-              borderColor: 'grey.300',
-              color: 'text.primary',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'white',
-              },
-            }}
-          >
-            {suggestion.title}
-          </Button>
-        ))}
+        {suggestions.map((suggestion, index) => {
+          const isActive = activeIndex === index;
+          return (
+            <Button
+              key={index}
+              variant="outlined"
+              startIcon={suggestion.icon}
+              onClick={() => {
+                setActiveIndex(index);
+                onSuggestionClick(suggestion.prompt);
+              }}
+              sx={{
+                borderRadius: 1.5,
+                px: 3,
+                py: 1.25,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: isActive ? 'primary.main' : 'grey.300',
+                color: isActive ? 'black' : 'text.primary',
+                bgcolor: isActive ? 'white' : 'transparent',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  color: 'black',
+                  bgcolor: 'white',
+                },
+              }}
+            >
+              {suggestion.title}
+            </Button>
+          );
+        })}
       </Box>
 
       {/* Disclaimer */}

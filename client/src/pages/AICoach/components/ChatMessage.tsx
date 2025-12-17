@@ -20,15 +20,14 @@ export function ChatMessage({ message }: Props) {
       <Paper
         elevation={0}
         sx={{
-          p: 2.5,
+          p: 2,
+          px: 3,
           maxWidth: '80%',
+          minWidth: '100px',
           bgcolor: isAssistant ? 'white' : '#EFF6FF',
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: isAssistant ? 'grey.200' : 'primary.200',
-          borderLeft: isAssistant ? '4px solid' : 'none',
-          borderLeftColor: isAssistant ? '#2563EB' : 'transparent',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+          borderRadius: isAssistant ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
+          border: 'none',
+          boxShadow: 'none',
         }}
       >
         {message.isStreaming && !message.content ? (

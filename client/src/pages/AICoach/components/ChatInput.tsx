@@ -170,7 +170,7 @@ export function ChatInput({
                     onDelete={() => onAthleteSelect(null)}
                     deleteIcon={<CloseIcon />}
                     sx={{
-                      bgcolor: 'primary.main',
+                      bgcolor: 'black',
                       color: 'white',
                       fontWeight: 600,
                       '& .MuiChip-deleteIcon': {
