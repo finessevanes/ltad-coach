@@ -18,7 +18,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           label: 'Pending',
           icon: <HourglassEmpty />,
           borderColor: '#D97706', // Muted orange
-          backgroundColor: '#FEF3C7', // Very light orange background
+          backgroundColor: '#FFFEF8', // Very light orange background
           textColor: '#D97706', // Text matches border
         };
       case 'active':
@@ -26,7 +26,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           label: 'Active',
           icon: <CheckCircle />,
           borderColor: '#65A30D', // Muted green
-          backgroundColor: '#F0F9E8', // Very light green background
+          backgroundColor: '#FCFEF9', // Very light green background
           textColor: '#65A30D', // Text matches border
         };
       case 'declined':
@@ -34,7 +34,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           label: 'Declined',
           icon: <Cancel />,
           borderColor: '#DC2626', // Muted red
-          backgroundColor: '#FEE2E2', // Very light red background
+          backgroundColor: '#FFFCFC', // Very light red background
           textColor: '#DC2626', // Text matches border
         };
     }

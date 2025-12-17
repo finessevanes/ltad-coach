@@ -98,13 +98,13 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({
           )}
         </Box>
 
-        {/* Coming Soon Badge - Top-left, rotated, lime green with black text, overlapping card edge */}
+        {/* Coming Soon Badge - Top-right, straight, lime green with black text, aligned with card edge */}
         {!assessment.isActive && (
           <Box
             sx={{
               position: 'absolute',
-              top: -4,
-              left: -4,
+              top: 12,
+              right: 12,
               backgroundColor: '#D4FF00',
               color: '#000000',
               padding: '6px 16px',
@@ -113,7 +113,6 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
-              transform: 'rotate(-5deg)',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               zIndex: 2,
             }}
