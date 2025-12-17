@@ -1,6 +1,4 @@
-import { Box, Paper, Avatar, CircularProgress, Typography } from '@mui/material';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import PersonIcon from '@mui/icons-material/Person';
+import { Box, Paper, CircularProgress, Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage as ChatMessageType } from '../../../types/chat';
 
@@ -15,21 +13,10 @@ export function ChatMessage({ message }: Props) {
     <Box
       sx={{
         display: 'flex',
-        gap: 2,
         mb: 3,
-        flexDirection: isAssistant ? 'row' : 'row-reverse',
+        justifyContent: isAssistant ? 'flex-start' : 'flex-end',
       }}
     >
-      <Avatar
-        sx={{
-          bgcolor: isAssistant ? 'primary.main' : 'secondary.main',
-          width: 36,
-          height: 36,
-        }}
-      >
-        {isAssistant ? <SmartToyIcon /> : <PersonIcon />}
-      </Avatar>
-
       <Paper
         elevation={1}
         sx={{
