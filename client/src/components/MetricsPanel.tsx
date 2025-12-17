@@ -48,9 +48,12 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: 'background.paper',
+        bgcolor: 'white',
         borderRadius: 2,
-        p: 2,
+        border: '1px solid',
+        borderColor: 'grey.200',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+        p: 3,
       }}
     >
       {/* READY STATE */}
@@ -67,16 +70,18 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
           }}
         >
           <Typography
-            variant="h6"
+            variant="h5"
             sx={{
-              fontWeight: 600,
-              mb: 1.5,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              mb: 2,
               color: 'primary.main',
             }}
           >
             Get in Position
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
             {getPositionInstruction()}
           </Typography>
         </Box>
@@ -84,7 +89,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
 
       {/* HOLDING STATE */}
       {testState === 'holding' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* Test Time */}
           <Box>
             <Typography
@@ -92,19 +97,22 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
               sx={{
                 textTransform: 'uppercase',
                 color: 'text.secondary',
-                fontWeight: 600,
+                fontWeight: 700,
                 letterSpacing: 0.5,
-                fontSize: '0.65rem',
+                fontSize: '0.7rem',
+                mb: 0.5,
+                display: 'block',
               }}
             >
               Test Time
             </Typography>
             <Typography
-              variant="h4"
+              variant="h3"
               sx={{
                 fontFamily: 'monospace',
-                fontWeight: 300,
-                mt: 0.25,
+                fontWeight: 700,
+                mt: 0.5,
+                fontSize: '2.5rem',
               }}
             >
               {formatTime(holdTime)}
@@ -113,20 +121,26 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
 
           {/* Progress Bar */}
           <Box>
-            <Box display="flex" justifyContent="space-between" mb={0.5}>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem">
+            <Box display="flex" justifyContent="space-between" mb={1}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontSize="0.7rem"
+                fontWeight={700}
+                sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+              >
                 Progress
               </Typography>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem">
+              <Typography variant="caption" color="text.secondary" fontSize="0.7rem" fontWeight={600}>
                 Target: {targetDuration.toFixed(1)}s
               </Typography>
             </Box>
             <Box
               sx={{
                 width: '100%',
-                height: 6,
+                height: 8,
                 bgcolor: 'grey.200',
-                borderRadius: 1,
+                borderRadius: 999,
                 overflow: 'hidden',
               }}
             >
@@ -134,8 +148,8 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
                 sx={{
                   width: `${Math.min((holdTime / targetDuration) * 100, 100)}%`,
                   height: '100%',
-                  bgcolor: 'primary.main',
-                  borderRadius: 1,
+                  bgcolor: '#2563EB',
+                  borderRadius: 999,
                   transition: 'width 100ms linear',
                 }}
               />
@@ -283,11 +297,18 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
             textAlign: 'center',
           }}
         >
-          <Typography sx={{ fontSize: '48px', mb: 1.5 }}>✓</Typography>
-          <Typography variant="h6" color="success.main" fontWeight={600} mb={1.5}>
+          <Typography sx={{ fontSize: '64px', mb: 2 }}>✓</Typography>
+          <Typography
+            variant="h5"
+            color="success.main"
+            fontWeight={700}
+            textTransform="uppercase"
+            letterSpacing={0.5}
+            mb={2}
+          >
             Great Job!
           </Typography>
-          <Typography variant="h5" fontFamily="monospace">
+          <Typography variant="h4" fontFamily="monospace" fontWeight={700}>
             {formatTime(holdTime)}
           </Typography>
         </Box>
@@ -305,11 +326,18 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
             textAlign: 'center',
           }}
         >
-          <Typography variant="h6" color="warning.main" fontWeight={600} mb={1.5}>
+          <Typography
+            variant="h5"
+            color="warning.main"
+            fontWeight={700}
+            textTransform="uppercase"
+            letterSpacing={0.5}
+            mb={2}
+          >
             Test Ended
           </Typography>
-          <Typography variant="h5" fontFamily="monospace">
-            Time: {formatTime(holdTime)}
+          <Typography variant="h4" fontFamily="monospace" fontWeight={700}>
+            {formatTime(holdTime)}
           </Typography>
         </Box>
       )}

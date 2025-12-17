@@ -41,8 +41,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       label={config.label}
       color={config.color}
       icon={config.icon}
-      variant="outlined"
+      variant="filled"
       size="small"
+      sx={{
+        fontWeight: 600,
+        fontSize: '0.75rem',
+        borderRadius: 1,
+        minWidth: 100,
+      }}
     />
   );
 };
