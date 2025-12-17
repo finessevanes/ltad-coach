@@ -110,7 +110,7 @@ export function Landing() {
       </Box>
 
       {/* Hero Section */}
-      <Container maxWidth="xl" sx={{ mt: 12, px: { xs: 3, md: 8 } }}>
+      <Container maxWidth="xl" sx={{ mt: 20, px: { xs: 3, md: 8 } }}>
         <Box
           sx={{
             textAlign: 'center',
@@ -120,7 +120,7 @@ export function Landing() {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '64px', md: '120px', lg: '140px' },
+              fontSize: { xs: '54px', md: '110px', lg: '130px' },
               fontWeight: 500,
               lineHeight: 0.98,
               color: '#000000',
@@ -141,16 +141,16 @@ export function Landing() {
               },
             }}
           >
-            The Foundation Before the Scoreboard
+            Build a D1 Foundation
           </Typography>
 
           {/* Video Demo Section */}
           <Box
             sx={{
               position: 'relative',
-              maxWidth: '1100px',
+              maxWidth: '900px',
               mx: 'auto',
-              mt: 2,
+              mt: -2,
               opacity: 0,
               animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
               '@keyframes fadeInUp': {
@@ -272,7 +272,7 @@ export function Landing() {
                 mb: 2,
               }}
             >
-              Real-Time Movement Analysis
+              Real-Time Analysis
             </Typography>
             <Typography
               sx={{
