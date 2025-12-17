@@ -200,7 +200,7 @@ export function AICoach() {
       >
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            AI Coach Assistant
+            CoachAI Assistant
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Get personalized coaching advice based on LTAD principles

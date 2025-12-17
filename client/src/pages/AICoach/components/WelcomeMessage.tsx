@@ -106,7 +106,7 @@ export function WelcomeMessage({ onSuggestionClick }: Props) {
               color: 'text.primary',
               '&:hover': {
                 borderColor: 'primary.main',
-                bgcolor: 'grey.50',
+                bgcolor: 'white',
               },
             }}
           >
