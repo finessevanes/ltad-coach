@@ -43,10 +43,22 @@ class Settings(BaseSettings):
     # CORS Configuration
     allowed_origins: str = "http://localhost:5173,http://localhost:3000"
 
+    # Feature Flags
+    feature_assessments_enabled: bool = True
+    feature_athlete_profile_enabled: bool = True
+
     @property
     def cors_origins(self) -> list[str]:
         """Parse ALLOWED_ORIGINS into a list of origins."""
         return [origin.strip() for origin in self.allowed_origins.split(",")]
+
+    @property
+    def feature_flags(self) -> dict[str, bool]:
+        """Get all feature flags as a dictionary."""
+        return {
+            "assessments_enabled": self.feature_assessments_enabled,
+            "athlete_profile_enabled": self.feature_athlete_profile_enabled,
+        }
 
     class Config:
         env_file = ".env"

@@ -107,7 +107,6 @@ VITE_FIREBASE_APP_ID=
 ```bash
 FRONTEND_URL=http://localhost:5173
 GOOGLE_APPLICATION_CREDENTIALS=./ltad-coach-firebase-adminsdk-fbsvc-fc7b6b2a69.json
-OPENROUTER_API_KEY=
 RESEND_API_KEY=
 ```
 

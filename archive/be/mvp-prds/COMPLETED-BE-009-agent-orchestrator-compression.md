@@ -138,11 +138,8 @@ class OpenRouterClient:
                 return data["choices"][0]["message"]["content"]
 
             except httpx.HTTPError as e:
-                # IMPORTANT: Clear console warning for quick debugging
-                print(f"[OPENROUTER_ERROR] API call failed: {e}")
-                print(f"[OPENROUTER_ERROR] Model: {model}")
-                print(f"[OPENROUTER_ERROR] Status: {e.response.status_code if hasattr(e, 'response') else 'N/A'}")
-                print(f"[OPENROUTER_ERROR] Check API key and rate limits at https://openrouter.ai/activity")
+                # IMPORTANT: Clear console warning for quick debugging{e.response.status_code if hasattr(e, 'response') else 'N/A'}")
+
                 raise
 
 # Singleton instance

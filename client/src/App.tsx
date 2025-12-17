@@ -7,6 +7,7 @@ import { routes } from './routes';
 import { AuthProvider } from './contexts/AuthContext';
 import { SnackbarProvider } from './contexts/SnackbarContext';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { FeatureFlagProvider } from './contexts/FeatureFlagContext';
 import { GlobalLoadingBar } from './components/GlobalLoadingBar';
 import { videoCache } from './utils/videoCache';
 
@@ -32,12 +33,14 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LoadingProvider>
-        <AuthProvider>
-          <SnackbarProvider>
-            <GlobalLoadingBar />
-            <RouterProvider router={router} />
-          </SnackbarProvider>
-        </AuthProvider>
+        <FeatureFlagProvider>
+          <AuthProvider>
+            <SnackbarProvider>
+              <GlobalLoadingBar />
+              <RouterProvider router={router} />
+            </SnackbarProvider>
+          </AuthProvider>
+        </FeatureFlagProvider>
       </LoadingProvider>
     </ThemeProvider>
   );

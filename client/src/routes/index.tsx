@@ -3,6 +3,7 @@ import { Layout } from "../components/Layout";
 import { Landing } from "../pages/Landing";
 import { Dashboard } from "../pages/Dashboard";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { FeatureFlagRoute } from "../components/FeatureFlagRoute";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import { AthletesList, AddAthlete, AthleteProfile } from "../pages/Athletes";
@@ -75,7 +76,9 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <AthleteProfile />
+          <FeatureFlagRoute flag="athleteProfileEnabled">
+            <AthleteProfile />
+          </FeatureFlagRoute>
         </ProtectedRoute>
       </Layout>
     ),
@@ -95,7 +98,9 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <AssessmentFlow />
+          <FeatureFlagRoute flag="assessmentsEnabled">
+            <AssessmentFlow />
+          </FeatureFlagRoute>
         </ProtectedRoute>
       </Layout>
     ),
@@ -105,7 +110,9 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <BackupUpload />
+          <FeatureFlagRoute flag="assessmentsEnabled">
+            <BackupUpload />
+          </FeatureFlagRoute>
         </ProtectedRoute>
       </Layout>
     ),
@@ -115,7 +122,9 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <AssessmentResults />
+          <FeatureFlagRoute flag="assessmentsEnabled">
+            <AssessmentResults />
+          </FeatureFlagRoute>
         </ProtectedRoute>
       </Layout>
     ),
@@ -125,7 +134,9 @@ export const routes: RouteObject[] = [
     element: (
       <Layout>
         <ProtectedRoute>
-          <AssessmentsList />
+          <FeatureFlagRoute flag="assessmentsEnabled">
+            <AssessmentsList />
+          </FeatureFlagRoute>
         </ProtectedRoute>
       </Layout>
     ),
