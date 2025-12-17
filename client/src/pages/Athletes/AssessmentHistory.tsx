@@ -1,13 +1,9 @@
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
-  Chip,
   Box,
+  List,
+  ListItem,
+  ListItemButton,
 } from '@mui/material';
 
 interface AssessmentListItem {
@@ -19,6 +15,8 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
+  leftLegHoldTime?: number;
+  rightLegHoldTime?: number;
 }
 
 interface AssessmentHistoryProps {
@@ -26,12 +24,20 @@ interface AssessmentHistoryProps {
   onAssessmentClick: (id: string) => void;
 }
 
-const SCORE_COLORS: Record<number, 'error' | 'warning' | 'info' | 'success' | 'secondary'> = {
-  1: 'error',
-  2: 'warning',
-  3: 'info',
-  4: 'success',
-  5: 'secondary',
+const SCORE_COLORS: Record<number, string> = {
+  1: '#EF4444', // Red
+  2: '#F59E0B', // Orange
+  3: '#FB923C', // Light Orange
+  4: '#34D399', // Light Green
+  5: '#10B981', // Green
+};
+
+const SCORE_BG_COLORS: Record<number, string> = {
+  1: '#FEE2E2',
+  2: '#FEF3C7',
+  3: '#FED7AA',
+  4: '#D1FAE5',
+  5: '#ECFDF5',
 };
 
 function getScore(duration: number): number {
@@ -54,56 +60,99 @@ export function AssessmentHistory({ assessments, onAssessmentClick }: Assessment
   }
 
   return (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Test</TableCell>
-            <TableCell>Leg</TableCell>
-            <TableCell>Duration</TableCell>
-            <TableCell>Score</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {assessments.map((assessment) => {
-            const score = assessment.durationSeconds
-              ? getScore(assessment.durationSeconds)
-              : null;
+    <List
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+      }}
+    >
+      {assessments.map((assessment) => {
+        const score = assessment.durationSeconds
+          ? getScore(assessment.durationSeconds)
+          : null;
+        const scoreColor = score ? SCORE_COLORS[score] : '#6B6B6B';
+        const scoreBgColor = score ? SCORE_BG_COLORS[score] : '#F5F5F5';
 
-            return (
-              <TableRow
-                key={assessment.id}
-                hover
-                onClick={() => onAssessmentClick(assessment.id)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <TableCell>
-                  {new Date(assessment.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>One-Leg Balance</TableCell>
-                <TableCell sx={{ textTransform: 'capitalize' }}>
-                  {assessment.legTested}
-                </TableCell>
-                <TableCell>
-                  {assessment.durationSeconds
-                    ? `${assessment.durationSeconds.toFixed(1)}s`
-                    : '-'}
-                </TableCell>
-                <TableCell>
-                  {score && (
-                    <Chip
-                      label={score}
-                      size="small"
-                      color={SCORE_COLORS[score]}
-                    />
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        return (
+          <ListItem key={assessment.id} disablePadding>
+            <ListItemButton
+              onClick={() => onAssessmentClick(assessment.id)}
+              sx={{
+                borderRadius: 1,
+                py: 2,
+                px: 2,
+                bgcolor: 'white',
+                border: '1px solid',
+                borderColor: 'grey.200',
+                borderLeft: '4px solid',
+                borderLeftColor: scoreColor,
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                '&:hover': {
+                  bgcolor: 'grey.50',
+                },
+              }}
+            >
+              {/* Left side: Test info */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  One-Leg Balance Test
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                  {new Date(assessment.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  {' • '}
+                  <span style={{ textTransform: 'capitalize' }}>{assessment.legTested} Leg</span>
+                </Typography>
+              </Box>
+
+              {/* Right side: Duration and Score */}
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                {assessment.durationSeconds && (
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                      Duration
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {assessment.durationSeconds.toFixed(1)}s
+                    </Typography>
+                  </Box>
+                )}
+                {score && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: scoreBgColor,
+                      borderRadius: 1,
+                      px: 2,
+                      py: 1,
+                      minWidth: 60,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 700,
+                        color: scoreColor,
+                      }}
+                    >
+                      {score}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </ListItemButton>
+          </ListItem>
+        );
+      })}
+    </List>
   );
 }

@@ -179,7 +179,6 @@ export const AthletesTable: React.FC<AthletesTableProps> = ({
                     <Tooltip title="Assess Athlete">
                       <IconButton
                         size="small"
-                        color="primary"
                         onClick={(e) => handleOpenAssessmentMenu(e, athlete.id)}
                         aria-label={`Assess ${athlete.name}`}
                       >

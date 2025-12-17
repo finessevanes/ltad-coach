@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   Typography,
   Box,
   Button,
@@ -101,25 +99,140 @@ export default function AthleteProfile() {
 
   if (error || !athlete) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ py: 5, px: { xs: 2, sm: 4 } }}>
         <Alert severity="error">{error || 'Athlete not found'}</Alert>
         <Button
           variant="outlined"
           onClick={() => navigate('/athletes')}
-          sx={{ mt: 2 }}
+          sx={{ mt: 2, borderRadius: 1.5, textTransform: 'none', fontWeight: 600 }}
         >
           Back to Athletes
         </Button>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 5, px: { xs: 2, sm: 4 } }}>
+      {/* Header Row: Athlete Name + Actions */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        <Box display="flex" gap={2} alignItems="center">
+          <Avatar
+            sx={{
+              width: 64,
+              height: 64,
+              fontSize: 28,
+              bgcolor: athlete.consentStatus === 'active' ? 'success.main' :
+                athlete.consentStatus === 'pending' ? 'warning.main' : 'error.main',
+              fontWeight: 700,
+            }}
+          >
+            {athlete.name.charAt(0).toUpperCase()}
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h2"
+              component="h1"
+              sx={{
+                fontWeight: 900,
+                fontSize: { xs: '1.75rem', md: '2rem' },
+                textTransform: 'uppercase',
+                letterSpacing: '-0.02em',
+                mb: 0.5,
+              }}
+            >
+              {athlete.name}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              {athlete.age} years old • {athlete.gender.charAt(0).toUpperCase() + athlete.gender.slice(1)}
+            </Typography>
+            <StatusBadge status={athlete.consentStatus} />
+          </Box>
+        </Box>
+
+        <Box display="flex" gap={1} flexWrap="wrap">
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate(`/assess/${athlete.id}`)}
+            disabled={isPending}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            New Assessment
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
+            onClick={() => navigate(`/assess/${athlete.id}/upload`)}
+            disabled={isPending}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Upload Video
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<ReportIcon />}
+            onClick={() => navigate(`/athletes/${athlete.id}/report`)}
+            disabled={isPending || assessments.length === 0}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Generate Report
+          </Button>
+          <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)}>
+            <MoreIcon />
+          </IconButton>
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={() => setMenuAnchor(null)}
+          >
+            <MenuItem onClick={() => { setEditModalOpen(true); setMenuAnchor(null); }}>
+              <EditIcon sx={{ mr: 1 }} /> Edit Athlete
+            </MenuItem>
+            <MenuItem
+              onClick={() => { setDeleteDialogOpen(true); setMenuAnchor(null); }}
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteIcon sx={{ mr: 1 }} /> Delete Athlete
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Box>
+
       {/* Consent Alert */}
       {isPending && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <Typography variant="subtitle2">Pending Parent Consent</Typography>
+        <Alert
+          severity="warning"
+          sx={{
+            mb: 3,
+            borderRadius: 1,
+            borderLeft: '4px solid',
+            borderLeftColor: '#F59E0B',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Pending Parent Consent
+          </Typography>
           <Typography variant="body2">
             Assessments are disabled until {athlete.name}'s parent provides consent.
             A consent request has been sent to {athlete.parentEmail}.
@@ -127,80 +240,44 @@ export default function AthleteProfile() {
         </Alert>
       )}
 
-      {/* Profile Header */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box display="flex" gap={2}>
-            <Avatar
-              sx={{ width: 80, height: 80, fontSize: 32, bgcolor: 'primary.main' }}
-            >
-              {athlete.name.charAt(0)}
-            </Avatar>
-            <Box>
-              <Typography variant="h4">{athlete.name}</Typography>
-              <Typography variant="body1" color="text.secondary">
-                {athlete.age} years old • {athlete.gender}
-              </Typography>
-              <Box mt={1}>
-                <StatusBadge status={athlete.consentStatus} />
-              </Box>
-            </Box>
-          </Box>
-
-          <Box display="flex" gap={1}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate(`/assess/${athlete.id}`)}
-              disabled={isPending}
-            >
-              New Assessment
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<UploadIcon />}
-              onClick={() => navigate(`/assess/${athlete.id}/upload`)}
-              disabled={isPending}
-            >
-              Upload Video
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ReportIcon />}
-              onClick={() => navigate(`/athletes/${athlete.id}/report`)}
-              disabled={isPending || assessments.length === 0}
-            >
-              Generate Report
-            </Button>
-            <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)}>
-              <MoreIcon />
-            </IconButton>
-            <Menu
-              anchorEl={menuAnchor}
-              open={Boolean(menuAnchor)}
-              onClose={() => setMenuAnchor(null)}
-            >
-              <MenuItem onClick={() => { setEditModalOpen(true); setMenuAnchor(null); }}>
-                <EditIcon sx={{ mr: 1 }} /> Edit Athlete
-              </MenuItem>
-              <MenuItem
-                onClick={() => { setDeleteDialogOpen(true); setMenuAnchor(null); }}
-                sx={{ color: 'error.main' }}
-              >
-                <DeleteIcon sx={{ mr: 1 }} /> Delete Athlete
-              </MenuItem>
-            </Menu>
-          </Box>
-        </Box>
-      </Paper>
+      {/* Divider */}
+      <Box
+        sx={{
+          borderBottom: '1px solid',
+          borderColor: 'grey.200',
+          mb: 4,
+        }}
+      />
 
       <Grid container spacing={3}>
         {/* Progress Chart */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Progress Over Time
-            </Typography>
+          <Box>
+            {/* Section Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+                pb: 1.5,
+                borderBottom: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  fontSize: '1.125rem',
+                  color: '#2D2D2D',
+                }}
+              >
+                Progress Over Time
+              </Typography>
+            </Box>
             {assessments.length > 0 ? (
               <ProgressChart assessments={assessments} />
             ) : (
@@ -208,20 +285,42 @@ export default function AthleteProfile() {
                 No assessments yet. Complete an assessment to see progress.
               </Typography>
             )}
-          </Paper>
+          </Box>
         </Grid>
 
         {/* Assessment History */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Assessment History
-            </Typography>
+          <Box>
+            {/* Section Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+                pb: 1.5,
+                borderBottom: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  fontSize: '1.125rem',
+                  color: '#2D2D2D',
+                }}
+              >
+                Assessment History
+              </Typography>
+            </Box>
             <AssessmentHistory
               assessments={assessments}
               onAssessmentClick={(id) => navigate(`/assessments/${id}`)}
             />
-          </Paper>
+          </Box>
         </Grid>
 
         {/* Report History */}
@@ -259,6 +358,6 @@ export default function AthleteProfile() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }
