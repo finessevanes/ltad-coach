@@ -81,21 +81,41 @@ async def get_dashboard(
     athlete_names = {athlete.id: athlete.name for athlete in all_athletes}
 
     # Map assessments to response items with athlete names
-    recent_items = [
-        RecentAssessmentItem(
-            id=assessment.id,
-            athlete_id=assessment.athlete_id,
-            athlete_name=athlete_names.get(assessment.athlete_id, "Unknown"),
-            test_type=assessment.test_type.value,
-            leg_tested=assessment.leg_tested.value,
-            status=assessment.status.value,
-            created_at=assessment.created_at,
-            duration_seconds=_get_duration_seconds(assessment),
-            duration_score=assessment.metrics.duration_score if assessment.metrics else None,
-            sway_velocity=assessment.metrics.sway_velocity if assessment.metrics else None,
+    recent_items = []
+    for assessment in recent_assessments:
+        # Extract metrics based on assessment type (single-leg vs dual-leg)
+        duration_score = None
+        sway_velocity = None
+
+        if assessment.metrics:
+            # Single-leg assessment
+            duration_score = assessment.metrics.duration_score
+            sway_velocity = assessment.metrics.sway_velocity
+        elif assessment.left_leg_metrics and assessment.right_leg_metrics:
+            # Dual-leg assessment: average the scores
+            # Note: left_leg_metrics and right_leg_metrics are MetricsData objects
+            left_score = assessment.left_leg_metrics.duration_score
+            right_score = assessment.right_leg_metrics.duration_score
+            duration_score = round((left_score + right_score) / 2)
+
+            left_sway = assessment.left_leg_metrics.sway_velocity
+            right_sway = assessment.right_leg_metrics.sway_velocity
+            sway_velocity = (left_sway + right_sway) / 2
+
+        recent_items.append(
+            RecentAssessmentItem(
+                id=assessment.id,
+                athlete_id=assessment.athlete_id,
+                athlete_name=athlete_names.get(assessment.athlete_id, "Unknown"),
+                test_type=assessment.test_type.value,
+                leg_tested=assessment.leg_tested.value,
+                status=assessment.status.value,
+                created_at=assessment.created_at,
+                duration_seconds=_get_duration_seconds(assessment),
+                duration_score=duration_score,
+                sway_velocity=sway_velocity,
+            )
         )
-        for assessment in recent_assessments
-    ]
 
     # Map pending athletes to response items
     pending_items = [

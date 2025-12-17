@@ -190,19 +190,21 @@ export function ChatInput({
                 {/* Voice input button */}
                 {isVoiceSupported && (
                   <Tooltip title={isListening ? 'Stop recording' : 'Voice input'}>
-                    <IconButton
-                      onClick={handleVoiceInput}
-                      disabled={disabled}
-                      size="small"
-                      sx={{
-                        color: isListening ? 'error.main' : 'text.secondary',
-                        '&:hover': {
-                          bgcolor: 'grey.100',
-                        },
-                      }}
-                    >
-                      {isListening ? <MicOffIcon /> : <MicIcon />}
-                    </IconButton>
+                    <span>
+                      <IconButton
+                        onClick={handleVoiceInput}
+                        disabled={disabled}
+                        size="small"
+                        sx={{
+                          color: isListening ? 'error.main' : 'text.secondary',
+                          '&:hover': {
+                            bgcolor: 'grey.100',
+                          },
+                        }}
+                      >
+                        {isListening ? <MicOffIcon /> : <MicIcon />}
+                      </IconButton>
+                    </span>
                   </Tooltip>
                 )}
 

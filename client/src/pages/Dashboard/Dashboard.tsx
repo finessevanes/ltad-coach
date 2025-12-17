@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { DashboardGreeting } from './components/DashboardGreeting';
@@ -30,9 +30,11 @@ export function Dashboard() {
   const { data: dashboardData, isLoading: loading, error } = useDashboard();
 
   // Show error if fetch failed
-  if (error) {
-    showSnackbar('Failed to load dashboard data', 'error');
-  }
+  useEffect(() => {
+    if (error) {
+      showSnackbar('Failed to load dashboard data', 'error');
+    }
+  }, [error, showSnackbar]);
 
   // Extract data from dashboard response
   const athletes = dashboardData?.athletes || [];
