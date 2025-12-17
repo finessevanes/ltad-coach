@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Chip } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import FlagIcon from '@mui/icons-material/Flag';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
