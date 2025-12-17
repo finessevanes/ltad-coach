@@ -1,5 +1,4 @@
 import { Typography } from '@mui/material';
-import { getGreeting } from '../../../utils/dateUtils';
 
 interface DashboardGreetingProps {
   loading?: boolean;
@@ -10,8 +9,6 @@ export const DashboardGreeting: React.FC<DashboardGreetingProps> = ({ loading })
     return null;
   }
 
-  const greeting = getGreeting().toUpperCase();
-
   return (
     <Typography
       variant="h2"
@@ -19,11 +16,10 @@ export const DashboardGreeting: React.FC<DashboardGreetingProps> = ({ loading })
       sx={{
         fontWeight: 900,
         fontSize: { xs: '2rem', md: '2.5rem' },
-        textTransform: 'uppercase',
         letterSpacing: '-0.02em',
       }}
     >
-      {greeting}, COACH.
+      Good Afternoon, Coach.
     </Typography>
   );
 };
