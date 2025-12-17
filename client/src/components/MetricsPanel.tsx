@@ -76,7 +76,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
               textTransform: 'uppercase',
               letterSpacing: 0.5,
               mb: 2,
-              color: 'primary.main',
+              color: 'text.primary',
             }}
           >
             Get in Position
