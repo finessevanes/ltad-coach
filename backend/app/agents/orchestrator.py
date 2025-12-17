@@ -229,17 +229,22 @@ class AgentOrchestrator:
                 for a in assessments
             ]
 
-            # Compress history if we have assessments
+            # Analyze trend using deterministic logic (replaces AI compression)
             compressed_history = None
             if assessment_dicts:
                 try:
-                    compressed_history = await compress_history(
+                    from app.services.trend_analyzer import analyze_trend
+
+                    trend_analysis = analyze_trend(
                         assessments=assessment_dicts,
                         athlete_name=athlete_name,
                         athlete_age=athlete_age,
                     )
+                    # Convert to narrative for Progress Agent
+                    compressed_history = trend_analysis.to_narrative_summary()
+                    logger.info(f"Trend analysis for {athlete_name}: {trend_analysis.trend} ({trend_analysis.trend_strength})")
                 except Exception as e:
-                    logger.error(f"History compression failed: {e}")
+                    logger.error(f"Trend analysis failed: {e}")
                     compressed_history = (
                         f"{athlete_name} has completed {len(assessment_dicts)} assessments. "
                         "Detailed history unavailable."

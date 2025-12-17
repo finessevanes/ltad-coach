@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDateTime } from '../../utils/dateUtils';
 import {
   Paper,
   Typography,
@@ -84,16 +85,6 @@ export const ReportHistory: React.FC<Props> = ({ reports, onReportResent }) => {
     setNewPin(null);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
 
   if (reports.length === 0) {
     return (
@@ -130,9 +121,9 @@ export const ReportHistory: React.FC<Props> = ({ reports, onReportResent }) => {
             <TableBody>
               {reports.map((report) => (
                 <TableRow key={report.id}>
-                  <TableCell>{formatDate(report.createdAt)}</TableCell>
+                  <TableCell>{formatDateTime(report.createdAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</TableCell>
                   <TableCell>
-                    {report.sentAt ? formatDate(report.sentAt) : 'Not sent'}
+                    {report.sentAt ? formatDateTime(report.sentAt, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not sent'}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton

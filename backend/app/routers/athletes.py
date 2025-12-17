@@ -2,7 +2,7 @@
 
 import asyncio
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.middleware.auth import get_current_user
@@ -44,7 +44,7 @@ class ResendRateLimiter:
         Returns:
             True if allowed (and recorded), False if rate limited
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(days=1)
 
         # Remove entries older than 24 hours

@@ -1,6 +1,6 @@
 """User repository for Firestore operations."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from google.cloud.firestore_v1 import Increment
 
@@ -41,7 +41,7 @@ class UserRepository(BaseRepository[User]):
         Returns:
             Created User instance
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         user_data = {
             "email": email,
             "name": name,
