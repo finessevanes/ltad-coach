@@ -1,6 +1,7 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Landing } from "../pages/Landing";
+import { BookDemo } from "../pages/BookDemo";
 import { Dashboard } from "../pages/Dashboard";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { FeatureFlagRoute } from "../components/FeatureFlagRoute";
@@ -20,6 +21,10 @@ export const routes: RouteObject[] = [
   {
     path: "/",
     element: <Landing />,
+  },
+  {
+    path: "/book-demo",
+    element: <BookDemo />,
   },
   // Auth routes (outside Layout - no sidebar/appbar)
   {
