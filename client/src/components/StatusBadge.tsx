@@ -16,20 +16,26 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case 'pending':
         return {
           label: 'Pending',
-          color: 'warning' as const,
           icon: <HourglassEmpty />,
+          borderColor: '#D97706', // Muted orange
+          backgroundColor: '#FEF3C7', // Very light orange background
+          textColor: '#D97706', // Text matches border
         };
       case 'active':
         return {
           label: 'Active',
-          color: 'success' as const,
           icon: <CheckCircle />,
+          borderColor: '#65A30D', // Muted green
+          backgroundColor: '#F0F9E8', // Very light green background
+          textColor: '#65A30D', // Text matches border
         };
       case 'declined':
         return {
           label: 'Declined',
-          color: 'error' as const,
           icon: <Cancel />,
+          borderColor: '#DC2626', // Muted red
+          backgroundColor: '#FEE2E2', // Very light red background
+          textColor: '#DC2626', // Text matches border
         };
     }
   };
@@ -39,15 +45,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   return (
     <Chip
       label={config.label}
-      color={config.color}
       icon={config.icon}
-      variant="filled"
+      variant="outlined"
       size="small"
       sx={{
         fontWeight: 600,
         fontSize: '0.75rem',
         borderRadius: 1,
         minWidth: 100,
+        borderColor: config.borderColor,
+        backgroundColor: config.backgroundColor,
+        color: config.textColor,
+        '& .MuiChip-icon': {
+          color: config.textColor,
+        },
       }}
     />
   );
