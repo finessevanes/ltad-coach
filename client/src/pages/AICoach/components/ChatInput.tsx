@@ -5,7 +5,6 @@ import {
   IconButton,
   Paper,
   Autocomplete,
-  Chip,
   Typography,
   Tooltip,
 } from '@mui/material';
@@ -14,6 +13,14 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PeopleIcon from '@mui/icons-material/People';
 import { Athlete } from '../../../types/athlete';
+
+// Type declaration for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 interface Props {
   onSend: (message: string, athleteId?: string) => void;
@@ -38,7 +45,7 @@ export function ChatInput({
   const [isListening, setIsListening] = useState(false);
   const [isVoiceSupported, setIsVoiceSupported] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Initialize speech recognition
   useEffect(() => {
