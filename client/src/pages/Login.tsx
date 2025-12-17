@@ -189,6 +189,7 @@ export default function Login() {
               fontWeight: 600,
               fontSize: '1rem',
               bgcolor: '#000000',
+              color: '#FFFFFF',
               '&:hover': {
                 bgcolor: '#2D2D2D',
               },
@@ -199,25 +200,28 @@ export default function Login() {
           </Button>
         </form>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Don't have an account?{' '}
-            <Link
-              component={RouterLink}
-              to="/register"
-              sx={{
-                fontWeight: 600,
-                color: '#000000',
-                textDecoration: 'none',
-                '&:hover': {
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              Sign up
-            </Link>
-          </Typography>
-        </Box>
+        {/* Sign-up link temporarily hidden while registrations are disabled */}
+        {false && (
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Don't have an account?{' '}
+              <Link
+                component={RouterLink}
+                to="/register"
+                sx={{
+                  fontWeight: 600,
+                  color: '#000000',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                Sign up
+              </Link>
+            </Typography>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

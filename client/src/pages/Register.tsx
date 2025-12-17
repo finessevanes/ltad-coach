@@ -1,68 +1,25 @@
-import { useState } from 'react';
 import { useNavigate, Link as RouterLink, Navigate } from 'react-router-dom';
 import {
   Paper,
   Typography,
-  TextField,
-  Button,
   Box,
-  Divider,
   Alert,
-  CircularProgress,
   Link,
   IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from '../contexts/AuthContext';
-import { GoogleButton } from '../components/AuthForm/GoogleButton';
-import { registerSchema, RegisterFormData } from '../utils/validation';
-import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
 
 export default function Register() {
-  const { user, signUpWithEmail, signInWithGoogle, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: yupResolver(registerSchema),
-  });
 
   if (!authLoading && user) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const onSubmit = async (data: RegisterFormData) => {
-    setError('');
-    setLoading(true);
-    try {
-      await signUpWithEmail(data.email, data.password, data.name);
-      navigate('/dashboard');
-    } catch (err: unknown) {
-      setError(getFirebaseErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithGoogle();
-      navigate('/dashboard');
-    } catch (err: unknown) {
-      setError(getFirebaseErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Sign-ups are currently disabled
+  const SIGNUPS_DISABLED = true;
 
   return (
     <Box
@@ -123,106 +80,31 @@ export default function Register() {
           Join Coach Lens to track athlete progress
         </Typography>
 
-        {error && (
+        {SIGNUPS_DISABLED ? (
           <Alert
-            severity="error"
+            severity="info"
             sx={{
               mb: 3,
               borderRadius: 1.5,
               borderLeft: '4px solid',
-              borderLeftColor: '#EF4444',
+              borderLeftColor: '#3B82F6',
             }}
           >
-            {error}
+            New sign-ups are temporarily disabled. We're preparing to launch our paid plans. Please check back soon or{' '}
+            <Link
+              component={RouterLink}
+              to="/login"
+              sx={{
+                fontWeight: 600,
+                color: '#3B82F6',
+                textDecoration: 'underline',
+              }}
+            >
+              sign in
+            </Link>{' '}
+            if you already have an account.
           </Alert>
-        )}
-
-        <GoogleButton onClick={handleGoogleSignIn} disabled={loading} />
-
-        <Divider sx={{ my: 3, color: 'text.secondary', fontSize: '0.875rem' }}>or</Divider>
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField
-            {...register('name')}
-            label="Full Name"
-            fullWidth
-            margin="normal"
-            error={!!errors.name}
-            helperText={errors.name?.message}
-            disabled={loading}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1.5,
-              },
-            }}
-          />
-          <TextField
-            {...register('email')}
-            label="Email"
-            type="email"
-            fullWidth
-            margin="normal"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            disabled={loading}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1.5,
-              },
-            }}
-          />
-          <TextField
-            {...register('password')}
-            label="Password"
-            type="password"
-            fullWidth
-            margin="normal"
-            error={!!errors.password}
-            helperText={errors.password?.message}
-            disabled={loading}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1.5,
-              },
-            }}
-          />
-          <TextField
-            {...register('confirmPassword')}
-            label="Confirm Password"
-            type="password"
-            fullWidth
-            margin="normal"
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword?.message}
-            disabled={loading}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1.5,
-              },
-            }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            size="large"
-            sx={{
-              mt: 3,
-              py: 1.5,
-              borderRadius: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '1rem',
-              bgcolor: '#000000',
-              '&:hover': {
-                bgcolor: '#2D2D2D',
-              },
-            }}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Create Account'}
-          </Button>
-        </form>
+        ) : null}
 
         <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
