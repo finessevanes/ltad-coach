@@ -1,7 +1,7 @@
 # Coach Lens Design System
-## Modern Athletic Minimalism v2.0
+## Minimalist Athletic v3.0
 
-**Last Updated:** December 12, 2025  
+**Last Updated:** December 17, 2025  
 **Target Platform:** Desktop Web Application (Mobile-responsive)  
 **Component Library:** Material-UI (MUI) v5+ with custom theme  
 **Target Audience:** Youth sports coaches, middle school athletes (ages 10-14), parents
@@ -10,9 +10,9 @@
 
 ## Overview
 
-The Coach Lens design system embodies modern athletic minimalism - clean, functional, and energetic. Built on Material-UI with extensive customization, this system prioritizes clarity, breathing room, and purposeful color usage to create an interface that feels professional yet approachable for middle school athletes and coaches.
+The Coach Lens design system embodies minimalist athletic design - bold, high-contrast, and energetic. Built on Material-UI with extensive customization, this system uses a stark white/black/gray foundation with lime green as a vibrant accent to create an interface that feels modern, professional, and athletic.
 
-**Brand Philosophy:** Professional coaching tool that energizes athletes. Trust through data, excitement through movement. Every interaction should feel confident and capable - like working with a great assistant coach.
+**Brand Philosophy:** Bold, modern coaching tool with maximum impact. Black text on white backgrounds for clarity, lime green for energy and action. Every interaction should feel sharp, confident, and direct.
 
 ---
 
@@ -22,33 +22,56 @@ The Coach Lens design system embodies modern athletic minimalism - clean, functi
 
 #### Brand Colors
 ```
-Athletic Blue (Primary)
-- Hex: #2563EB
-- Usage: Primary CTAs, key data highlights, active states, progress indicators
-- Backgrounds: #EFF6FF (light variant)
+Lime Green (Primary Accent)
+- Hex: #D4FF00
+- Light: #E3FF4D
+- Dark: #A3CC00
+- Usage: Primary CTAs, key actions, active states, progress indicators, highlights
+- Contrast Text: #000000 (black)
+- Backgrounds: #F7FEE7 (very light lime for backgrounds)
+- Impact: Electric, energetic, modern, immediately draws attention
 
-Energy Orange (Secondary)  
-- Hex: #F97316
-- Usage: Improvement metrics, alerts, highlights, achievement accents
-- Backgrounds: #FFF7ED (light variant)
-- IMPORTANT: Use sparingly - this is an accent, not a primary color
+Softer Lime (Success States)
+- Hex: #84CC16
+- Light: #A3E635
+- Dark: #65A30D
+- Usage: Success states, completed items, positive indicators
+- Less intense than primary lime for sustained viewing
 ```
 
-#### Neutral Colors
+#### Neutral Colors (Foundation)
 ```
-Charcoal: #2D2D2D - Primary text, headings
-Gray: #6B6B6B - Secondary text, captions, inactive states  
-Light Gray: #F5F5F5 - Background alternates, card backgrounds
-White: #FFFFFF - Base background, card surfaces
+Black: #000000 - Primary text, headings, high-emphasis CTAs, secondary color
+  - Pure black for maximum contrast and readability
+  - Used for all body text and headings
+  - Black buttons for strongest emphasis
+
+Charcoal: #2D2D2D - Button hover states, subtle blacks
+  - Lighter alternative to pure black
+  - Hover states for black buttons
+
+Gray: #6B6B6B - Secondary text, captions, inactive states
+  - Mid-tone gray for less important text
+  - Metadata, timestamps, helper text
+
+Light Gray: #F5F5F5 - Default background (base page background)
+  - Subtle background provides depth
+  - Creates contrast with white cards
+
+White: #FFFFFF - Card surfaces (paper), elevated components
+  - Primary surface color
+  - All cards and elevated components
+
 Border: #E5E5E5 - Borders, dividers, input outlines
+  - Subtle separation between elements
 ```
 
 #### Semantic Colors
 ```
-Success: #10B981 (bg: #ECFDF5) - Completed, positive feedback
-Warning: #F59E0B (bg: #FEF3C7) - Needs attention
-Error: #EF4444 (bg: #FEE2E2) - Errors, critical alerts
-Info: #3B82F6 (bg: #DBEAFE) - Information, tips
+Success: #84CC16 (bg: #F7FEE7) - Softer lime for completed states, positive feedback
+Warning: #F59E0B (bg: #FEF3C7) - Amber for warnings, needs attention
+Error: #EF4444 (bg: #FEE2E2) - Red for errors, critical alerts
+Info: #6B6B6B (bg: #F5F5F5) - Gray for neutral information, tips
 ```
 
 #### Skeleton Overlay System (Computer Vision)
@@ -228,22 +251,22 @@ transition: all 0.2s ease;
 
 ### Buttons
 
-**Primary Button (Athletic Blue)**
+**Primary Button (Lime Green)**
 ```css
-background: #2563EB
-color: #FFFFFF
+background: #D4FF00
+color: #000000
 padding: 12px 24px
 font-size: 16px
 font-weight: 600
 border-radius: 12px
 border: none
 
-hover: background #1D4ED8
+hover: background #A3CC00
 ```
 
-**Secondary Button (Energy Orange)**
+**Secondary Button (Black)**
 ```css
-background: #F97316
+background: #000000
 color: #FFFFFF
 padding: 12px 24px
 font-size: 16px
@@ -251,20 +274,20 @@ font-weight: 600
 border-radius: 12px
 border: none
 
-hover: background #EA580C
+hover: background #2D2D2D
 ```
 
 **Outlined Button**
 ```css
 background: transparent
-color: #2D2D2D
+color: #000000
 padding: 12px 24px
 font-size: 16px
 font-weight: 600
 border-radius: 12px
 border: 2px solid #E5E5E5
 
-hover: border-color #2563EB, color #2563EB
+hover: border-color #D4FF00, color #D4FF00
 ```
 
 **Text Button**
@@ -277,13 +300,30 @@ font-weight: 600
 border-radius: 12px
 border: none
 
-hover: color #2D2D2D
+hover: color #000000
 ```
 
 **Button with Icon:**
 - Icon size: 20px
 - Gap between text and icon: 8px
 - Use lucide-react icons
+
+**Suggestion Button (AI Coach Welcome)**
+```css
+background: #FFFFFF
+color: #000000
+padding: 12px 24px
+font-size: 16px
+font-weight: 600
+border-radius: 12px
+border: 1px solid #E5E5E5
+
+hover: 
+  background: #FFFFFF
+  border-color: #D4FF00 (neon yellow/lime green)
+```
+
+**Usage:** Used in AI Coach welcome screen for suggestion buttons (Exercise, Analyze, Progress). White fill maintained on hover with neon yellow border highlight.
 
 ### Cards
 
@@ -540,6 +580,125 @@ Elements:
   3. Primary CTA button
 ```
 
+### Dashboard Header Pattern (NEW - Dec 2025)
+```
+Layout: Flex row, space-between
+Gap: 16px
+Margin Bottom: 40px (5 spacing units)
+Elements:
+  1. Greeting text:
+     - Font size: 2rem (xs) to 2.5rem (md+)
+     - Font weight: 900
+     - Text transform: UPPERCASE
+     - Letter spacing: -0.02em
+     - Color: #2D2D2D
+     - Pattern: "GOOD MORNING, COACH."
+  2. Primary action button (right-aligned)
+```
+
+### Section Header with Divider Pattern (NEW - Dec 2025)
+```
+Layout: Flex row, space-between
+Border Bottom: 1px solid #E5E5E5
+Padding Bottom: 12px
+Margin Bottom: 16px
+Elements:
+  1. Title (left):
+     - Font size: 1.125rem
+     - Font weight: 700
+     - Text transform: UPPERCASE
+     - Letter spacing: 0.5px
+     - Color: #2D2D2D
+  2. Optional metadata (right):
+     - Font size: 0.75rem
+     - Font weight: 700
+     - Color: #2D2D2D
+  3. Optional indicator dot (right):
+     - Size: 8px circle
+     - Background: #EF4444 (for pending items)
+```
+
+### List Card with Status Accent Pattern (NEW - Dec 2025)
+```
+Layout: Vertical stack
+Gap: 8px between items
+Item Structure:
+  - Background: #FFFFFF
+  - Border: 1px solid #E5E5E5
+  - Border Left: 4px solid [status-color]
+  - Border Radius: 4px (8px for standalone cards)
+  - Padding: 16px
+  - Box Shadow: 0 1px 3px rgba(0, 0, 0, 0.08)
+  - Hover: background #F5F5F5
+Status Colors:
+  - High Priority: #EF4444 (red)
+  - Approval Needed: #D4FF00 (lime-yellow)
+  - Medium Priority: #F59E0B (orange)
+  - Success/Active: #10B981 (green)
+```
+
+### Avatar List Item Pattern (NEW - Dec 2025)
+```
+Layout: List with flex items
+Gap: 8px between items
+Item Structure:
+  - Card container with 1px border
+  - Box shadow: 0 1px 3px rgba(0, 0, 0, 0.08)
+  - Padding: 12px 16px
+  - Border radius: 4px
+  - Hover: background #F5F5F5
+Elements:
+  1. Avatar (left):
+     - Size: 48px circle
+     - Background: Status-based color
+     - Initial: First letter, uppercase, white text
+     - Font weight: 700
+  2. Text content (right):
+     - Name: 600 weight, body1 size
+     - Optional subtitle: 400 weight, body2 size
+```
+
+### Priority Badge Pattern (NEW - Dec 2025)
+```
+Display: Inline-block
+Padding: 4px 12px
+Border Radius: 4px
+Margin Bottom: 8px
+Text:
+  - Font size: 0.65rem
+  - Font weight: 700
+  - Text transform: UPPERCASE
+  - Letter spacing: 0.5px
+Variants:
+  - High Priority:
+    - Background: #FFFFFF
+    - Text color: #EF4444
+    - Border: none
+  - Approval:
+    - Background: #F7FEE7
+    - Text color: #84CC16
+  - Medium:
+    - Background: #FEF3C7
+    - Text color: #F59E0B
+```
+
+### Skeleton Loading Pattern (NEW - Dec 2025)
+```
+Purpose: Match final UI structure exactly
+Best Practices:
+  - Use MUI Skeleton component
+  - Match card structure and spacing
+  - Include all major layout elements
+  - Use appropriate variants:
+    - text: For text content
+    - circular: For avatars
+    - rectangular: For images/buttons
+Example Structure:
+  1. Header skeleton (matches section header)
+  2. List item skeletons (match final card structure)
+  3. Gap spacing matches final UI (8px-24px)
+```
+
 ---
 
 ## Product-Specific Decisions
@@ -763,6 +922,15 @@ SPECIFIC REQUIREMENTS:
 ---
 
 ## Version History
+
+**v2.1.0** - December 17, 2025
+- Updated to reflect actual implementation patterns from Dashboard redesign
+- Corrected secondary color documentation (Lighter Blue #60A5FA, not Energy Orange)
+- Energy Orange now documented as warning color accent
+- Added black button variant for high-emphasis CTAs
+- Corrected background colors (default: #F5F5F5, paper: #FFFFFF)
+- Synchronized design.json and design-system.md with theme.ts implementation
+- Verified all Dashboard components match documented patterns
 
 **v2.0.0** - December 12, 2025
 - Merged modern athletic minimalism with MUI compatibility

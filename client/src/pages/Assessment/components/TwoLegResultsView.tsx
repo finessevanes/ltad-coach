@@ -90,6 +90,16 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               variant="contained"
               startIcon={<PersonIcon />}
               onClick={() => navigate(`/athletes/${assessment.athleteId}`)}
+              sx={{
+                bgcolor: 'black',
+                color: 'white',
+                '& .MuiSvgIcon-root': {
+                  color: 'white',
+                },
+                '&:hover': {
+                  bgcolor: 'rgba(0, 0, 0, 0.85)',
+                },
+              }}
             >
               View Athlete
             </Button>
@@ -97,6 +107,17 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
               variant="outlined"
               startIcon={<ArrowBackIcon />}
               onClick={() => navigate('/athletes')}
+              sx={{
+                borderColor: 'black',
+                color: 'black',
+                '& .MuiSvgIcon-root': {
+                  color: 'black',
+                },
+                '&:hover': {
+                  borderColor: 'black',
+                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                },
+              }}
             >
               Back
             </Button>
@@ -110,7 +131,7 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
         <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
           <Card sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" color="primary" gutterBottom>
+              <Typography variant="h6" color="text.primary" gutterBottom>
                 Standing on Left Leg
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
@@ -199,7 +220,7 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="primary" gutterBottom>
+              <Typography variant="subtitle2" color="text.primary" gutterBottom>
                 Standing on Left Leg (Right foot raised)
               </Typography>
               <VideoThumbnail
@@ -313,7 +334,7 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Coach AI Assessment
+              CoachAI Assessment
             </Typography>
             <Box sx={{ '& p': { mb: 2 }, '& ul': { pl: 3 }, '& li': { mb: 1 } }}>
               <ReactMarkdown>{assessment.aiCoachAssessment}</ReactMarkdown>
@@ -333,6 +354,14 @@ export const TwoLegResultsView: React.FC<TwoLegResultsViewProps> = ({
         <Button
           variant="outlined"
           onClick={() => navigate('/athletes')}
+          sx={{
+            borderColor: 'black',
+            color: 'black',
+            '&:hover': {
+              borderColor: 'black',
+              bgcolor: 'rgba(0, 0, 0, 0.04)',
+            },
+          }}
         >
           Back to Athletes
         </Button>

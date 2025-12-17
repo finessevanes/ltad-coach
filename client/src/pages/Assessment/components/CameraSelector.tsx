@@ -25,6 +25,9 @@ export const CameraSelector: React.FC<CameraSelectorProps> = ({
         value={selectedDevice || ''}
         label="Camera Source"
         onChange={(e) => onSelect(e.target.value)}
+        sx={{
+          bgcolor: 'white',
+        }}
       >
         {devices.map((device) => (
           <MenuItem key={device.deviceId} value={device.deviceId}>

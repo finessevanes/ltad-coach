@@ -16,11 +16,16 @@ export function GoogleButton({ onClick, disabled }: GoogleButtonProps) {
       onClick={onClick}
       disabled={disabled}
       sx={{
-        borderColor: '#4285f4',
-        color: '#4285f4',
+        py: 1.5,
+        borderRadius: 1.5,
+        borderColor: '#000000',
+        color: '#000000',
+        textTransform: 'none',
+        fontWeight: 600,
+        fontSize: '1rem',
         '&:hover': {
-          borderColor: '#357abd',
-          backgroundColor: 'rgba(66, 133, 244, 0.04)',
+          borderColor: '#000000',
+          backgroundColor: '#F5F5F5',
         },
       }}
     >

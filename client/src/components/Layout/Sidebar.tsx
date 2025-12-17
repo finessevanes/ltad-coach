@@ -15,7 +15,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
-import AssessmentIcon from '@mui/icons-material/Assessment';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MessageIcon from '@mui/icons-material/Message';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -31,8 +31,8 @@ interface SidebarProps {
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Athletes', icon: <PeopleIcon />, path: '/athletes' },
-  { text: 'Assessments', icon: <AssessmentIcon />, path: '/assessments' },
-  { text: 'AI Coach', icon: <MessageIcon />, path: '/ai-coach' },
+  { text: 'Assessments', icon: <AssessmentOutlinedIcon />, path: '/assessments' },
+  { text: 'CoachAI', icon: <MessageIcon />, path: '/ai-coach' },
 ];
 
 export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: SidebarProps) {
@@ -64,7 +64,17 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header with Coach Lens branding */}
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', minHeight: 56 }}>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', minHeight: 56, gap: 1.5 }}>
+        <Box
+          component="img"
+          src="/favicon.png"
+          alt="Coach Lens"
+          sx={{
+            width: 28,
+            height: 28,
+            objectFit: 'contain',
+          }}
+        />
         {!collapsed && (
           <Typography variant="h6" noWrap sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
             Coach Lens
@@ -84,9 +94,37 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: 
                   navigate(item.path);
                   onClose?.();
                 }}
-                sx={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+                sx={{
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: '#F5F5F5',
+                    '& .MuiListItemIcon-root': {
+                      color: '#2D2D2D',
+                    },
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#000000',
+                    color: '#D4FF00',
+                    fontWeight: 600,
+                    '& .MuiListItemIcon-root': {
+                      color: '#D4FF00',
+                    },
+                    '&:hover': {
+                      backgroundColor: '#000000',
+                      '& .MuiListItemIcon-root': {
+                        color: '#D4FF00',
+                      },
+                    },
+                  },
+                }}
               >
-                <ListItemIcon sx={{ minWidth: collapsed ? 0 : 56 }}>
+                <ListItemIcon
+                  sx={{
+                    minWidth: collapsed ? 0 : 56,
+                    color: '#9CA3AF',
+                  }}
+                >
                   {item.icon}
                 </ListItemIcon>
                 {!collapsed && <ListItemText primary={item.text} />}
@@ -113,9 +151,11 @@ export function Sidebar({ width, collapsedWidth, mobileOpen = false, onClose }: 
                 <Avatar
                   alt={user.displayName || user.email || 'User'}
                   src={user.photoURL || undefined}
-                  imgProps={{
-                    crossOrigin: 'anonymous',
-                    referrerPolicy: 'no-referrer'
+                  slotProps={{
+                    img: {
+                      crossOrigin: 'anonymous',
+                      referrerPolicy: 'no-referrer'
+                    }
                   }}
                   sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}
                 >

@@ -4,11 +4,7 @@ import {
   Container,
   Box,
   Typography,
-  Card,
-  CardContent,
-  CardActionArea,
   Grid,
-  Chip,
   Skeleton,
   Button,
   Dialog,
@@ -17,101 +13,89 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { useSnackbar } from '../../contexts/SnackbarContext';
-import assessmentsService from '../../services/assessments';
-
-// Assessment type card data
-interface AssessmentType {
-  id: string;
-  name: string;
-  image: string;
-  isActive: boolean;
-}
-
-const assessmentTypes: AssessmentType[] = [
-  { id: 'balance', name: 'One Leg Balance', image: '/OneLegBalance.png', isActive: true },
-  { id: 'lunge', name: 'Lunge', image: '/lunge.png', isActive: false },
-  { id: 'side-plank', name: 'Side Plank', image: '/SidePlank.png', isActive: false },
-  { id: 'single-leg-hop', name: 'Single-leg Hop', image: '/SingleLegHop.png', isActive: false },
-  { id: 'squat', name: 'Squat', image: '/squat.png', isActive: false },
-];
-
-interface AssessmentListItem {
-  id: string;
-  athleteId: string;
-  athleteName: string;
-  testType: string;
-  legTested: string;
-  createdAt: string;
-  status: string;
-  durationSeconds?: number;
-}
+import {
+  getAllAssessments,
+  getAssessmentsByCategory,
+  categoryLabels,
+  LTADCategory,
+  AssessmentConfig,
+} from '../../config/assessments';
+import { AssessmentCard } from '../../components/AssessmentCard';
+import { CategoryFilter } from '../../components/CategoryFilter';
+import { AvailabilityFilter, AvailabilityStatus } from '../../components/AvailabilityFilter';
 
 export default function AssessmentsList() {
-  const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<LTADCategory | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<AvailabilityStatus>('active'); // Active by default
   const [loading, setLoading] = useState(true);
   const [comingSoonModalOpen, setComingSoonModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
-    const fetchAssessments = async () => {
-      try {
-        setLoading(true);
-        const data = await assessmentsService.getAll(50);
-        setAssessments(data);
-      } catch (error) {
-        console.error('[AssessmentsList] Fetch error:', error);
-        showSnackbar('Failed to load assessments', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssessments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only fetch on mount, showSnackbar is stable
+    // Simulate loading delay for consistent UX
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleAssessmentClick = (assessmentId: string) => {
-    navigate(`/assessments/${assessmentId}`);
-  };
+    const assessment = getAllAssessments().find((a) => a.id === assessmentId);
+    if (!assessment) return;
 
-  const handleAthleteClick = (e: React.MouseEvent, athleteId: string) => {
-    e.stopPropagation();
-    navigate(`/athletes/${athleteId}`);
-  };
-
-  const handleAssessmentTypeClick = (type: AssessmentType) => {
-    if (type.isActive) {
+    if (assessment.isActive) {
       navigate('/athletes');
     } else {
       setComingSoonModalOpen(true);
     }
   };
 
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'processing':
-        return 'warning';
-      case 'failed':
-        return 'error';
-      default:
-        return 'default';
+  /**
+   * Get all assessments to display
+   * Filter by selected category and availability status
+   */
+  const getDisplayAssessments = (): AssessmentConfig[] => {
+    let assessments = getAllAssessments();
+
+    // Filter by category
+    if (selectedCategory) {
+      assessments = getAssessmentsByCategory(selectedCategory);
     }
+
+    // Filter by availability status
+    if (selectedStatus === 'active') {
+      assessments = assessments.filter((a) => a.isActive);
+    } else if (selectedStatus === 'coming-soon') {
+      assessments = assessments.filter((a) => !a.isActive);
+    }
+
+    return assessments;
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
+  /**
+   * Group assessments by category and sub-category
+   */
+  const getGroupedAssessments = (): Record<
+    string,
+    Record<string, AssessmentConfig[]>
+  > => {
+    const assessments = getDisplayAssessments();
+    const grouped: Record<string, Record<string, AssessmentConfig[]>> = {};
+
+    assessments.forEach((assessment) => {
+      if (!grouped[assessment.category]) {
+        grouped[assessment.category] = {};
+      }
+
+      const subCat = assessment.subCategory || 'General';
+      if (!grouped[assessment.category][subCat]) {
+        grouped[assessment.category][subCat] = [];
+      }
+
+      grouped[assessment.category][subCat].push(assessment);
+    });
+
+    return grouped;
   };
 
   // Loading state
@@ -124,84 +108,28 @@ export default function AssessmentsList() {
           <Skeleton variant="text" height={24} width="350px" />
         </Box>
 
-        {/* Assessment Types Grid Skeleton */}
-        <Box sx={{ mb: 5 }}>
-          <Skeleton variant="text" height={32} width="220px" sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            {[1, 2, 3, 4, 5].map((item) => (
-              <Grid item xs={6} sm={4} md={3} key={item}>
-                <Card>
-                  {/* 3:4 Aspect Ratio Image Skeleton */}
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      paddingTop: '133.33%',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Skeleton
-                      variant="rectangular"
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    />
-                  </Box>
-                  {/* Card Label Skeleton */}
-                  <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
-                    <Skeleton variant="text" height={24} width="80%" sx={{ mx: 'auto' }} />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Completed Assessments Section Skeleton */}
-        <Box sx={{ mb: 2 }}>
-          <Skeleton variant="text" height={32} width="280px" sx={{ mb: 1 }} />
-          <Skeleton variant="text" height={20} width="180px" />
+        {/* Filter Skeleton */}
+        <Box sx={{ mb: 3 }}>
+          <Skeleton variant="rounded" height={36} width="100%" />
         </Box>
 
         {/* Assessments Grid Skeleton */}
         <Grid container spacing={2}>
-          {[1, 2, 3, 4, 5].map((item) => (
-            <Grid item xs={12} key={item}>
-              <Card>
-                <CardContent>
-                  <Grid container spacing={2} alignItems="center">
-                    {/* Athlete Name Skeleton */}
-                    <Grid item xs={12} sm={3}>
-                      <Skeleton variant="text" height={24} width="150px" />
-                    </Grid>
-
-                    {/* Test Details Skeleton */}
-                    <Grid item xs={12} sm={3}>
-                      <Skeleton variant="text" height={20} width="140px" sx={{ mb: 0.5 }} />
-                      <Skeleton variant="text" height={16} width="80px" />
-                    </Grid>
-
-                    {/* Duration Skeleton */}
-                    <Grid item xs={12} sm={2}>
-                      <Skeleton variant="text" height={20} width="50px" sx={{ mb: 0.5 }} />
-                      <Skeleton variant="text" height={16} width="70px" />
-                    </Grid>
-
-                    {/* Date Skeleton */}
-                    <Grid item xs={12} sm={2}>
-                      <Skeleton variant="text" height={20} width="120px" />
-                    </Grid>
-
-                    {/* Status Chip Skeleton */}
-                    <Grid item xs={12} sm={2}>
-                      <Skeleton variant="rounded" height={24} width="90px" />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={item}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  paddingTop: '133.33%',
+                  overflow: 'hidden',
+                  mb: 2,
+                }}
+              >
+                <Skeleton variant="rectangular" sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+              </Box>
+              <Skeleton variant="text" height={24} width="80%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={16} width="100%" sx={{ mb: 0.5 }} />
+              <Skeleton variant="rounded" height={24} width="60%" />
             </Grid>
           ))}
         </Grid>
@@ -209,8 +137,9 @@ export default function AssessmentsList() {
     );
   }
 
-  // Note: Empty state for completed assessments is now handled inline below
-  // so we always show the Assessment Types cards
+  const groupedAssessments = getGroupedAssessments();
+  const displayAssessments = getDisplayAssessments();
+  const hasNoResults = displayAssessments.length === 0;
 
   // Main content
   return (
@@ -221,189 +150,112 @@ export default function AssessmentsList() {
           Assessments
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Select an assessment type to get started
+          Select an assessment to get started, organized by LTAD tracking categories
         </Typography>
       </Box>
 
-      {/* Assessment Types Grid */}
-      <Box sx={{ mb: 5 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-          Assessment Types
-        </Typography>
+      {/* Filters Section */}
+      <Box sx={{ mb: 3 }}>
         <Grid container spacing={2}>
-          {assessmentTypes.map((type) => (
-            <Grid item xs={6} sm={4} md={3} key={type.id}>
-              <Card
-                onClick={() => handleAssessmentTypeClick(type)}
-                sx={{
-                  cursor: 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  },
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {/* 3:4 Aspect Ratio Image Container */}
-                <Box
-                  sx={{
-                    position: 'relative',
-                    paddingTop: '133.33%',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={type.image}
-                    alt={type.name}
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-
-                  {/* Coming Soon Ribbon */}
-                  {!type.isActive && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 20,
-                        right: -35,
-                        backgroundColor: 'warning.main',
-                        color: 'white',
-                        padding: '4px 40px',
-                        transform: 'rotate(45deg)',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        boxShadow: 2,
-                      }}
-                    >
-                      Coming Soon
-                    </Box>
-                  )}
-                </Box>
-
-                {/* Card Label */}
-                <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    {type.name}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          <Grid item xs={12} sm={6}>
+            <AvailabilityFilter
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+          </Grid>
         </Grid>
       </Box>
 
-      {/* Completed Assessments Section */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" gutterBottom>
-          Completed Assessments
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {assessments.length} assessment{assessments.length !== 1 ? 's' : ''} total
-        </Typography>
-      </Box>
-
-      {/* Empty state for completed assessments */}
-      {assessments.length === 0 ? (
+      {/* Empty State */}
+      {hasNoResults ? (
         <Box
           sx={{
             textAlign: 'center',
-            py: 6,
+            py: 8,
             backgroundColor: 'grey.50',
-            borderRadius: 3,
+            borderRadius: 2,
             border: '1px dashed',
             borderColor: 'grey.300',
           }}
         >
-          <Typography variant="body1" color="text.secondary" paragraph>
-            No completed assessments yet. Select an assessment type above to get started!
+          <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
+            No assessments found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {selectedStatus === 'coming-soon'
+              ? "We don't have any coming soon assessments in your current filter."
+              : 'No assessments match your current filters.'}
           </Typography>
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/athletes')}
+            variant="outlined"
+            onClick={() => {
+              setSelectedCategory(null);
+              setSelectedStatus('active');
+            }}
+            sx={{ mt: 1 }}
           >
-            Start Balance Test
+            Reset Filters
           </Button>
         </Box>
       ) : (
-        /* Assessments Grid */
-        <Grid container spacing={2}>
-          {assessments.map((assessment) => (
-          <Grid item xs={12} key={assessment.id}>
-            <Card>
-              <CardActionArea onClick={() => handleAssessmentClick(assessment.id)}>
-                <CardContent>
-                  <Grid container spacing={2} alignItems="center">
-                    {/* Athlete Name */}
-                    <Grid item xs={12} sm={3}>
-                      <Typography
-                        variant="subtitle1"
-                        component="a"
-                        onClick={(e) => handleAthleteClick(e, assessment.athleteId)}
-                        sx={{
-                          color: 'primary.main',
-                          textDecoration: 'none',
-                          '&:hover': { textDecoration: 'underline' },
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {assessment.athleteName}
-                      </Typography>
-                    </Grid>
+        <>
+          {/* Assessments organized by category and sub-category */}
+          {Object.entries(groupedAssessments).map(([category, subCategoryGroup]) => (
+            <Box key={category} sx={{ mb: 5 }}>
+              {/* Category Header */}
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{
+                  mb: 3,
+                  fontWeight: 600,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  pb: 1,
+                }}
+              >
+                {categoryLabels[category as LTADCategory]}
+              </Typography>
 
-                    {/* Test Details */}
-                    <Grid item xs={12} sm={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        {assessment.testType === 'one_leg_balance' ? 'One-Leg Balance' : assessment.testType}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {assessment.legTested === 'left' ? 'Left Leg' : 'Right Leg'}
-                      </Typography>
-                    </Grid>
+              {/* Sub-categories within category */}
+              {Object.entries(subCategoryGroup).map(([subCategory, assessments]) => (
+                <Box key={subCategory} sx={{ mb: 4 }}>
+                  {/* Sub-category Header - only show if there are sub-categories in this category */}
+                  {Object.keys(subCategoryGroup).length > 1 && (
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        mb: 2,
+                        fontWeight: 500,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      {subCategory}
+                    </Typography>
+                  )}
 
-                    {/* Duration */}
-                    <Grid item xs={12} sm={2}>
-                      <Typography variant="body2" fontWeight="medium">
-                        {assessment.durationSeconds
-                          ? `${assessment.durationSeconds.toFixed(1)}s`
-                          : 'N/A'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Hold Time
-                      </Typography>
-                    </Grid>
-
-                    {/* Date */}
-                    <Grid item xs={12} sm={2}>
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(assessment.createdAt)}
-                      </Typography>
-                    </Grid>
-
-                    {/* Status */}
-                    <Grid item xs={12} sm={2}>
-                      <Chip
-                        label={assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
-                        color={getStatusColor(assessment.status)}
-                        size="small"
-                      />
-                    </Grid>
+                  {/* Assessment Cards Grid */}
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    {assessments.map((assessment) => (
+                      <Grid item xs={12} sm={6} md={4} lg={3} key={assessment.id}>
+                        <AssessmentCard
+                          assessment={assessment}
+                          onClick={handleAssessmentClick}
+                        />
+                      </Grid>
+                    ))}
                   </Grid>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
+                </Box>
+              ))}
+            </Box>
           ))}
-        </Grid>
+        </>
       )}
 
       {/* Coming Soon Modal */}

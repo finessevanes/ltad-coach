@@ -273,26 +273,17 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
 
   return (
     <Box>
-      {/* Header - only show in setup phase */}
-      {phase === 'setup' && (
-        <Box mb={2}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h5">
-              Recording Setup
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setShowPositioningTips(true)}
-              sx={{ color: 'primary.main' }}
-            >
-              <InfoIcon />
-            </IconButton>
-          </Box>
+      {/* Header */}
+      <Box mb={2}>
+        <Typography variant="h5">
+          Recording Setup
+        </Typography>
+        {phase === 'setup' && (
           <Typography variant="body2" color="text.secondary">
             Select your camera and position the athlete in frame
           </Typography>
-        </Box>
-      )}
+        )}
+      </Box>
 
       {/* Error Alert */}
       {error && phase === 'setup' && (
@@ -499,7 +490,18 @@ export const RecordingStep: React.FC<RecordingStepProps> = ({
         {/* Setup phase buttons */}
         {phase === 'setup' && (
           <>
-            <Button variant="outlined" onClick={onBack}>
+            <Button
+              variant="outlined"
+              onClick={onBack}
+              sx={{
+                borderColor: 'black',
+                color: 'black',
+                '&:hover': {
+                  borderColor: 'black',
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                },
+              }}
+            >
               Back
             </Button>
             <Button

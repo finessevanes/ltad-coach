@@ -30,7 +30,6 @@ export function Layout({ children }: LayoutProps) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           ml: { sm: `${COLLAPSED_DRAWER_WIDTH}px` },
           width: { sm: `calc(100% - ${COLLAPSED_DRAWER_WIDTH}px)` },
           overflow: 'auto',

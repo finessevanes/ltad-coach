@@ -107,7 +107,15 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
                 onClick={onReshootLeft}
                 variant="outlined"
                 size="medium"
-                sx={{ flex: 1 }}
+                sx={{
+                  flex: 1,
+                  borderColor: 'black',
+                  color: 'black',
+                  '&:hover': {
+                    borderColor: 'black',
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                }}
               >
                 Redo Left
               </Button>
@@ -115,7 +123,15 @@ export const FinalReviewModal: React.FC<FinalReviewModalProps> = ({
                 onClick={onReshootRight}
                 variant="outlined"
                 size="medium"
-                sx={{ flex: 1 }}
+                sx={{
+                  flex: 1,
+                  borderColor: 'black',
+                  color: 'black',
+                  '&:hover': {
+                    borderColor: 'black',
+                    bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                }}
               >
                 Redo Right
               </Button>
