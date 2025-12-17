@@ -335,7 +335,6 @@ Not applicable - this is an internal agent called by the orchestrator.
 ## Environment Variables
 
 Uses existing OpenRouter configuration:
-- `OPENROUTER_API_KEY` (required)
 - `SONNET_MODEL` (e.g., "anthropic/claude-3.5-sonnet")
 
 ## Estimated Complexity

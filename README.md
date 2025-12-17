@@ -212,9 +212,7 @@ FRONTEND_URL=http://localhost:5173
 API_BASE_URL=http://localhost:8000
 GOOGLE_APPLICATION_CREDENTIALS=./ltad-coach-firebase-adminsdk-*.json
 FIREBASE_PROJECT_ID=ltad-coach
-FIREBASE_STORAGE_BUCKET=ltad-coach.firebasestorage.app
-OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1  # Optional
+FIREBASE_STORAGE_BUCKET=ltad-coach.firebasestorage.app # Optional
 RESEND_API_KEY=re_...
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000  # Optional
 ```

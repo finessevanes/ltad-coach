@@ -884,7 +884,6 @@ The following security trade-offs are accepted for MVP:
 | `FIREBASE_PROJECT_ID` | Firebase project identifier |
 | `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK private key |
 | `FIREBASE_CLIENT_EMAIL` | Firebase Admin SDK client email |
-| `OPENROUTER_API_KEY` | OpenRouter API key for Claude model access |
 | `RESEND_API_KEY` | Resend email service API key |
 | `FRONTEND_URL` | Deployed frontend URL (for email links) |
 | `BACKEND_URL` | Deployed backend URL (for API calls) |
