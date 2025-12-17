@@ -409,7 +409,7 @@ export function Landing() {
       <Box sx={{ borderTop: '1px solid #E5E5E5', my: 20 }} />
 
       {/* LTAD Framework Diagram */}
-      <Container maxWidth="lg" sx={{ mb: 24 }}>
+      <Container maxWidth="xl" sx={{ mb: 24 }}>
         <Card
           sx={{
             borderRadius: '24px',
@@ -427,7 +427,7 @@ export function Landing() {
             >
               <Box
                 component="img"
-                src="/profression-diagram.png"
+                src="/diagram.png"
                 alt="Long-Term Athletic Development Framework showing the Five S's: Skill, Speed, Suppleness, Stamina, and Strength across developmental stages"
                 sx={{
                   width: '100%',
