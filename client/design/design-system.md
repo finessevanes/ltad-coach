@@ -540,6 +540,125 @@ Elements:
   3. Primary CTA button
 ```
 
+### Dashboard Header Pattern (NEW - Dec 2025)
+```
+Layout: Flex row, space-between
+Gap: 16px
+Margin Bottom: 40px (5 spacing units)
+Elements:
+  1. Greeting text:
+     - Font size: 2rem (xs) to 2.5rem (md+)
+     - Font weight: 900
+     - Text transform: UPPERCASE
+     - Letter spacing: -0.02em
+     - Color: #2D2D2D
+     - Pattern: "GOOD MORNING, COACH."
+  2. Primary action button (right-aligned)
+```
+
+### Section Header with Divider Pattern (NEW - Dec 2025)
+```
+Layout: Flex row, space-between
+Border Bottom: 1px solid #E5E5E5
+Padding Bottom: 12px
+Margin Bottom: 16px
+Elements:
+  1. Title (left):
+     - Font size: 1.125rem
+     - Font weight: 700
+     - Text transform: UPPERCASE
+     - Letter spacing: 0.5px
+     - Color: #2D2D2D
+  2. Optional metadata (right):
+     - Font size: 0.75rem
+     - Font weight: 700
+     - Color: #2D2D2D
+  3. Optional indicator dot (right):
+     - Size: 8px circle
+     - Background: #EF4444 (for pending items)
+```
+
+### List Card with Status Accent Pattern (NEW - Dec 2025)
+```
+Layout: Vertical stack
+Gap: 8px between items
+Item Structure:
+  - Background: #FFFFFF
+  - Border: 1px solid #E5E5E5
+  - Border Left: 4px solid [status-color]
+  - Border Radius: 4px (8px for standalone cards)
+  - Padding: 16px
+  - Box Shadow: 0 1px 3px rgba(0, 0, 0, 0.08)
+  - Hover: background #F5F5F5
+Status Colors:
+  - High Priority: #EF4444 (red)
+  - Approval Needed: #D4FF00 (lime-yellow)
+  - Medium Priority: #F59E0B (orange)
+  - Success/Active: #10B981 (green)
+```
+
+### Avatar List Item Pattern (NEW - Dec 2025)
+```
+Layout: List with flex items
+Gap: 8px between items
+Item Structure:
+  - Card container with 1px border
+  - Box shadow: 0 1px 3px rgba(0, 0, 0, 0.08)
+  - Padding: 12px 16px
+  - Border radius: 4px
+  - Hover: background #F5F5F5
+Elements:
+  1. Avatar (left):
+     - Size: 48px circle
+     - Background: Status-based color
+     - Initial: First letter, uppercase, white text
+     - Font weight: 700
+  2. Text content (right):
+     - Name: 600 weight, body1 size
+     - Optional subtitle: 400 weight, body2 size
+```
+
+### Priority Badge Pattern (NEW - Dec 2025)
+```
+Display: Inline-block
+Padding: 4px 12px
+Border Radius: 4px
+Margin Bottom: 8px
+Text:
+  - Font size: 0.65rem
+  - Font weight: 700
+  - Text transform: UPPERCASE
+  - Letter spacing: 0.5px
+Variants:
+  - High Priority:
+    - Background: #FFFFFF
+    - Text color: #EF4444
+    - Border: none
+  - Approval:
+    - Background: #F7FEE7
+    - Text color: #84CC16
+  - Medium:
+    - Background: #FEF3C7
+    - Text color: #F59E0B
+```
+
+### Skeleton Loading Pattern (NEW - Dec 2025)
+```
+Purpose: Match final UI structure exactly
+Best Practices:
+  - Use MUI Skeleton component
+  - Match card structure and spacing
+  - Include all major layout elements
+  - Use appropriate variants:
+    - text: For text content
+    - circular: For avatars
+    - rectangular: For images/buttons
+Example Structure:
+  1. Header skeleton (matches section header)
+  2. List item skeletons (match final card structure)
+  3. Gap spacing matches final UI (8px-24px)
+```
+
 ---
 
 ## Product-Specific Decisions
