@@ -1,31 +1,24 @@
-import { Box, Typography, Grid, Card, CardContent } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
+import FlagIcon from '@mui/icons-material/Flag';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 const suggestions = [
   {
-    icon: <FitnessCenterIcon />,
-    title: 'Balance Exercises',
+    icon: <FitnessCenterIcon sx={{ fontSize: 16 }} />,
+    title: 'Exercise',
     prompt: 'What are the best balance exercises for 8-year-olds?',
   },
   {
-    icon: <PsychologyIcon />,
-    title: 'Coaching Cues',
-    prompt:
-      'Give me coaching cues for an athlete with high sway during balance tests.',
-  },
-  {
-    icon: <TipsAndUpdatesIcon />,
-    title: 'Progression Ideas',
-    prompt:
-      'How can I progress balance training for athletes who can hold 20+ seconds?',
-  },
-  {
-    icon: <PersonSearchIcon />,
-    title: 'Athlete Analysis',
+    icon: <PersonSearchIcon sx={{ fontSize: 16 }} />,
+    title: 'Analyze',
     prompt: 'Select an athlete above and ask: "How is this athlete progressing?"',
+  },
+  {
+    icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
+    title: 'Progress',
+    prompt: 'How can I progress balance training for athletes who can hold 20+ seconds?',
   },
 ];
 
@@ -35,48 +28,100 @@ interface Props {
 
 export function WelcomeMessage({ onSuggestionClick }: Props) {
   return (
-    <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        AI Coach Assistant
+    <Box
+      sx={{
+        textAlign: 'center',
+        py: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {/* Flag Icon */}
+      <FlagIcon
+        sx={{
+          fontSize: 40,
+          color: 'text.secondary',
+          mb: 2,
+          opacity: 0.7,
+        }}
+      />
+
+      {/* Main Title */}
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontWeight: 600,
+          maxWidth: 600,
+          mx: 'auto',
+          mb: 1.5,
+          lineHeight: 1.3,
+        }}
+      >
+        Elevate Your Athletes with AI-Powered Coaching Intelligence
       </Typography>
+
+      {/* Subtitle */}
       <Typography
         variant="body1"
         color="text.secondary"
-        sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
+        sx={{
+          mb: 3,
+          maxWidth: 550,
+          mx: 'auto',
+          lineHeight: 1.6,
+        }}
       >
-        I&apos;m here to help with balance training, exercise recommendations,
-        and athlete development guidance based on LTAD principles.
+        Ask questions about your athletes&apos; assessments, identify performance gaps,
+        and get personalized recommendations to help every player reach their full potential
       </Typography>
 
-      <Grid container spacing={2} sx={{ maxWidth: 800, mx: 'auto' }}>
+      {/* Suggestion Buttons */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1.5,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
         {suggestions.map((suggestion, index) => (
-          <Grid item xs={12} sm={6} key={index}>
-            <Card
-              sx={{
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: 3,
-                },
-              }}
-              onClick={() => onSuggestionClick(suggestion.prompt)}
-            >
-              <CardContent
-                sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
-              >
-                <Box sx={{ color: 'primary.main' }}>{suggestion.icon}</Box>
-                <Box sx={{ textAlign: 'left' }}>
-                  <Typography variant="subtitle2">{suggestion.title}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {suggestion.prompt}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Button
+            key={index}
+            variant="outlined"
+            startIcon={suggestion.icon}
+            onClick={() => onSuggestionClick(suggestion.prompt)}
+            sx={{
+              borderRadius: 3,
+              px: 2.5,
+              py: 1,
+              textTransform: 'none',
+              borderColor: 'divider',
+              color: 'text.primary',
+              '&:hover': {
+                borderColor: 'primary.main',
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            {suggestion.title}
+          </Button>
         ))}
-      </Grid>
+      </Box>
+
+      {/* Disclaimer */}
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          mt: 2,
+          opacity: 0.6,
+        }}
+      >
+        AI-generated insights may be inaccurate. Verify important training data.
+      </Typography>
     </Box>
   );
 }

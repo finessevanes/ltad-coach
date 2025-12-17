@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Container, Box, Typography, Paper, IconButton, Tooltip } from '@mui/material';
+import { Container, Box, Typography, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -183,7 +183,7 @@ export function AICoach() {
     <Container
       maxWidth="lg"
       sx={{
-        py: 4,
+        py: 2,
         height: 'calc(100vh - 64px)',
         display: 'flex',
         flexDirection: 'column',
@@ -195,7 +195,7 @@ export function AICoach() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 3,
+          mb: 2,
         }}
       >
         <Box>
@@ -216,15 +216,11 @@ export function AICoach() {
       </Box>
 
       {/* Chat messages area */}
-      <Paper
-        elevation={1}
+      <Box
         sx={{
           flex: 1,
           mb: 2,
-          p: 3,
           overflow: 'auto',
-          bgcolor: 'background.default',
-          borderRadius: 2,
         }}
       >
         {messages.length === 0 ? (
@@ -237,7 +233,7 @@ export function AICoach() {
             <div ref={messagesEndRef} />
           </>
         )}
-      </Paper>
+      </Box>
 
       {/* Input area */}
       <ChatInput
