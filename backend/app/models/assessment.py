@@ -362,6 +362,8 @@ class AssessmentListItem(BaseModel):
     created_at: datetime
     status: AssessmentStatus
     duration_seconds: Optional[float] = Field(None, description="Test duration in seconds")
+    left_leg_hold_time: Optional[float] = Field(None, description="Left leg hold time in seconds")
+    right_leg_hold_time: Optional[float] = Field(None, description="Right leg hold time in seconds")
 
 
 class AssessmentListResponse(BaseModel):

@@ -10,6 +10,8 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
+  leftLegHoldTime?: number;
+  rightLegHoldTime?: number;
 }
 
 interface AssessmentListResponse {

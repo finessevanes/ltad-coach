@@ -11,8 +11,6 @@ import {
   ReferenceLine,
   Legend,
 } from 'recharts';
-import assessmentsService from '../../services/assessments';
-import { Assessment } from '../../types/assessment';
 
 interface AssessmentListItem {
   id: string;
@@ -23,6 +21,8 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
+  leftLegHoldTime?: number;
+  rightLegHoldTime?: number;
 }
 
 interface ProgressChartProps {
@@ -41,55 +41,27 @@ export function ProgressChart({ assessments }: ProgressChartProps) {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
-    const fetchFullAssessments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch full assessment details for each assessment
-        const fullAssessments = await Promise.all(
-          assessments.map((a) => assessmentsService.getById(a.id))
-        );
+      // Use data already in the assessments prop - no API calls needed!
+      const data = assessments
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .map((assessment) => ({
+          date: new Date(assessment.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+          leftLeg: assessment.leftLegHoldTime,
+          rightLeg: assessment.rightLegHoldTime,
+        }));
 
-        // Sort by date and prepare chart data
-        const data = fullAssessments
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          .map((assessment: Assessment) => {
-            const dataPoint: ChartDataPoint = {
-              date: new Date(assessment.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              }),
-            };
-
-            // Extract hold times from the appropriate metrics
-            if (assessment.legTested === 'both') {
-              // Dual-leg assessment: use leftLegMetrics and rightLegMetrics
-              dataPoint.leftLeg = assessment.leftLegMetrics?.holdTime;
-              dataPoint.rightLeg = assessment.rightLegMetrics?.holdTime;
-            } else if (assessment.legTested === 'left') {
-              // Single left leg: use metrics.holdTime
-              dataPoint.leftLeg = assessment.metrics?.holdTime;
-            } else if (assessment.legTested === 'right') {
-              // Single right leg: use metrics.holdTime
-              dataPoint.rightLeg = assessment.metrics?.holdTime;
-            }
-
-            return dataPoint;
-          });
-
-        setChartData(data);
-      } catch (err: any) {
-        console.error('Failed to fetch full assessments for chart:', err);
-        setError(err.message || 'Failed to load chart data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (assessments.length > 0) {
-      fetchFullAssessments();
-    } else {
+      setChartData(data);
+    } catch (err: any) {
+      console.error('Failed to prepare chart data:', err);
+      setError(err.message || 'Failed to load chart data');
+    } finally {
       setLoading(false);
     }
   }, [assessments]);
