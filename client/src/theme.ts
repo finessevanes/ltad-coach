@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-// CoachLens Modern Athletic Minimalism Design System
+// Coach Lens Modern Athletic Minimalism Design System
 // Based on design.json v2.0.0
 
 export const theme = createTheme({

@@ -82,7 +82,7 @@ export default function Login() {
             Sign In
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Welcome back to CoachLens
+            Welcome back to Coach Lens
           </Typography>
 
           {error && (

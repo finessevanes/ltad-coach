@@ -1,1 +1,1 @@
-# CoachLens Backend Application
+# Coach Lens Backend Application
