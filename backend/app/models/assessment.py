@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, validator
 class TestType(str, Enum):
     """Type of balance test."""
     ONE_LEG_BALANCE = "one_leg_balance"
+    ANTHROPOMETRIC = "anthropometric"
 
 
 class LegTested(str, Enum):
