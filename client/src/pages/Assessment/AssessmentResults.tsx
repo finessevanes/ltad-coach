@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -22,45 +21,30 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ReactMarkdown from 'react-markdown';
-import assessmentsService from '../../services/assessments';
-import athletesService from '../../services/athletes';
-import { Assessment } from '../../types/assessment';
-import { Athlete } from '../../types/athlete';
+import { useAssessment } from '../../hooks/useAssessments';
+import { useAthlete } from '../../hooks/useAthletes';
 import { TwoLegResultsView } from './components/TwoLegResultsView';
 
 export default function AssessmentResults() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
   const navigate = useNavigate();
 
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [athlete, setAthlete] = useState<Athlete | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Fetch assessment with React Query (cached, deduplicated)
+  const {
+    data: assessment,
+    isLoading: assessmentLoading,
+    error: assessmentError,
+  } = useAssessment(assessmentId);
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!assessmentId) {
-        setError('No assessment ID provided');
-        setLoading(false);
-        return;
-      }
+  // Fetch athlete once we have the assessment (sequential dependency)
+  const {
+    data: athlete,
+    isLoading: athleteLoading,
+  } = useAthlete(assessment?.athleteId);
 
-      try {
-        const assessmentData = await assessmentsService.getById(assessmentId);
-        setAssessment(assessmentData);
-
-        // Fetch athlete info
-        const athleteData = await athletesService.getById(assessmentData.athleteId);
-        setAthlete(athleteData);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load assessment');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [assessmentId]);
+  // Combine loading states
+  const loading = assessmentLoading || (assessment && athleteLoading);
+  const error = assessmentError ? (assessmentError as any).message || 'Failed to load assessment' : null;
 
   if (loading) {
     return (
