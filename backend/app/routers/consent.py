@@ -36,9 +36,9 @@ I, as the parent or legal guardian of the athlete named above, hereby consent to
 
 6. **Voluntary Participation**: I understand that participation is voluntary and I may withdraw consent at any time by contacting the coach.
 
-7. **No Medical Advice**: I understand that CoachLens provides athletic coaching feedback only and does not constitute medical advice. Any concerns about my child's health or physical development should be discussed with a qualified healthcare professional.
+7. **No Medical Advice**: I understand that Coach Lens provides athletic coaching feedback only and does not constitute medical advice. Any concerns about my child's health or physical development should be discussed with a qualified healthcare professional.
 
-By providing consent, I acknowledge that I have read and understood the above terms and agree to allow my child to participate in athletic assessments using the CoachLens platform.
+By providing consent, I acknowledge that I have read and understood the above terms and agree to allow my child to participate in athletic assessments using the Coach Lens platform.
 """.strip()
 
 

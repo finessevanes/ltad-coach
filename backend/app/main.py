@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(
-    title="CoachLens API",
+    title="Coach Lens API",
     description="Computer vision athletic assessment platform for youth sports coaches",
     version=VERSION,
     lifespan=lifespan,

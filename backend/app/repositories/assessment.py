@@ -1,7 +1,7 @@
 """Assessment repository for database operations."""
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from app.repositories.base import BaseRepository
 from app.models.assessment import Assessment, AssessmentStatus, MetricsData, ClientMetricsData
 
@@ -45,7 +45,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "video_url": video_url,
             "video_path": video_path,
             "status": AssessmentStatus.PROCESSING.value,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "raw_keypoints_url": None,
             "metrics": None,
             "client_metrics": client_metrics,
@@ -93,7 +93,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "video_url": video_url,
             "video_path": video_path,
             "status": AssessmentStatus.COMPLETED.value,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "raw_keypoints_url": None,
             "metrics": metrics,
             "ai_coach_assessment": None,  # Populated in Phase 7
@@ -168,7 +168,7 @@ class AssessmentRepository(BaseRepository[Assessment]):
             "test_type": test_type,
             "leg_tested": "both",
             "status": AssessmentStatus.COMPLETED.value,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             # Left leg fields
             "left_leg_video_url": left_leg_video_url,
             "left_leg_video_path": left_leg_video_path,

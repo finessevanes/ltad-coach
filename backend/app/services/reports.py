@@ -21,49 +21,84 @@ orchestrator = AgentOrchestrator()
 
 
 def _get_assessment_hold_time(assessment: Assessment) -> float:
-    """Extract hold time from assessment, handling both single-leg and dual-leg."""
-    if assessment.leg_tested.value == "both":
-        # For dual-leg, use left leg as primary (matches current report logic)
-        if assessment.left_leg_metrics:
-            return assessment.left_leg_metrics.hold_time
-        return 0.0
-    else:
-        if assessment.metrics:
-            return assessment.metrics.hold_time
-        return 0.0
+    """Extract hold time from assessment.
+
+    For balance tests (always dual-leg), uses left leg as primary for consistency
+    across progress tracking and graph visualization.
+    """
+    # Balance assessments are always dual-leg
+    if assessment.leg_tested.value == "both" and assessment.left_leg_metrics:
+        return assessment.left_leg_metrics.hold_time
+
+    # Legacy fallback for single-leg (may not be used for balance tests)
+    if assessment.metrics:
+        return assessment.metrics.hold_time
+
+    return 0.0
 
 
 def _get_assessment_score(assessment: Assessment) -> int:
-    """Extract duration score from assessment, handling both single-leg and dual-leg."""
-    if assessment.leg_tested.value == "both":
-        if assessment.left_leg_metrics:
-            return assessment.left_leg_metrics.duration_score
-        return 1
-    else:
-        if assessment.metrics:
-            return assessment.metrics.duration_score
-        return 1
+    """Extract duration score from assessment.
+
+    For balance tests (always dual-leg), uses left leg as primary for consistency
+    across progress tracking and graph visualization.
+    """
+    # Balance assessments are always dual-leg
+    if assessment.leg_tested.value == "both" and assessment.left_leg_metrics:
+        return assessment.left_leg_metrics.duration_score
+
+    # Legacy fallback for single-leg (may not be used for balance tests)
+    if assessment.metrics:
+        return assessment.metrics.duration_score
+
+    return 1
 
 
 def _compute_graph_data(assessments: List[Assessment]) -> List[ReportGraphDataPoint]:
-    """Transform assessments into chart-ready data points.
+    """Transform assessments into chart-ready data points with bilateral support.
 
     Args:
         assessments: List of assessments (most recent first from repository)
 
     Returns:
         List of graph data points sorted chronologically (oldest first)
+        with separate left_leg and right_leg fields for bilateral visualization
     """
     # Sort chronologically (oldest first) for graph display
     sorted_assessments = sorted(assessments, key=lambda a: a.created_at)
 
-    return [
-        ReportGraphDataPoint(
+    data_points = []
+    for a in sorted_assessments:
+        # Extract bilateral data
+        left_leg_time = None
+        right_leg_time = None
+
+        if a.leg_tested.value == "both":
+            # Dual-leg assessment
+            if a.left_leg_metrics:
+                left_leg_time = a.left_leg_metrics.hold_time
+            if a.right_leg_metrics:
+                right_leg_time = a.right_leg_metrics.hold_time
+        elif a.leg_tested.value == "left":
+            # Single left leg
+            if a.metrics:
+                left_leg_time = a.metrics.hold_time
+        elif a.leg_tested.value == "right":
+            # Single right leg
+            if a.metrics:
+                right_leg_time = a.metrics.hold_time
+
+        # Legacy duration field (left leg for consistency)
+        duration = left_leg_time or right_leg_time or 0.0
+
+        data_points.append(ReportGraphDataPoint(
             date=a.created_at.strftime("%b %d"),
-            duration=_get_assessment_hold_time(a)
-        )
-        for a in sorted_assessments
-    ]
+            duration=duration,
+            left_leg=left_leg_time,
+            right_leg=right_leg_time
+        ))
+
+    return data_points
 
 
 def _compute_progress_snapshot(assessments: List[Assessment]) -> Optional[ProgressSnapshot]:
@@ -131,17 +166,20 @@ def _compute_milestones(assessments: List[Assessment], athlete_name: str) -> Lis
                 ))
             break  # Only check until first 20+ hold
 
-    # Milestone 2: First improvement over previous assessment
-    if len(sorted_assessments) >= 2:
-        for i in range(1, len(sorted_assessments)):
-            curr_time = _get_assessment_hold_time(sorted_assessments[i])
-            prev_time = _get_assessment_hold_time(sorted_assessments[i - 1])
-            if curr_time > prev_time:
-                milestones.append(MilestoneInfo(
-                    type="improvement",
-                    message=f"{athlete_name} showed improvement over their previous assessment!"
-                ))
-                break  # Only report first improvement
+    # Milestone 2: Sustained improvement (requires consistent trend, not single blips)
+    # Only trigger if last 3 assessments average significantly better than first 3
+    if len(sorted_assessments) >= 6:
+        # Compare first 3 (oldest) vs last 3 (most recent) assessments
+        first_three_avg = sum(_get_assessment_hold_time(a) for a in sorted_assessments[:3]) / 3
+        last_three_avg = sum(_get_assessment_hold_time(a) for a in sorted_assessments[-3:]) / 3
+
+        # Only show improvement if last 3 are significantly better (15%+ improvement)
+        if last_three_avg > first_three_avg * 1.15:
+            improvement_pct = ((last_three_avg / first_three_avg - 1) * 100)
+            milestones.append(MilestoneInfo(
+                type="improvement",
+                message=f"{athlete_name} has shown consistent improvement ({improvement_pct:.0f}% increase in balance duration)!"
+            ))
 
     return milestones
 
@@ -229,6 +267,14 @@ async def generate_report_content(
         athlete_name=athlete.name,
         athlete_age=athlete.age,
     )
+
+    # Debug: Log compressed history to diagnose trend detection issues
+    logger.info(f"[DEBUG] Report generation for {athlete.name}:")
+    logger.info(f"  Assessment count: {routing['assessment_count']}")
+    if routing['compressed_history']:
+        logger.info(f"  Compressed history (first 300 chars): {routing['compressed_history'][:300]}...")
+    else:
+        logger.warning(f"  No compressed history generated!")
 
     # Generate report content using Progress Agent
     content = await generate_progress_report(

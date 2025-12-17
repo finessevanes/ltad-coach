@@ -1,4 +1,4 @@
-# CoachLens Design System
+# Coach Lens Design System
 ## Modern Athletic Minimalism v2.0
 
 **Last Updated:** December 12, 2025  
@@ -10,7 +10,7 @@
 
 ## Overview
 
-The CoachLens design system embodies modern athletic minimalism - clean, functional, and energetic. Built on Material-UI with extensive customization, this system prioritizes clarity, breathing room, and purposeful color usage to create an interface that feels professional yet approachable for middle school athletes and coaches.
+The Coach Lens design system embodies modern athletic minimalism - clean, functional, and energetic. Built on Material-UI with extensive customization, this system prioritizes clarity, breathing room, and purposeful color usage to create an interface that feels professional yet approachable for middle school athletes and coaches.
 
 **Brand Philosophy:** Professional coaching tool that energizes athletes. Trust through data, excitement through movement. Every interaction should feel confident and capable - like working with a great assistant coach.
 
@@ -695,7 +695,7 @@ Color coding: Neutral card, colored trends only
 When prompting AI to generate UI in this style:
 
 ```
-Create a [component/screen] for CoachLens using our Modern Athletic Minimalism design system:
+Create a [component/screen] for Coach Lens using our Modern Athletic Minimalism design system:
 
 FRAMEWORK:
 - Material-UI (MUI) v5+ with custom theme

@@ -47,6 +47,8 @@ interface AssessmentListItem {
   createdAt: string;
   status: string;
   durationSeconds?: number;
+  leftLegHoldTime?: number;
+  rightLegHoldTime?: number;
 }
 
 export default function AthleteProfile() {

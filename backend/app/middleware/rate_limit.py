@@ -1,6 +1,6 @@
 """Rate limiting middleware for API endpoints."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from typing import Dict, List
 from fastapi import HTTPException, status
@@ -34,7 +34,7 @@ class RateLimiter:
         Returns:
             True if allowed (and recorded), False if rate limited
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - self.window
 
         # Remove entries older than time window

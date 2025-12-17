@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from 'recharts';
 import { ReportGraphDataPoint } from '../../services/reports';
 
@@ -16,12 +17,12 @@ interface ReportProgressChartProps {
 }
 
 /**
- * Progress chart for parent reports.
- * Identical styling to existing ProgressChart.tsx but accepts
- * pre-computed graph data from the backend.
+ * Progress chart for parent reports with bilateral visualization.
+ * Displays separate lines for left and right leg to show asymmetry over time.
  *
  * Uses:
- * - Athletic Blue (#2563EB) for the line per design system
+ * - Athletic Blue (#2563EB) for left leg line
+ * - Orange (#ff6f00) for right leg line
  * - Reference line at 20 seconds (target threshold)
  * - Y-axis fixed at [0, 30] for consistency
  */
@@ -87,8 +88,12 @@ export function ReportProgressChart({ graphData }: ReportProgressChartProps) {
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
               }}
               labelStyle={{ color: '#2D2D2D', fontWeight: 600 }}
-              itemStyle={{ color: '#2563EB' }}
-              formatter={(value: number) => [`${value.toFixed(1)}s`, 'Duration']}
+              formatter={(value: number) => [`${value.toFixed(1)}s`]}
+            />
+            <Legend
+              wrapperStyle={{
+                paddingTop: '10px',
+              }}
             />
             <ReferenceLine
               y={20}
@@ -103,7 +108,7 @@ export function ReportProgressChart({ graphData }: ReportProgressChartProps) {
             />
             <Line
               type="monotone"
-              dataKey="duration"
+              dataKey="leftLeg"
               stroke="#2563EB"
               strokeWidth={3}
               dot={{
@@ -118,7 +123,28 @@ export function ReportProgressChart({ graphData }: ReportProgressChartProps) {
                 stroke: '#FFFFFF',
                 strokeWidth: 2,
               }}
-              name="Duration (s)"
+              name="Left Leg"
+              connectNulls
+            />
+            <Line
+              type="monotone"
+              dataKey="rightLeg"
+              stroke="#ff6f00"
+              strokeWidth={3}
+              dot={{
+                r: 6,
+                fill: '#ff6f00',
+                stroke: '#FFFFFF',
+                strokeWidth: 2,
+              }}
+              activeDot={{
+                r: 8,
+                fill: '#ff6f00',
+                stroke: '#FFFFFF',
+                strokeWidth: 2,
+              }}
+              name="Right Leg"
+              connectNulls
             />
           </LineChart>
         </ResponsiveContainer>
